@@ -63,6 +63,10 @@ class IVRCallDialogueResponse(BaseModel):
     ai_spoken_reply_tamil: str
     ai_spoken_reply_english: str
     detected_language: str
+    language_confidence: Optional[float] = None
+    latitude: Optional[str] = None
+    longitude: Optional[str] = None
+    osm_location_name: Optional[str] = None
     intent: str  # 'GATHER_MORE_INFO' | 'CONFIRMATION_PENDING' | 'CONFIRMED' | 'GENERAL_HELP'
     extracted_category: Optional[str] = None
     extracted_location: Optional[str] = None

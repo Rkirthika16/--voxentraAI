@@ -317,6 +317,10 @@ export interface IVRCallDialogueResponse {
   ai_spoken_reply_tamil: string;
   ai_spoken_reply_english: string;
   detected_language: string;
+  language_confidence?: number;
+  latitude?: string;
+  longitude?: string;
+  osm_location_name?: string;
   intent: 'GATHER_MORE_INFO' | 'CONFIRMATION_PENDING' | 'READY_TO_REGISTER' | 'CONFIRMED' | 'GENERAL_HELP';
   extracted_category?: string;
   extracted_location?: string;

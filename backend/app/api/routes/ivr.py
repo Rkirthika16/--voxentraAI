@@ -105,11 +105,14 @@ def handle_ivr_dialogue_turn(
     if req.caller_phone and not session["fields"].get("citizen_details"):
         session["fields"]["citizen_details"] = req.caller_phone
 
-    # Detect language
-    detected_lang, _ = detect_language(user_speech)
+    # Detect language with confidence
+    detected_lang, lang_conf = detect_language(user_speech)
     if req.language_preference in ["Tamil", "English", "Tanglish"]:
         detected_lang = req.language_preference
+        lang_conf = 1.0
     session["language"] = detected_lang
+
+    from app.ai.location_service import extract_location
 
     # 1. If currently in CONFIRMATION_PENDING stage
     if session.get("state") == "CONFIRMATION_PENDING":
@@ -152,6 +155,10 @@ def handle_ivr_dialogue_turn(
                     ai_spoken_reply_tamil=reply_ta,
                     ai_spoken_reply_english=reply_en,
                     detected_language=detected_lang,
+                    language_confidence=lang_conf,
+                    latitude=str(created_complaint.latitude) if created_complaint.latitude else None,
+                    longitude=str(created_complaint.longitude) if created_complaint.longitude else None,
+                    osm_location_name=created_complaint.location,
                     intent="CONFIRMED",
                     extracted_category=created_complaint.category,
                     extracted_location=created_complaint.location,
@@ -187,6 +194,7 @@ def handle_ivr_dialogue_turn(
                     ai_spoken_reply_tamil=reply_ta,
                     ai_spoken_reply_english=reply_en,
                     detected_language=detected_lang,
+                    language_confidence=lang_conf,
                     intent="GATHER_MORE_INFO",
                     is_confirmation_pending=False,
                     is_completed=False,
@@ -200,6 +208,16 @@ def handle_ivr_dialogue_turn(
     for k, v in extracted_slots.items():
         if v and str(v).strip():
             session["fields"][k] = v
+
+    # Extract location and geocoordinates using Tamil Nadu OpenStreetMap GIS engine
+    loc_components = [
+        session["fields"].get("exact_location") or "",
+        session["fields"].get("street_road_name") or "",
+        session["fields"].get("district_area") or "",
+        session["fields"].get("landmark") or ""
+    ]
+    loc_str = ", ".join([c for c in loc_components if c]).strip()
+    osm_name, lat, lon, loc_conf = extract_location(loc_str or user_speech)
 
     # 3. Check for next missing field
     next_missing = complaint_collector.get_next_missing_field(session)
@@ -220,6 +238,10 @@ def handle_ivr_dialogue_turn(
             ai_spoken_reply_tamil=summary_text if detected_lang == "Tamil" else spoken_summary,
             ai_spoken_reply_english=spoken_summary if detected_lang == "English" else summary_text,
             detected_language=detected_lang,
+            language_confidence=lang_conf,
+            latitude=lat,
+            longitude=lon,
+            osm_location_name=osm_name or session['fields'].get('district_area'),
             intent="CONFIRMATION_PENDING",
             extracted_category=cat,
             extracted_location=f"{session['fields'].get('district_area', '')}, {session['fields'].get('street_road_name', '')}",
@@ -256,6 +278,10 @@ def handle_ivr_dialogue_turn(
         ai_spoken_reply_tamil=q_ta,
         ai_spoken_reply_english=q_en,
         detected_language=detected_lang,
+        language_confidence=lang_conf,
+        latitude=lat,
+        longitude=lon,
+        osm_location_name=osm_name or session['fields'].get('district_area'),
         intent="GATHER_MORE_INFO",
         extracted_category=session["fields"].get("problem_description"),
         extracted_location=session["fields"].get("district_area"),

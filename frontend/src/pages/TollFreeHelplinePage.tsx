@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ivrApi } from '../api/ivr';
 import { IVRProcessSpeechResponse } from '../types';
 import { speech } from '../utils/speech';
+import { IVRStreetMap } from '../components/IVRStreetMap';
 import { Link } from 'react-router-dom';
 import {
   PhoneCall,
@@ -23,7 +24,9 @@ import {
   Globe,
   RotateCcw,
   Check,
-  Headphones
+  Headphones,
+  Compass,
+  Navigation
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -37,7 +40,11 @@ interface ChatMessage {
 export const TollFreeHelplinePage: React.FC = () => {
   // Call States: 'IDLE' -> 'CALLING' -> 'CONNECTED' -> 'RECORDING' -> 'PROCESSING' -> 'DONE'
   const [callState, setCallState] = useState<'IDLE' | 'CALLING' | 'CONNECTED' | 'RECORDING' | 'PROCESSING' | 'DONE'>('IDLE');
-  const [language, setLanguage] = useState<'ta' | 'en' | 'tanglish' | 'hi'>('ta');
+  
+  // Real-time Automatic Language Recognition State (No manual option needed)
+  const [detectedLanguage, setDetectedLanguage] = useState<string>('Auto-Detecting...');
+  const [languageConfidence, setLanguageConfidence] = useState<number>(0.98);
+
   const [callerPhone, setCallerPhone] = useState('+91 98430 98765');
   const tollFreeNumber = '1913';
 
@@ -54,6 +61,11 @@ export const TollFreeHelplinePage: React.FC = () => {
   const [collectionFields, setCollectionFields] = useState<Record<string, any>>({});
   const [isConfirmationPending, setIsConfirmationPending] = useState(false);
   const [summaryText, setSummaryText] = useState('');
+
+  // OpenStreetMap GIS Live Classification State
+  const [currentLatitude, setCurrentLatitude] = useState<string | number | null>(null);
+  const [currentLongitude, setCurrentLongitude] = useState<string | number | null>(null);
+  const [osmLocationName, setOsmLocationName] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -86,7 +98,7 @@ export const TollFreeHelplinePage: React.FC = () => {
     });
   };
 
-  // 1. INITIATE TOLL-FREE CALL
+  // 1. INITIATE ZERO-SELECTION TOLL-FREE CALL (Citizen speaks first)
   const handleStartCall = async () => {
     speech.unlock();
     setError(null);
@@ -99,9 +111,13 @@ export const TollFreeHelplinePage: React.FC = () => {
     setCollectionFields({});
     setIsConfirmationPending(false);
     setSummaryText('');
+    setDetectedLanguage('Auto-Detecting...');
+    setCurrentLatitude(null);
+    setCurrentLongitude(null);
+    setOsmLocationName(null);
 
     // Play phone ringtone
-    speech.playRingTone(2.0);
+    speech.playRingTone(1.8);
 
     try {
       const initData = await ivrApi.initiateCall(callerPhone, tollFreeNumber);
@@ -112,32 +128,25 @@ export const TollFreeHelplinePage: React.FC = () => {
         speech.playConnectChime();
         setCallState('CONNECTED');
 
-        // Greeting formulation based on citizen's language
-        let greeting = initData.greeting_tamil + " " + initData.prompt_tamil;
-        let langName = 'Tamil';
-
-        if (language === 'hi') {
-          greeting = "नमस्ते! वॉक्सेंट्रा तमिलनाडु सरकारी हेल्पलाइन में आपका स्वागत है. कृपया अपनी ग्राम पंचायत या नागरिक समस्या बताएं.";
-          langName = 'Hindi';
-        } else if (language === 'en') {
-          greeting = initData.greeting_english + " " + initData.prompt_english;
-          langName = 'English';
-        } else if (language === 'tanglish') {
-          greeting = "Vanakkam! Voxentra Tamil Nadu Civic & Grievance Helpline ku welcome. Ungaloda problem enna nu sollunga.";
-          langName = 'Tanglish';
-        }
-
+        // Universal bilingual IVR welcoming prompt
+        const greeting = "வணக்கம். வாக்ஸென்ட்ரா தமிழ்நாடு அரசு குறைதீர்ப்பு சேவைக்கு நல்வரவு. Welcome to Voxentra Tamil Nadu Civic Helpline. Please state your grievance in Tamil, English, or Tanglish after the tone.";
+        
         const aiMsg: ChatMessage = {
           id: `ai_${Date.now()}`,
           sender: 'ai',
           text: greeting,
-          language: langName,
+          language: 'Tamil',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
         setMessages([aiMsg]);
 
-        // Speak greeting aloud immediately
-        playVoice(greeting, langName);
+        // Speak greeting aloud
+        playVoice(greeting, 'Tamil');
+
+        // Automatically start recording so citizen can speak immediately
+        setTimeout(() => {
+          handleStartRecording();
+        }, 3200);
       }, 1500);
 
     } catch (err: any) {
@@ -152,7 +161,7 @@ export const TollFreeHelplinePage: React.FC = () => {
     speech.stop();
     speech.stopRingTone();
     if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+      try { mediaRecorderRef.current.stop(); } catch (e) {}
     }
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
@@ -163,7 +172,7 @@ export const TollFreeHelplinePage: React.FC = () => {
     setCallState('IDLE');
   };
 
-  // 3. START CONTINUOUS SPEECH RECOGNITION
+  // 3. START SPEECH RECOGNITION (Captures Tamil, Tanglish & English naturally)
   const handleStartRecording = async () => {
     setError(null);
     speech.stop();
@@ -184,7 +193,7 @@ export const TollFreeHelplinePage: React.FC = () => {
 
           mediaRecorder.start(250);
         } catch (mediaErr) {
-          console.warn('Microphone stream optional notice:', mediaErr);
+          console.warn('Microphone stream notice:', mediaErr);
         }
       }
 
@@ -193,11 +202,10 @@ export const TollFreeHelplinePage: React.FC = () => {
       setRecordSeconds(0);
       setSpokenText('');
 
-      // Continuous Speech Recognition in Tamil / English / Tanglish
+      // Continuous Speech Recognition with auto-language capture
       if (speech.isSTTSupported()) {
-        const sttLang = language === 'ta' ? 'ta-IN' : (language === 'hi' ? 'hi-IN' : 'en-IN');
         const rec = speech.createRecognition(
-          sttLang as any,
+          'ta-IN' as any,
           (transcript) => {
             setSpokenText(transcript);
           },
@@ -218,7 +226,7 @@ export const TollFreeHelplinePage: React.FC = () => {
     }
   };
 
-  // 4. SUBMIT SPOKEN GRIEVANCE TURN-BY-TURN WITH NO ASSUMPTIONS LOCATION CLARIFICATION
+  // 4. SUBMIT SPOKEN GRIEVANCE TURN-BY-TURN (AI auto-detects language and classifies OSM location)
   const handleSubmitSpokenProblem = async (customText?: string) => {
     speech.unlock();
     const textToProcess = (customText || spokenText).trim();
@@ -236,7 +244,7 @@ export const TollFreeHelplinePage: React.FC = () => {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
+      try { mediaRecorderRef.current.stop(); } catch (e) {}
     }
 
     // Add citizen's spoken message to conversation stream
@@ -244,7 +252,7 @@ export const TollFreeHelplinePage: React.FC = () => {
       id: `cit_${Date.now()}`,
       sender: 'citizen',
       text: textToProcess,
-      language: language,
+      language: detectedLanguage,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     setMessages((prev) => [...prev, citizenMsg]);
@@ -252,18 +260,35 @@ export const TollFreeHelplinePage: React.FC = () => {
 
     try {
       const activeSid = currentCallSid || `CA_${Date.now()}`;
-      const langPref = language === 'ta' ? 'Tamil' : (language === 'tanglish' ? 'Tanglish' : (language === 'hi' ? 'Hindi' : 'English'));
 
-      // Use dialogue turn endpoint for intelligent clarification & confirmation flow
+      // Zero-Selection Dialogue Turn (Auto-Language Detection + OpenStreetMap GIS Classification)
       const res = await ivrApi.dialogueTurn({
         call_sid: activeSid,
         caller_phone: callerPhone,
         dialogue_turn: dialogueTurn,
         user_speech: textToProcess,
-        language_preference: langPref,
+        language_preference: 'Auto',
       });
 
       setDialogueTurn(res.dialogue_turn);
+      
+      // Update Auto-detected Language & Confidence
+      if (res.detected_language) {
+        setDetectedLanguage(res.detected_language);
+      }
+      if (res.language_confidence) {
+        setLanguageConfidence(res.language_confidence);
+      }
+
+      // Update OpenStreetMap GIS Geocoordinates & Location Name
+      if (res.latitude && res.longitude) {
+        setCurrentLatitude(res.latitude);
+        setCurrentLongitude(res.longitude);
+      }
+      if (res.osm_location_name) {
+        setOsmLocationName(res.osm_location_name);
+      }
+
       if (res.collection_state) {
         setCollectionFields(res.collection_state);
       }
@@ -279,7 +304,9 @@ export const TollFreeHelplinePage: React.FC = () => {
           complaint_id: res.complaint_id || 1,
           category: res.extracted_category || 'General Civic',
           suggested_department: res.suggested_department || 'Municipal Administration',
-          extracted_location: res.extracted_location || 'Tamil Nadu',
+          extracted_location: res.extracted_location || res.osm_location_name || 'Tamil Nadu',
+          latitude: res.latitude || currentLatitude,
+          longitude: res.longitude || currentLongitude,
           status: 'SUBMITTED',
           sms_text: `[Govt of TN / Voxentra] Grievance #${res.complaint_number} registered. Dept: ${res.suggested_department}. Status: Assigned to Field Officer.`
         });
@@ -289,7 +316,7 @@ export const TollFreeHelplinePage: React.FC = () => {
       }
 
       const replyText = res.ai_spoken_reply;
-      const spokenLang = res.detected_language || (language === 'ta' ? 'Tamil' : (language === 'tanglish' ? 'Tanglish' : 'English'));
+      const spokenLang = res.detected_language || 'Tamil';
 
       const aiReply: ChatMessage = {
         id: `ai_${Date.now()}`,
@@ -301,7 +328,7 @@ export const TollFreeHelplinePage: React.FC = () => {
       setMessages((prev) => [...prev, aiReply]);
       setSpokenText('');
 
-      // AI speaks out loud to the citizen
+      // AI speaks out loud to the citizen in their detected language
       playVoice(replyText, spokenLang);
 
     } catch (err: any) {
@@ -311,9 +338,9 @@ export const TollFreeHelplinePage: React.FC = () => {
   };
 
   return (
-    <div className="page-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '950px', margin: '0 auto' }}>
+    <div className="page-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '980px', margin: '0 auto' }}>
       
-      {/* 1. Header & Language Controls */}
+      {/* 1. Header & Zero-Selection Auto-Recognition Indicator */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div
@@ -336,52 +363,32 @@ export const TollFreeHelplinePage: React.FC = () => {
               Toll-Free Civic Helpline (1913)
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              Tamil Nadu Citizen Grievance Portal • Automatic AI Department Routing & Voice Redressal
+              Tamil Nadu Citizen Grievance Portal • Zero-Selection Conversational Voice IVR & OpenStreetMap GIS
             </p>
           </div>
         </div>
 
-        {/* Language Selection */}
+        {/* Live Auto-Recognized Language Badge (No Manual Selection Required) */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem',
-            background: 'var(--bg-input)',
-            padding: '0.35rem 0.6rem',
+            gap: '0.6rem',
+            background: 'rgba(15, 23, 42, 0.8)',
+            padding: '0.5rem 0.9rem',
             borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
           }}
         >
-          <Globe size={15} color="#38bdf8" />
-          <button
-            onClick={() => setLanguage('ta')}
-            className={`btn btn-sm ${language === 'ta' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-          >
-            தமிழ்
-          </button>
-          <button
-            onClick={() => setLanguage('en')}
-            className={`btn btn-sm ${language === 'en' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-          >
-            English
-          </button>
-          <button
-            onClick={() => setLanguage('tanglish')}
-            className={`btn btn-sm ${language === 'tanglish' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-          >
-            Tanglish
-          </button>
-          <button
-            onClick={() => setLanguage('hi')}
-            className={`btn btn-sm ${language === 'hi' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-          >
-            हिन्दी
-          </button>
+          <Globe size={16} color="#38bdf8" />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+              RECOGNIZED LANGUAGE:
+            </span>
+            <span style={{ fontSize: '0.85rem', color: '#34d399', fontWeight: 700 }}>
+              {detectedLanguage === 'Auto-Detecting...' ? '🌐 Auto-Detect (தமிழ் / Tanglish / English)' : `✓ ${detectedLanguage} (${Math.round(languageConfidence * 100)}%)`}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -425,15 +432,15 @@ export const TollFreeHelplinePage: React.FC = () => {
       >
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 'var(--radius-full)', padding: '0.35rem 1rem', fontSize: '0.85rem', color: '#34d399', fontWeight: 700 }}>
           <Radio size={15} className={callState !== 'IDLE' ? 'animate-pulse' : ''} />
-          <span>TOLL-FREE CIVIC HELPLINE • 1913</span>
+          <span>TOLL-FREE HELPLINE • 1913 • CITIZEN TALKS FIRST</span>
         </div>
 
         <div>
           <div style={{ fontSize: 'clamp(2.5rem, 6vw, 4rem)', fontWeight: 800, fontFamily: 'var(--font-heading)', color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1 }}>
             1913
           </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.75rem', maxWidth: '600px' }}>
-            Call from any basic mobile phone or click below. The AI answers, clarifies missing location & problem details without making assumptions, asks confirmation, and dispatches to the government department.
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.75rem', maxWidth: '650px' }}>
+            No language keypad options needed. Connect and speak your grievance in Tamil, Tanglish, or English. The AI listens, auto-identifies your dialect, accurately pinpoints your street on OpenStreetMap, and dispatches to the department.
           </p>
         </div>
 
@@ -453,7 +460,7 @@ export const TollFreeHelplinePage: React.FC = () => {
               }}
             >
               <PhoneCall size={22} />
-              <span>Call 1913 Helpline</span>
+              <span>Call 1913 Helpline (Speak Grievance)</span>
             </button>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -471,27 +478,32 @@ export const TollFreeHelplinePage: React.FC = () => {
                 <span>End Call</span>
               </button>
               <span style={{ fontSize: '0.85rem', color: '#34d399', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.6rem 1.2rem', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
-                ● Call Connected • Turn {dialogueTurn} (AI Audio Active)
+                ● Call Live • Turn {dialogueTurn} (AI Listening & Responding)
               </span>
             </div>
           )}
         </div>
       </div>
 
-      {/* 3. Live AI Voice Dialogue & Grievance Recording */}
+      {/* 3. Live AI Voice Dialogue, Street Map GIS & Grievance Recording */}
       {callState !== 'IDLE' && (
         <div className="glass-card animate-fade-in" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <Headphones size={20} color="#38bdf8" />
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Government AI Voice Assistant</h3>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Government AI Voice Assistant (Tamil Nadu)</h3>
             </div>
-            {isAiSpeaking && (
-              <span style={{ background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)', color: '#38bdf8', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700 }} className="animate-pulse">
-                🔊 AI Speaking Aloud...
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#34d399', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700 }}>
+                🌐 Detected: {detectedLanguage}
               </span>
-            )}
+              {isAiSpeaking && (
+                <span style={{ background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)', color: '#38bdf8', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700 }} className="animate-pulse">
+                  🔊 AI Speaking Aloud...
+                </span>
+              )}
+            </div>
           </div>
 
           {/* 10-Point Intake HUD Indicator */}
@@ -540,6 +552,19 @@ export const TollFreeHelplinePage: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* OpenStreetMap GIS Location Classifier Widget */}
+          <IVRStreetMap
+            latitude={currentLatitude || collectionFields['latitude']}
+            longitude={currentLongitude || collectionFields['longitude']}
+            locationName={osmLocationName || collectionFields['district_area']}
+            districtArea={collectionFields['district_area']}
+            streetName={collectionFields['street_road_name']}
+            landmark={collectionFields['landmark']}
+            exactLocation={collectionFields['exact_location']}
+            category={collectionFields['problem_description']}
+            height="260px"
+          />
 
           {/* Dialogue Message History */}
           <div
@@ -612,7 +637,7 @@ export const TollFreeHelplinePage: React.FC = () => {
             <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.25))', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '1.25rem', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#34d399', fontWeight: 700 }}>
                 <CheckCircle2 size={18} />
-                <span>All 10 Details Gathered • Please Confirm with AI:</span>
+                <span>All 10 Details Gathered & Location Pinpointed • Confirm with AI:</span>
               </div>
               <p style={{ fontSize: '0.85rem', color: '#e2e8f0', margin: 0 }}>
                 Shall we register this grievance and forward it to the department now?
@@ -637,51 +662,43 @@ export const TollFreeHelplinePage: React.FC = () => {
             </div>
           )}
 
-          {/* Quick 1-Click Dialogue Clarification Presets */}
+          {/* Realistic 1-Click Citizen Speech Tester Presets in Tamil, Tanglish & English */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(15, 23, 42, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Sparkles size={14} color="#38bdf8" /> Fast Voice Clarification Responses (Click to Speak to AI):
+              <Sparkles size={14} color="#38bdf8" /> Citizen Voice Quick-Test Prompts (Click to Simulate Citizen Speaking):
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               <button
                 type="button"
-                onClick={() => { setSpokenText('Water pipe is broken and leaking'); handleSubmitSpokenProblem('Water pipe is broken and leaking'); }}
+                onClick={() => { setSpokenText('கோயம்புத்தூர் காந்திபுரம் 5-வது கிராஸ் கட் ரோட்ல குடிநீர் பைப் உடைஞ்சு தண்ணி ரோட்ல ஓடுது, முருகன் கோவில் பக்கத்துல கதவு எண் 45'); handleSubmitSpokenProblem('கோயம்புத்தூர் காந்திபுரம் 5-வது கிராஸ் கட் ரோட்ல குடிநீர் பைப் உடைஞ்சு தண்ணி ரோட்ல ஓடுது, முருகன் கோவில் பக்கத்துல கதவு எண் 45'); }}
                 className="btn btn-secondary btn-sm"
                 style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.4)', color: '#38bdf8' }}
               >
-                💧 1. Water pipe leak (பிரச்சனை)
+                🗣️ தமிழ்: காந்திபுரம் 5-வது கிராஸ் கட் ரோடு பைப் உடைப்பு
               </button>
               <button
                 type="button"
-                onClick={() => { setSpokenText('Gandhipuram, Coimbatore'); handleSubmitSpokenProblem('Gandhipuram, Coimbatore'); }}
+                onClick={() => { setSpokenText('Chennai Anna Nagar 2nd Avenue la street light eriyala romba dark ah irukku near Nilgiris supermarket opposite Door 12'); handleSubmitSpokenProblem('Chennai Anna Nagar 2nd Avenue la street light eriyala romba dark ah irukku near Nilgiris supermarket opposite Door 12'); }}
                 className="btn btn-secondary btn-sm"
                 style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.4)', color: '#fbbf24' }}
               >
-                🏙️ 2. Gandhipuram, Coimbatore (பகுதி)
+                🗣️ Tanglish: Anna Nagar 2nd Ave street light issue
               </button>
               <button
                 type="button"
-                onClick={() => { setSpokenText('Cross Cut Road'); handleSubmitSpokenProblem('Cross Cut Road'); }}
+                onClick={() => { setSpokenText('Sewage drainage water is overflowing on Trichy Road, Singanallur opposite Bus Depot since yesterday morning'); handleSubmitSpokenProblem('Sewage drainage water is overflowing on Trichy Road, Singanallur opposite Bus Depot since yesterday morning'); }}
                 className="btn btn-secondary btn-sm"
                 style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(249, 115, 22, 0.15)', borderColor: 'rgba(249, 115, 22, 0.4)', color: '#fdba74' }}
               >
-                🛣️ 3. Cross Cut Road (தெரு)
+                🗣️ English: Singanallur Trichy Road drainage overflow
               </button>
               <button
                 type="button"
-                onClick={() => { setSpokenText('Opposite City Hospital near Indian Bank ATM'); handleSubmitSpokenProblem('Opposite City Hospital near Indian Bank ATM'); }}
+                onClick={() => { setSpokenText('மதுரை மேலூர் மெயின் ரோட்ல பெரிய குப்பை குமிஞ்சிருக்கு துர்நாற்றம் வீசுது அரசு பள்ளி அருகில்'); handleSubmitSpokenProblem('மதுரை மேலூர் மெயின் ரோட்ல பெரிய குப்பை குமிஞ்சிருக்கு துர்நாற்றம் வீசுது அரசு பள்ளி அருகில்'); }}
                 className="btn btn-secondary btn-sm"
                 style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.4)', color: '#c4b5fd' }}
               >
-                🏛️ 4. Opp City Hospital (Landmark)
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSpokenText('Near Pole #14, Door 45'); handleSubmitSpokenProblem('Near Pole #14, Door 45'); }}
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#6ee7b7' }}
-              >
-                📍 5. Near Pole #14 (Exact Spot)
+                🗣️ தமிழ்: மதுரை மேலூர் மெயின் ரோடு குப்பை தேக்கம்
               </button>
             </div>
           </div>
@@ -717,7 +734,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                 value={spokenText}
                 onChange={(e) => setSpokenText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitSpokenProblem(); }}
-                placeholder="Or type/edit your grievance here (e.g. திருவாரூர்ல ஸ்ட்ரீட் லைட் எரியல / Water pipe leak in Madurai)..."
+                placeholder="Citizen speaks or types here (e.g. காந்திபுரம் கிராஸ் கட் ரோடு / Anna Nagar street light problem)..."
                 className="input-field"
                 style={{ flex: 1, padding: '0.75rem 1rem', fontSize: '0.9rem' }}
               />
@@ -749,83 +766,80 @@ export const TollFreeHelplinePage: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircle2 size={26} />
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: 'rgba(16, 185, 129, 0.25)',
+                  border: '2px solid #10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#34d399',
+                }}
+              >
+                <CheckCircle2 size={24} />
               </div>
               <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Grievance Auto-Routed & Registered
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#34d399' }}>
+                  Grievance Registered Successfully via Toll-Free Helpline!
+                </h3>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Tracking ID: <strong style={{ color: '#ffffff' }}>#{result.complaint_number}</strong> • OpenStreetMap Location Verified
                 </span>
-                <h2 style={{ fontSize: '1.85rem', fontFamily: 'monospace', fontWeight: 800 }}>
-                  {result.complaint_number}
-                </h2>
               </div>
             </div>
 
-            <Link
-              to={`/complaints/${result.complaint_id}`}
-              className="btn btn-primary btn-sm"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-            >
-              <span>View Full Ticket Record</span>
-              <ArrowRight size={14} />
-            </Link>
+            <span style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399', padding: '0.35rem 0.85rem', borderRadius: 'var(--radius-full)', fontSize: '0.8rem', fontWeight: 700 }}>
+              STATUS: ASSIGNED TO FIELD OFFICER
+            </span>
           </div>
 
-          <div className="grid-3">
-            <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 700 }}>
-                Automatically Assigned Department
-              </span>
-              <p style={{
-                fontSize: '1rem',
-                fontWeight: 800,
-                color: result.suggested_department.includes('Lighting') ? '#fbbf24' : (result.suggested_department.includes('Water') ? '#38bdf8' : (result.suggested_department.includes('Electricity') ? '#fef08a' : (result.suggested_department.includes('Road') ? '#fdba74' : (result.suggested_department.includes('Sanitation') ? '#6ee7b7' : '#93c5fd')))),
-                marginTop: '0.35rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <Building2 size={18} />
-                {result.suggested_department}
-              </p>
+          {/* Details Summary Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>DEPARTMENT ROUTED</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: '#38bdf8' }}>
+                <Building2 size={16} />
+                <span>{result.suggested_department}</span>
+              </div>
             </div>
 
-            <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 700 }}>
-                Extracted Village / Location
-              </span>
-              <p style={{ fontSize: '0.95rem', fontWeight: 700, color: '#34d399', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>OPENSTREETMAP LOCATION</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: '#fbbf24' }}>
                 <MapPin size={16} />
-                {result.extracted_location || 'Tamil Nadu'}
-              </p>
+                <span>{result.extracted_location}</span>
+              </div>
             </div>
 
-            <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 700 }}>
-                Assessed Priority
-              </span>
-              <p style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fbbf24', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Flame size={16} />
-                {result.priority}
-              </p>
+            <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>AUTOMATIC SMS DISPATCH</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: '#34d399' }}>
+                <MessageSquare size={16} />
+                <span>Sent to {callerPhone}</span>
+              </div>
             </div>
           </div>
 
-          {/* SMS Dispatch Receipt */}
-          <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, color: '#93c5fd' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <MessageSquare size={15} />
-                SMS Delivered to Caller ({result.caller_phone})
-              </span>
-              <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontSize: '0.7rem' }}>
-                SMS DELIVERED
-              </span>
-            </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-              {result.sms_text}
-            </p>
+          {/* Action Links */}
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+            <Link to={`/complaints/${result.complaint_id}`} className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>View Official Complaint Record</span>
+              <ArrowRight size={16} />
+            </Link>
+            <button
+              onClick={() => {
+                setCallState('IDLE');
+                setResult(null);
+                setMessages([]);
+                setCollectionFields({});
+              }}
+              className="btn btn-secondary"
+            >
+              Start New Toll-Free Helpline Call
+            </button>
           </div>
         </div>
       )}
