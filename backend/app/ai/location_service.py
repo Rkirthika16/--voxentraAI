@@ -11,7 +11,627 @@ from rapidfuzz import fuzz
 TAMIL_NADU_DISTRICT_LOCATIONS: List[Dict] = [
     # --------------------------------------------------------------------------
     # 1. COIMBATORE DISTRICT (கோயம்புத்தூர்)
+    # Structured official gazette master covering 3 Revenue Divisions, 11 Taluks,
+    # and all official Revenue Villages & Localities.
     # --------------------------------------------------------------------------
+
+    # --- MADUKKARAI TALUK (மடுக்கரை வட்டம்) ---
+    {
+        "name": "Madukkarai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.903000",
+        "longitude": "76.963000",
+        "keywords": ["madukkarai", "மதுக்கரை", "madukkarai market", "acc cement madukkarai", "madukkarai railway station"]
+    },
+    {
+        "name": "Mavuthampathy, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.860000",
+        "longitude": "76.880000",
+        "keywords": ["mavuthampathy", "mavuthampathi", "மவுத்தம்பதி", "mavuthampatty", "navakkarai"]
+    },
+    {
+        "name": "Pichanur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.875000",
+        "longitude": "76.895000",
+        "keywords": ["pichanur", "பிச்சனூர்", "pichanoor", "walayar border pichanur"]
+    },
+    {
+        "name": "Seerapalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.915000",
+        "longitude": "76.975000",
+        "keywords": ["seerapalayam", "சீராபாளையம்", "seerapalayam pirivu"]
+    },
+    {
+        "name": "Ettimadai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.900000",
+        "longitude": "76.898000",
+        "keywords": ["ettimadai", "எட்டிமடை", "amrita university ettimadai", "ettimadai railway station"]
+    },
+    {
+        "name": "Thirumalayampalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.870000",
+        "longitude": "76.910000",
+        "keywords": ["thirumalayampalayam", "திருமலையம்பாளையம்", "thirumalaiyampalayam"]
+    },
+    {
+        "name": "Vazhukuparai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.865000",
+        "longitude": "76.935000",
+        "keywords": ["vazhukuparai", "valukkupparai", "வழுக்குப்பாறை", "vazhukkuparai"]
+    },
+    {
+        "name": "Malumichampatti, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.910000",
+        "longitude": "76.985000",
+        "keywords": ["malumichampatti", "மலுமிச்சம்பட்டி", "malumichampatty", "malumichampatti junction"]
+    },
+    {
+        "name": "Palathurai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.895000",
+        "longitude": "76.945000",
+        "keywords": ["palathurai", "பாலத்துறை", "palathurai road"]
+    },
+    {
+        "name": "Karunchamigoundenpalayam & Thammagoundanpalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.885000",
+        "longitude": "76.955000",
+        "keywords": ["karunchamigoundenpalayam", "கருஞ்சாமி கவுண்டன்பாளையம்", "thammagoundanpalayam", "தம்ம கவுண்டன்பாளையம்"]
+    },
+    {
+        "name": "Nachipalayam & Arisipalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.880000",
+        "longitude": "76.920000",
+        "keywords": ["nachipalayam", "நாச்சிபாளையம்", "arisipalayam", "அரிசிபாளையம்", "arisi palayam"]
+    },
+    {
+        "name": "Myleripalayam & Oorattukuppai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.890000",
+        "longitude": "77.010000",
+        "keywords": ["myleripalayam", "மயிலேரிபாளையம்", "oorattukuppai", "ஊரட்டுக்குப்பை", "orattukuppai"]
+    },
+    {
+        "name": "Othakkalmandapam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.885000",
+        "longitude": "76.975000",
+        "keywords": ["othakkalmandapam", "ஒத்தக்கால்மண்டபம்", "othakkalmandapam junction", "premier mills"]
+    },
+    {
+        "name": "Chettypalayam (Chettipalayam), Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.880000",
+        "longitude": "77.030000",
+        "keywords": ["chettypalayam", "chettipalayam", "செட்டிப்பாளையம்", "kari motor speedway"]
+    },
+    {
+        "name": "Kurichi & Eachanari, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.942700",
+        "longitude": "76.965400",
+        "keywords": ["kurichy", "kurichi", "குறிச்சி", "eachanari", "ஈச்சனாரி", "sidco coimbatore", "sundarapuram", "சுந்தராபுரம்"]
+    },
+    {
+        "name": "Vellalur (Vellalore), Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.963400",
+        "longitude": "76.994000",
+        "keywords": ["vellalur", "vellalore", "வெள்ளலூர்", "podanur", "போத்தனூர்"]
+    },
+
+    # --- PERUR TALUK (பேரூர் வட்டம்) ---
+    {
+        "name": "Ikkaraipoluvampatty & Madavarayapuram, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.950000",
+        "longitude": "76.780000",
+        "keywords": ["ikkaraipoluvampatty", "இக்கரை பூளுவாம்பட்டி", "ikkaraiboluampatti", "madavarayapuram", "மாதவராயபுரம்"]
+    },
+    {
+        "name": "Alandurai & Pooluvampatti, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.930000",
+        "longitude": "76.810000",
+        "keywords": ["alandurai", "ஆலாந்துறை", "pooluvampatti", "pooluvapatti", "பூளுவம்பட்டி", "thenkarai", "தென்கரை"]
+    },
+    {
+        "name": "Semmedu, Iruttupallam & Poondi, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.975000",
+        "longitude": "76.735000",
+        "keywords": ["semmedu", "செம்மேடு", "iruttupallam", "இருட்டுப்பள்ளம்", "poondi velliangiri", "பூண்டி", "velliangiri hills", "isha yoga center"]
+    },
+    {
+        "name": "Madampatty & Theethipalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.965000",
+        "longitude": "76.865000",
+        "keywords": ["madampatty", "madampatti", "மாதம்பட்டி", "theethipalayam", "தீதிப்பாளையம்"]
+    },
+    {
+        "name": "Perur Chettipalayam & Perur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.970000",
+        "longitude": "76.910000",
+        "keywords": ["perur", "பேரூர்", "perur chettipalayam", "பேரூர் செட்டிபாளையம்", "perur pateeswarar temple", "பேரூர் கோவில்"]
+    },
+    {
+        "name": "Narasipuram & Vellimalaipattinam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.990000",
+        "longitude": "76.840000",
+        "keywords": ["narasipuram", "நரசிபுரம்", "vellimalaipattinam", "வெள்ளிமலைப்பட்டினம்", "vaidehi falls"]
+    },
+    {
+        "name": "Jakirnaickenpalayam & Devarayanpuram, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.985000",
+        "longitude": "76.820000",
+        "keywords": ["jakirnaickenpalayam", "ஜாகீர்நாயக்கன்பாளையம்", "devarayanpuram", "தேவராயன்புரம்"]
+    },
+    {
+        "name": "Thondamuthur & Thenamanallur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.990000",
+        "longitude": "76.840000",
+        "keywords": ["thondamuthur", "தொண்டாமுத்தூர்", "thenamanallur", "தேனமநல்லூர்", "muthurajapuram"]
+    },
+    {
+        "name": "Kalikanaickenpalayam & Vadavalli, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.027000",
+        "longitude": "76.904800",
+        "keywords": ["kalikanaickenpalayam", "காளிகநாயக்கன்பாளையம்", "vadavalli", "வடவள்ளி", "marudhamalai", "மருதமலை", "navavoor", "bommanampalayam"]
+    },
+    {
+        "name": "Chithirai Chavadi & Vedapatti, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.985000",
+        "longitude": "76.890000",
+        "keywords": ["chithirai chavadi", "சித்திரை சாவடி", "vedapatti", "வேடபட்டி", "dhaliyur", "தாளியூர்"]
+    },
+    {
+        "name": "Sundakamuthur & Veerakeralam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.980000",
+        "longitude": "76.920000",
+        "keywords": ["sundakamuthur", "சுண்டக்காமுத்தூர்", "veerakeralam", "வீரகேரளம்", "sundakkamuthur"]
+    },
+    {
+        "name": "Komarapalayam & Kuniyamuthur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.957600",
+        "longitude": "76.957100",
+        "keywords": ["komarapalayam", "குமாரபாளையம்", "kuniyamuthur", "குனியமுத்தூர்", "kuniamuthur", "kovaipudur", "கோவைப்புதூர்"]
+    },
+
+    # --- SULUR TALUK (சூலூர் வட்டம்) ---
+    {
+        "name": "Paduvampalli & Kaduvettipalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.080000",
+        "longitude": "77.160000",
+        "keywords": ["paduvampalli", "படுவம்பள்ளி", "kaduvettipalayam", "கடுவெட்டிபாளையம்"]
+    },
+    {
+        "name": "Mopperipalayam & Kittampalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.095000",
+        "longitude": "77.190000",
+        "keywords": ["mopperipalayam", "மொப்பிரிபாளையம்", "kittampalayam", "கிட்டாம்பாளையம்"]
+    },
+    {
+        "name": "Semmandampalayam & Karumathampatty, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.110000",
+        "longitude": "77.180000",
+        "keywords": ["semmandampalayam", "செம்மண்டாம்பாளையம்", "karumathampatty", "karumathampatti", "கருமத்தம்பட்டி", "somanur", "சோமனூர்"]
+    },
+    {
+        "name": "Kaniyur & Arasur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.070000",
+        "longitude": "77.130000",
+        "keywords": ["kaniyur", "கணியூர்", "arasur", "அரசூர்"]
+    },
+    {
+        "name": "Neelambur & Mylampatty, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.055000",
+        "longitude": "77.085000",
+        "keywords": ["neelambur", "நீலம்பூர்", "mylampatty", "மயிலாம்பட்டி", "avinashi road bypass"]
+    },
+    {
+        "name": "Irugur & Chinniyampalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.020000",
+        "longitude": "77.065000",
+        "keywords": ["irugur", "இருகூர்", "chinniyampalayam", "சின்னியம்பாளையம்", "goldwins", "கோல்ட்வின்ஸ்"]
+    },
+    {
+        "name": "Rasipalayam & Kadampadi, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.010000",
+        "longitude": "77.110000",
+        "keywords": ["rasipalayam", "ராசிபாளையம்", "kadampadi", "கடம்பாடி"]
+    },
+    {
+        "name": "Kangayampalayam & Sulur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.025000",
+        "longitude": "77.127000",
+        "keywords": ["kangayampalayam", "காங்கேயம்பாளையம்", "sulur", "சூலூர்", "sulur air force base"]
+    },
+    {
+        "name": "Kannampalayam & Otterpalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.000000",
+        "longitude": "77.100000",
+        "keywords": ["kannampalayam", "கண்ணம்பாளையம்", "otterpalayam", "ஒட்டர் பாளையம்", "pallapalayam", "பல்லபாளையம்"]
+    },
+    {
+        "name": "Pattanam & Peedampalli, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.970000",
+        "longitude": "77.070000",
+        "keywords": ["pattanam", "பட்டணம்", "peedampalli", "பீடம்பள்ளி", "pattanam itanagar"]
+    },
+    {
+        "name": "Kallengal & Pappampatty, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.980000",
+        "longitude": "77.120000",
+        "keywords": ["kallengal", "கல்லேங்கல்", "kallangal", "pappampatty", "பப்பம்பட்டி", "pappampatti"]
+    },
+    {
+        "name": "Kallapalayam & Pachapalayam (Sulur), Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.960000",
+        "longitude": "77.110000",
+        "keywords": ["kallapalayam", "கள்ளப்பாளையம்", "pachapalayam sulur", "பச்சாபாளையம்"]
+    },
+    {
+        "name": "Bogampatty & Idayapalayam (Sulur), Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.930000",
+        "longitude": "77.150000",
+        "keywords": ["bogampatty", "bogampatti", "போகம்பட்டி", "idayapalayam sulur", "இடையர்பாளையம் சூலூர்"]
+    },
+    {
+        "name": "Selakkarichel & Varapatty, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.890000",
+        "longitude": "77.170000",
+        "keywords": ["selakkarichel", "செலாக்கரிச்சல்", "varapatty", "varapatti", "வரப்பட்டி", "sultanpet", "சுல்தான்பேட்டை"]
+    },
+    {
+        "name": "Vadambacheri & Vadavedampatty, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.870000",
+        "longitude": "77.180000",
+        "keywords": ["vadambacheri", "வடம்பச்சேரி", "vadavedampatty", "வடவேடம்பட்டி"]
+    },
+    {
+        "name": "Kumarapalayam (Sulur) & Malaipalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.860000",
+        "longitude": "77.160000",
+        "keywords": ["kumarapalayam sulur", "குமாரபாளையம் சூலூர்", "malaipalayam", "மலைப்பாளையம்"]
+    },
+    {
+        "name": "S. Ayyampalayam & Kammalapatty, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.840000",
+        "longitude": "77.150000",
+        "keywords": ["s. ayyampalayam", "எஸ். அய்யம்பாளையம்", "kammalapatty", "கம்மாலபட்டி"]
+    },
+    {
+        "name": "Jallipatty & Sencheripudur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.820000",
+        "longitude": "77.170000",
+        "keywords": ["jallipatty", "ஜல்லிபட்டி", "sencheripudur", "செஞ்சேரிபுதூர்", "senjerimalai", "செஞ்சேரிமலை"]
+    },
+    {
+        "name": "Thalakari & J. Krishnapuram, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.800000",
+        "longitude": "77.180000",
+        "keywords": ["thalakari", "தளக்கரை", "j. krishnapuram", "ஜே. கிருஷ்ணாபுரம்", "j. krisnapuram"]
+    },
+
+    # --- COIMBATORE NORTH TALUK (கோயம்புத்தூர் வடக்கு வட்டம்) ---
+    {
+        "name": "Kalapatty & Vilankurichi, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.060000",
+        "longitude": "77.030000",
+        "keywords": ["kalapatty", "kalapatti", "காளப்பட்டி", "vilankurichi", "விளாங்குறிச்சி", "sharp nagar", "veeriyampalayam"]
+    },
+    {
+        "name": "Saravanampatty & Chinnavedampatty, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.077200",
+        "longitude": "76.997500",
+        "keywords": ["saravanampatty", "saravanampatti", "சரவணம்பட்டி", "chinnavedampatty", "chinnavedampatti", "சின்னவேடம்பட்டி", "chil sez", "kct"]
+    },
+    {
+        "name": "Vellakinar & Sanganur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.078400",
+        "longitude": "76.938800",
+        "keywords": ["vellakinar", "வெள்ளக்கினார்", "sanganur", "சங்கனூர்", "sanganur canal"]
+    },
+    {
+        "name": "Ganapathy & Krishnarayapuram, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.038400",
+        "longitude": "76.974400",
+        "keywords": ["ganapathy", "கணபதி", "krishnarayapuram", "கிருஷ்ணராயபுரம்", "maniyakarampalayam", "sathy road"]
+    },
+    {
+        "name": "Thelungupalayam & Puliyakulam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.010000",
+        "longitude": "76.980000",
+        "keywords": ["thelungupalayam", "telungupalayam", "தெலுங்குபாளையம்", "puliyakulam", "புலியகுளம்", "puliyakulam vinayagar"]
+    },
+    {
+        "name": "Anupperpalayam & Naickenpalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.130000",
+        "longitude": "76.940000",
+        "keywords": ["anupperpalayam", "அனுப்பர்பாளையம்", "naickenpalayam", "நாயக்கன்பாளையம்"]
+    },
+    {
+        "name": "Gudalur (Coimbatore) & Periyanaickenpalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.145000",
+        "longitude": "76.935000",
+        "keywords": ["gudalur coimbatore", "கூடலூர் கோவை", "periyanaickenpalayam", "பெரியநாயக்கன்பாளையம்", "pns palayam"]
+    },
+    {
+        "name": "Veerapandi & Bilichi, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.160000",
+        "longitude": "76.930000",
+        "keywords": ["veerapandi coimbatore", "வீரபாண்டி", "bilichi", "பிலிச்சி"]
+    },
+    {
+        "name": "Narasimhanaickenpalayam & Kurudampalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.100000",
+        "longitude": "76.935000",
+        "keywords": ["narasimhanaickenpalayam", "நரசிம்மநாயக்கன்பாளையம்", "nsn palayam", "kurudampalayam", "குருடம்பாளையம்"]
+    },
+    {
+        "name": "Thudiyalur & Pannimadai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.078400",
+        "longitude": "76.938800",
+        "keywords": ["thudiyalur", "துடியலூர்", "pannimadai", "பன்னிமடை", "thoppampatti", "nggo colony"]
+    },
+    {
+        "name": "Nanjundapuram & Chinnathadagam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.050000",
+        "longitude": "76.880000",
+        "keywords": ["nanjundapuram", "நஞ்சுண்டாபுரம்", "chinnathadagam", "thadagam", "சின்னத்தடாகம்", "somayampalayam", "சோமையம்பாளையம்", "kanuvai"]
+    },
+    {
+        "name": "Goundenpalayam (Kavundampalayam) & Saibaba Colony, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.045000",
+        "longitude": "76.935000",
+        "keywords": ["goundenpalayam", "kavundampalayam", "koundampalayam", "கவுண்டம்பாளையம்", "saibaba colony", "சாயிபாபா காலனி", "edaiyarpalayam"]
+    },
+
+    # --- METTUPALAYAM TALUK (மேட்டுப்பாளையம் வட்டம்) ---
+    {
+        "name": "Nellithurai & Odanthurai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.300000",
+        "longitude": "76.930000",
+        "keywords": ["nellithurai", "நெல்லித்துறை", "odanthurai", "ஒடந்துறை", "mettupalayam", "மேட்டுப்பாளையம்", "black thunder"]
+    },
+    {
+        "name": "Thekkampatty & Sikkadasampalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.310000",
+        "longitude": "76.960000",
+        "keywords": ["thekkampatty", "thekkampatti", "தேக்கம்பட்டி", "sikkadasampalayam", "chikkadasampalayam", "சிக்கதாசம்பாளையம்"]
+    },
+    {
+        "name": "Sirumugai & Irumburai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.320000",
+        "longitude": "77.000000",
+        "keywords": ["sirumugai", "சிறுமுகை", "irumburai", "இரும்பறை", "alangombu", "ஆலங்கொம்பு"]
+    },
+    {
+        "name": "Chinnakallipatty & Mooduthurai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.330000",
+        "longitude": "77.020000",
+        "keywords": ["chinnakallipatty", "சின்னக்கல்லிபட்டி", "mooduthurai", "மூடுதுறை"]
+    },
+    {
+        "name": "Iluppanatham & Bellepalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.270000",
+        "longitude": "76.980000",
+        "keywords": ["iluppanatham", "இலுப்பநத்தம்", "bellepalayam", "பெள்ளேபாளையம்"]
+    },
+    {
+        "name": "Jadayampalayam & Kemmarampalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.250000",
+        "longitude": "76.990000",
+        "keywords": ["jadayampalayam", "ஜடையம்பாளையம்", "kemmarampalayam", "கெம்மாரம்பாளையம்"]
+    },
+    {
+        "name": "Tholampalayam & Velliyankadu, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.230000",
+        "longitude": "76.880000",
+        "keywords": ["tholampalayam", "தோலம்பாளையம்", "velliyankadu", "வெள்ளியங்காடு", "pillur dam", "பிள்ளூர் அணை"]
+    },
+    {
+        "name": "Kalampalayam & Marudur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.260000",
+        "longitude": "76.940000",
+        "keywords": ["kalampalayam", "காளம்பாளையம்", "marudur mettupalayam", "மருதூர் மேட்டுப்பாளையம்"]
+    },
+    {
+        "name": "Karamadai, Bellathi & Sikkarampalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.240000",
+        "longitude": "76.960000",
+        "keywords": ["karamadai", "காரமடை", "bellathi", "பெள்ளாதி", "sikkarampalayam", "சிக்காரம்பாளையம்", "karamadai ranganathar"]
+    },
+
+    # --- ANNUR TALUK (அன்னூர் வட்டம்) ---
+    {
+        "name": "Annur & Pillayampalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.233300",
+        "longitude": "77.133300",
+        "keywords": ["annur", "அன்னூர்", "pillayampalayam", "பிள்ளையம்பாளையம்", "annur bus stand"]
+    },
+    {
+        "name": "Kariyampalayam & Vadavalli (Annur), Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.250000",
+        "longitude": "77.120000",
+        "keywords": ["kariyampalayam", "காரியம்பாளையம்", "vadavalli annur", "வடவள்ளி அன்னூர்"]
+    },
+    {
+        "name": "Kuppepalayam & Kattampatty, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.220000",
+        "longitude": "77.100000",
+        "keywords": ["kuppepalayam", "குப்பப்பாளையம்", "kattampatty", "kattampatti", "காட்டம்பட்டி"]
+    },
+    {
+        "name": "Kunnathur & Masagoundenpalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.260000",
+        "longitude": "77.140000",
+        "keywords": ["kunnathur annur", "குன்னத்தூர்", "masagoundenpalayam", "மாசகவுண்டன்பாளையம்"]
+    },
+    {
+        "name": "Pachapalayam (Annur) & Naranapuram, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.210000",
+        "longitude": "77.120000",
+        "keywords": ["pachapalayam annur", "பச்சாபாளையம் அன்னூர்", "naranapuram", "நாரணாபுரம்"]
+    },
+    {
+        "name": "Karegoundenpalayam & Bogalur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.230000",
+        "longitude": "77.080000",
+        "keywords": ["karegoundenpalayam", "காரேகவுண்டன்பாளையம்", "bogalur", "போகலூர்"]
+    },
+    {
+        "name": "Odderpalayam & Kuppanur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.200000",
+        "longitude": "77.110000",
+        "keywords": ["odderpalayam", "ஒட்டர் பாளையம் அன்னூர்", "kuppanur", "குப்பனூர்"]
+    },
+    {
+        "name": "Akkari Sengapally & Kanuvakarai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.240000",
+        "longitude": "77.170000",
+        "keywords": ["akkari sengapally", "அக்கரை செங்கப்பள்ளி", "sengapally", "kanuvakarai", "கணுவாக்கரை"]
+    },
+    {
+        "name": "Aambothi & Vadakkalur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.220000",
+        "longitude": "77.160000",
+        "keywords": ["aambothi", "ஆம்போதி", "vadakkalur", "வடவக்கலூர்", "vadalur"]
+    },
+    {
+        "name": "Annur Mettupalayam, Pasoor & Allapalayam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.250000",
+        "longitude": "77.070000",
+        "keywords": ["annur mettupalayam", "அன்னூர் மேட்டுப்பாளையம்", "pasoor", "pasur annur", "பாசூர்", "allapalayam", "அல்லப்பாளையம்"]
+    },
+    {
+        "name": "Kanjampally & Vellamadai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.180000",
+        "longitude": "77.050000",
+        "keywords": ["kanjampally", "காஞ்சாம்பள்ளி", "vellamadai", "வெள்ளமடை"]
+    },
+    {
+        "name": "Agraharasamakulam, Kondayampalayam & Sarkarsamakulam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.120000",
+        "longitude": "77.020000",
+        "keywords": ["agraharasamakulam", "அக்ரஹார சாமக்குளம்", "kondayampalayam", "கொண்டையம்பாளையம்", "sarkarsamakulam", "சர்க்கார் சாமக்குளம்", "kovilpalayam", "கோவில்பாளையம்"]
+    },
+    {
+        "name": "Kallipalayam, Vellanaipatty, Keeranatham & Idigarai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.110000",
+        "longitude": "77.000000",
+        "keywords": ["kallipalayam", "கள்ளிப்பாளையம்", "vellanaipatty", "வெள்ளனைப்பட்டி", "keeranatham", "கீரநத்தம்", "idigarai", "இடிகரை", "chil sez keeranatham"]
+    },
+
+    # --- POLLACHI, KINATHUKADAVU, VALPARAI & ANAIMALAI TALUKS ---
+    {
+        "name": "Pollachi Town & Mahalingapuram, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.660000",
+        "longitude": "77.010000",
+        "keywords": ["pollachi", "பொள்ளாச்சி", "mahalingapuram pollachi", "மஹாலிங்கபுரம்", "achippatti", "unjavelampatti", "vadakkipalayam pollachi", "gomangalam", "samathur", "zamin uthukuli"]
+    },
+    {
+        "name": "Kinathukadavu & Negamam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.820000",
+        "longitude": "77.020000",
+        "keywords": ["kinathukadavu", "கிணத்துக்கடவு", "negamam", "நெகமம்", "solavampalayam", "thamaraikulam"]
+    },
+    {
+        "name": "Anaimalai & Sethumadai, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.583300",
+        "longitude": "76.933300",
+        "keywords": ["anaimalai", "ஆனைமலை", "anainamalai masani amman", "sethumadai", "topslip", "kottur pollachi", "vettaikaranpudur", "kambalapatti", "somandurai chittur"]
+    },
+    {
+        "name": "Valparai & Sholayar Dam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.320000",
+        "longitude": "76.955000",
+        "keywords": ["valparai", "வால்பாறை", "sholayar dam", "சோலையார் அணை", "mudis", "stanmore", "rotikadavu", "waterfalls estate valparai"]
+    },
+    {
+        "name": "Aliyar Dam & Monkey Falls, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.485000",
+        "longitude": "76.972000",
+        "keywords": ["aliyar", "ஆழியார்", "aliyar dam", "ஆழியார் அணை", "monkey falls", "குரங்கு அருவி", "temple of consciousness aliyar", "navamalai"]
+    },
+
+    # --- COIMBATORE SOUTH / CENTRAL URBAN ZONES ---
     {
         "name": "Gandhipuram, Coimbatore District",
         "district": "Coimbatore",
@@ -20,333 +640,39 @@ TAMIL_NADU_DISTRICT_LOCATIONS: List[Dict] = [
         "keywords": ["gandhipuram", "காந்திபுரம்", "gandhipuram bus stand", "gandhipuram central", "cross cut road", "100 feet road", "seventh street gandhipuram"]
     },
     {
-        "name": "RS Puram, Coimbatore District",
+        "name": "RS Puram & Race Course, Coimbatore District",
         "district": "Coimbatore",
         "latitude": "11.008321",
         "longitude": "76.949056",
-        "keywords": ["rs puram", "r s puram", "rspuram", "ஆர் எஸ் புரம்", "ஆர்.எஸ்.புரம்", "டி பி ரோடு", "db road", "thiruvenkataswamy road", "tv samy road", "diwan bahadur road"]
+        "keywords": ["rs puram", "r s puram", "rspuram", "ஆர் எஸ் புரம்", "db road", "race course coimbatore", "ரேஸ் கோர்ஸ்", "red fields", "collector office coimbatore"]
     },
     {
         "name": "Peelamedu & SITRA, Coimbatore District",
         "district": "Coimbatore",
         "latitude": "11.026110",
         "longitude": "77.008240",
-        "keywords": ["peelamedu", "பீளமேடு", "sitra", "சித்ரா", "coimbatore airport", "psg tech", "hopes college", "ஹோப்ஸ்", "avalanche coimbatore", "fun mall peelamedu", "tidel park coimbatore"]
+        "keywords": ["peelamedu", "பீளமேடு", "sitra", "சித்ரா", "coimbatore airport", "psg tech", "hopes college", "ஹோப்ஸ்", "tidel park coimbatore"]
     },
     {
-        "name": "Ukkadam, Coimbatore District",
+        "name": "Ukkadam & Town Hall, Coimbatore District",
         "district": "Coimbatore",
         "latitude": "10.988220",
         "longitude": "76.960240",
-        "keywords": ["ukkadam", "உக்கடம்", "ukkadam bus stand", "உக்கடம் பஸ் ஸ்டாண்ட்", "ukkadam lake", "periyakulam coimbatore", "sungam bypass ukkadam", "karumbukadai", "கரும்புக்கடை", "athupalam", "ஆத்துப்பாலம்"]
+        "keywords": ["ukkadam", "உக்கடம்", "ukkadam bus stand", "town hall coimbatore", "டவுன் ஹால்", "oppanakara street", "big bazaar street", "karumbukadai", "athupalam"]
     },
     {
-        "name": "Singanallur, Coimbatore District",
+        "name": "Singanallur, Ramanathapuram & Sungam, Coimbatore District",
         "district": "Coimbatore",
         "latitude": "10.998400",
         "longitude": "77.025600",
-        "keywords": ["singanallur", "சிங்காநல்லூர்", "singanallur bus stand", "சிங்காநல்லூர் பஸ் நிலையம்", "singanallur lake", "trichy road coimbatore", "kamal mill"]
+        "keywords": ["singanallur", "சிங்காநல்லூர்", "ramanathapuram coimbatore", "ராமநாதபுரம் கோவை", "sungam", "சுங்கம்", "80 feet road ramanathapuram"]
     },
     {
-        "name": "Ramanathapuram & Sungam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.993000",
-        "longitude": "76.984700",
-        "keywords": ["ramanathapuram coimbatore", "ராமநாதபுரம் கோவை", "sungam", "சுங்கம்", "80 feet road ramanathapuram", "olaibus ramanathapuram"]
-    },
-    {
-        "name": "Saibaba Colony, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.028900",
-        "longitude": "76.943100",
-        "keywords": ["saibaba colony", "சாயிபாபா காலனி", "kavundampalayam road", "alagesan road", "ganga hospital area", "nsr road", "என் எஸ் ஆர் ரோடு"]
-    },
-    {
-        "name": "Ganapathy, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.038400",
-        "longitude": "76.974400",
-        "keywords": ["ganapathy", "கணபதி", "ganapathy pudur", "sathy road coimbatore", "maniyakarampalayam", "மணியகாரம்பாளையம்", "sanganur", "சங்கனூர்"]
-    },
-    {
-        "name": "Saravanampatti & CHIL SEZ, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.077200",
-        "longitude": "76.997500",
-        "keywords": ["saravanampatti", "சரவணம்பட்டி", "saravanampatty", "chil sez", "it corridor coimbatore", "kumaraguru", "kct", "kghsl", "vilankurichi road"]
-    },
-    {
-        "name": "Vadavalli & Marudhamalai, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.027000",
-        "longitude": "76.904800",
-        "keywords": ["vadavalli", "வடவள்ளி", "marudhamalai", "மருதமலை", "maruthamalai", "navavoor", "நவவூர்", "bommanampalayam", "பொம்மணம்பாளையம்", "bharathiar university area"]
-    },
-    {
-        "name": "Thudiyalur & Vellakinar, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.078400",
-        "longitude": "76.938800",
-        "keywords": ["thudiyalur", "துடியலூர்", "vellakinar", "வெள்ளக்கினார்", "thoppampatti", "தோப்பம்பட்டி", "nggo colony", "என்ஜிஜிஓ காலனி", "koundampalayam checkpost"]
-    },
-    {
-        "name": "Koundampalayam & TVS Nagar, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.045000",
-        "longitude": "76.935000",
-        "keywords": ["koundampalayam", "கவுண்டம்பாளையம்", "kavundampalayam", "tvs nagar", "டிவிஎஸ் நகர்", "edaiyarpalayam", "இடையர்பாளையம்", "kanuvai", "கணுவாய்", "kng pudur"]
-    },
-    {
-        "name": "Kuniyamuthur & Kovaipudur, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.957600",
-        "longitude": "76.957100",
-        "keywords": ["kuniyamuthur", "குனியமுத்தூர்", "kuniamuthur", "kovaipudur", "கோவைப்புதூர்", "kovaiputhur", "palakkad main road", "sri krishna college"]
-    },
-    {
-        "name": "Sundarapuram & Kurichi, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.942700",
-        "longitude": "76.965400",
-        "keywords": ["sundarapuram", "சுந்தராபுரம்", "kurichi", "குறிச்சி", "sidco coimbatore", "சிட்கோ", "pollachi main road sundarapuram", "madukkarai market"]
-    },
-    {
-        "name": "Podanur & Vellalore, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.963400",
-        "longitude": "76.994000",
-        "keywords": ["podanur", "போத்தனூர்", "podanur junction", "vellalore", "வெள்ளலூர்", "chettipalayam road", "konavaikkalpalayam"]
-    },
-    {
-        "name": "Eachanari & Malumichampatti, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.923400",
-        "longitude": "76.974500",
-        "keywords": ["eachanari", "ஈச்சனாரி", "eachanari vinayagar temple", "malumichampatti", "மலுமிச்சம்பட்டி", "othakkalmandapam", "ஒத்தக்கால்மண்டபம்", "rathinam college area", "seerapalayam"]
-    },
-    {
-        "name": "Town Hall & Big Bazaar, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.997500",
-        "longitude": "76.960800",
-        "keywords": ["town hall coimbatore", "டவுன் ஹால்", "big bazaar street", "peria kadai veethi", "oppanakara street", "ஒப்பணக்கார வீதி", "sukrawarpet", "sukrawarpettai", "sukravarpet", "raja street"]
-    },
-    {
-        "name": "Selvapuram & Telungupalayam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.985000",
-        "longitude": "76.935000",
-        "keywords": ["selvapuram", "செல்வபுரம்", "telungupalayam", "தெலுங்குபாளையம்", "chokkampudur", "சொக்கம்புதூர்", "shiva nagar selvapuram", "perur road selvapuram"]
-    },
-    {
-        "name": "Race Course & Red Fields, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.002000",
-        "longitude": "76.975000",
-        "keywords": ["race course coimbatore", "ரேஸ் கோர்ஸ்", "red fields", "ரெட் பீல்ட்ஸ்", "collector office coimbatore", "thomas park", "air force administrative college"]
-    },
-    {
-        "name": "Pappanaickenpalayam & Avarampalayam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.018000",
-        "longitude": "76.982000",
-        "keywords": ["pappanaickenpalayam", "pn palayam coimbatore", "பாப்பநாயக்கன்பாளையம்", "avarampalayam", "அவரம்பாளையம்", "siddhapudur", "சித்தப்புதூர்", "gknm hospital area"]
-    },
-    {
-        "name": "Vilankurichi & Kalapatti, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.060000",
-        "longitude": "77.030000",
-        "keywords": ["vilankurichi", "விளாங்குறிச்சி", "kalapatti", "காளப்பட்டி", "veeriyampalayam", "வீரியம்பாளையம்", "kurumbapalayam", "குரும்பபாளையம்", "sharp nagar kalapatti"]
-    },
-    {
-        "name": "Sowripalayam & Ondipudur, Coimbatore District",
+        "name": "Pappanaickenpalayam, Sowripalayam & Ondipudur, Coimbatore District",
         "district": "Coimbatore",
         "latitude": "10.995000",
         "longitude": "77.045000",
-        "keywords": ["sowripalayam", "சௌரிபாளையம்", "ondipudur", "ஒண்டிப்புதூர்", "ondipudur bus stand", "meena estate", "ramanujam nagar", "masakalipalayam", "மசக்காளிபாளையம்"]
-    },
-    {
-        "name": "Irugur & Chinniyampalayam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.020000",
-        "longitude": "77.065000",
-        "keywords": ["irugur", "இருகூர்", "chinniyampalayam", "சின்னியம்பாளையம்", "goldwins", "கோல்ட்வின்ஸ்", "venkitapuram", "neelambur", "நீலம்பூர்", "avashi road bypass"]
-    },
-    {
-        "name": "Keeranatham & Kovilpalayam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.110000",
-        "longitude": "77.010000",
-        "keywords": ["keeranatham", "கீரநத்தம்", "kovilpalayam", "கோவில்பாளையம்", "sarkar samakulam", "சர்க்கார் சாமக்குளம்", "kondayampalayam", "கொண்டையம்பாளையம்", "vellanaipatti", "வெள்ளனைப்பட்டி"]
-    },
-    {
-        "name": "Periyanaickenpalayam & NSN Palayam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.145000",
-        "longitude": "76.935000",
-        "keywords": ["periyanaickenpalayam", "பெரியநாயக்கன்பாளையம்", "pns palayam", "nsn palayam", "என் எஸ் என் பாளையம்", "vadamadurai coimbatore", "வடமதுரை கோவை", "kannarpalayam", "ramakrishna mission vidyalaya"]
-    },
-    {
-        "name": "Pannimadai & Somayampalayam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.070000",
-        "longitude": "76.900000",
-        "keywords": ["pannimadai", "பன்னிமடை", "somayampalayam", "சோமையம்பாளையம்", "nanjundapuram", "நஞ்சுண்டாபுரம்", "varapalayam", "வரப்பாளையம்", "vada valli outskirts"]
-    },
-    {
-        "name": "Thondamuthur & Narasipuram, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.990000",
-        "longitude": "76.840000",
-        "keywords": ["thondamuthur", "தொண்டாமுத்தூர்", "narasipuram", "நரசிபுரம்", "vaidehi falls", "வைதேகி அருவி", "muthurajapuram", "முத்துராஜபுரம்", "kalveerampalayam", "கல்வீரம்பாளையம்"]
-    },
-    {
-        "name": "Perur & Vedapatti, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.970000",
-        "longitude": "76.910000",
-        "keywords": ["perur", "பேரூர்", "perur pateeswarar temple", "பேரூர் பட்டீஸ்வரர் கோவில்", "vedapatti", "வேடபட்டி", "dhaliyur", "தாளியூர்", "perur chettipalayam", "பேரூர் செட்டிபாளையம்", "marichettipatti"]
-    },
-    {
-        "name": "Alandurai & Pooluvapatti, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.930000",
-        "longitude": "76.810000",
-        "keywords": ["alandurai", "ஆலாந்துறை", "pooluvapatti", "பூளுவபட்டி", "thenkarai", "தென்கரை", "madampatti", "மாதம்பட்டி", "iruttupallam road", "kulathupalayam"]
-    },
-    {
-        "name": "Semmedu, Iruttupallam & Poondi (Velliangiri), Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.975000",
-        "longitude": "76.735000",
-        "keywords": ["semmedu", "செம்மேடு", "iruttupallam", "இருட்டுப்பள்ளம்", "poondi velliangiri", "பூண்டி", "velliangiri hills", "வெள்ளியங்கிரி", "isha yoga center coimbatore", "ஈஷா யோகா"]
-    },
-    {
-        "name": "Siruvani & Karunya Nagar, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.940000",
-        "longitude": "76.745000",
-        "keywords": ["siruvani", "சிறுவாணி", "siruvani dam", "siruvani waterfalls", "karunya nagar", "காருண்யா நகர்", "sadivayal", "சாடிவயல்", "chinnampathy", "singapathi"]
-    },
-    {
-        "name": "Madukkarai & Ettimadai, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.900000",
-        "longitude": "76.960000",
-        "keywords": ["madukkarai", "மதுக்கரை", "acc cement madukkarai", "ettimadai", "எட்டிமடை", "amrita university ettimadai", "pichanur", "பிச்சனூர்", "palakkad gap coimbatore border", "walayar border"]
-    },
-    {
-        "name": "Thirumalayampalayam & Chettipalayam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.870000",
-        "longitude": "76.910000",
-        "keywords": ["thirumalayampalayam", "திருமலையம்பாளையம்", "chettipalayam coimbatore", "செட்டிப்பாளையம்", "kari motor speedway", "othakkalmandapam junction", "valukkupparai", "வழுக்குப்பாறை", "arisi palayam"]
-    },
-    {
-        "name": "Sulur & Kangeyampalayam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.025000",
-        "longitude": "77.127000",
-        "keywords": ["sulur", "சூலூர்", "sulur air force base", "kangeyampalayam", "காங்கேயம்பாளையம்", "kannampalayam", "கண்ணம்பாளையம்", "pallapalayam", "பல்லபாளையம்", "ravathur", "ராவத்தூர்", "kalangal", "கலங்கல்"]
-    },
-    {
-        "name": "Karumathampatti & Somanur, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.110000",
-        "longitude": "77.180000",
-        "keywords": ["karumathampatti", "கரு Search results for karumathampatti", "கருத்தம்பட்டி", "கருமத்தம்பட்டி", "somanur", "சோமனூர்", "arasur", "அரசூர்", "kaduvettipalayam", "கடுவெட்டிபாளையம்", "kaniyur coimbatore", "கணியூர்"]
-    },
-    {
-        "name": "Annur & Pasur, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.233300",
-        "longitude": "77.133300",
-        "keywords": ["annur", "அன்னூர்", "pasur annur", "பாசூர்", "kariampalayam", "காரியம்பாளையம்", "pogalur", "போகலூர்", "kattampatti", "காட்டம்பட்டி", "allapalayam", "அல்லப்பாளையம்", "kunnathur annur"]
-    },
-    {
-        "name": "Sultanpet & Varapatti, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.890000",
-        "longitude": "77.170000",
-        "keywords": ["sultanpet", "சுல்தான்பேட்டை", "varapatti", "வரப்பட்டி", "senjeri", "செஞ்சேரி", "vadambacheri", "வடம்பச்சேரி", "bogampatti", "போகம்பட்டி", "poorandampalayam", "பூராண்டாம்பாளையம்"]
-    },
-    {
-        "name": "Mettupalayam & Odanthurai, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.300000",
-        "longitude": "76.950000",
-        "keywords": ["mettupalayam", "மேட்டுப்பாளையம்", "odanthurai", "ஒடந்துறை", "black thunder mettupalayam", "bhavani river mettupalayam", "chikkadasampalayam", "சிக்கதாசம்பாளையம்", "marudur mettupalayam"]
-    },
-    {
-        "name": "Karamadai & Sirumugai, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.240000",
-        "longitude": "76.960000",
-        "keywords": ["karamadai", "காரமடை", "karamadai ranganathar", "sirumugai", "சிறுமுகை", "alangombu", "ஆலங்கொம்பு", "jadayampalayam", "ஜடையம்பாளையம்", "kemmarampalayam", "கெம்மாரம்பாளையம்"]
-    },
-    {
-        "name": "Bellathi, Nellithurai & Velliangadu, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "11.280000",
-        "longitude": "76.890000",
-        "keywords": ["bellathi", "பெள்ளாதி", "nellithurai", "நெல்லித்துறை", "velliangadu", "வெள்ளியங்காடு", "thekkampatti", "தேக்கம்பட்டி", "tholampalayam", "தோலம்பாளையம்", "pillur dam", "பிள்ளூர் அணை"]
-    },
-    {
-        "name": "Pollachi Town & Mahalingapuram, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.660000",
-        "longitude": "77.010000",
-        "keywords": ["pollachi", "பொள்ளாச்சி", "mahalingapuram pollachi", "மஹாலிங்கபுரம்", "achippatti", "அச்சிப்பட்டி", "unjavelampatti", "உஞ்சவேலம்பட்டி", "vadakkipalayam pollachi", "pollachi junction", "subramania swamy temple pollachi"]
-    },
-    {
-        "name": "Anaimalai & Sethumadai, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.583300",
-        "longitude": "76.933300",
-        "keywords": ["anaimalai", "ஆனைமலை", "anainamalai masani amman", "மாசாணியம்மன் கோவில்", "sethumadai", "சேத்துமடை", "topslip", "டாப்ஸ்லிப்", "kaliyapuram", "காளியாபுரம்", "marchinaickenpalayam"]
-    },
-    {
-        "name": "Kottur & Vettaikaranpudur, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.533300",
-        "longitude": "76.983300",
-        "keywords": ["kottur pollachi", "கோட்டூர்", "vettaikaranpudur", "வேட்டைக்காரன்புதூர்", "kambalapatti", "கம்பளபட்டி", "somandurai chittur", "சோமந்துரை சித்தூர்", "angalakurichi", "அங்கைக்குறிச்சி"]
-    },
-    {
-        "name": "Samathur & Zamin Uthukuli, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.620000",
-        "longitude": "77.010000",
-        "keywords": ["samathur", "சமத்தூர்", "zamin uthukuli", "ஜமீன் ஊத்துக்குளி", "jameen uthukuli", "ramapatnam", "ராமபட்டினம்", "nallur pollachi"]
-    },
-    {
-        "name": "Negamam & Senjerimalai, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.760000",
-        "longitude": "77.120000",
-        "keywords": ["negamam", "நெகமம்", "senjerimalai", "செஞ்சேரிமலை", "gomangalam", "கோமங்கலம்", "puravipalayam", "புரவிபாளையம்", "kaliyappagoundenpudur"]
-    },
-    {
-        "name": "Kinathukadavu & Vadakkipalayam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.820000",
-        "longitude": "77.020000",
-        "keywords": ["kinathukadavu", "கிணத்துக்கடவு", "kinathukadavu checkpost", "kallapalayam", "கள்ளப்பாளையம்", "solavampalayam", "சோழவம்பாளையம்", "kovilpalayam kinathukadavu", "tamaraikulam kinathukadavu"]
-    },
-    {
-        "name": "Valparai & Sholayar Dam, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.320000",
-        "longitude": "76.955000",
-        "keywords": ["valparai", "வால்பாறை", "sholayar dam", "சோலையார் அணை", "mudis", "முடிஸ்", "stanmore", "rotikadavu", "waterfalls estate valparai", "cblock valparai", "kavarkal"]
-    },
-    {
-        "name": "Aliyar Dam & Monkey Falls, Coimbatore District",
-        "district": "Coimbatore",
-        "latitude": "10.485000",
-        "longitude": "76.972000",
-        "keywords": ["aliyar", "ஆழியார்", "aliyar dam", "ஆழியார் அணை", "monkey falls", "குரங்கு அருவி", "temple of consciousness aliyar", "அறிவு திருக்கோவில் ஆழியார்", "navamalai", "நவமலை"]
+        "keywords": ["pappanaickenpalayam", "pn palayam coimbatore", "பாப்பநாயக்கன்பாளையம்", "sowripalayam", "சௌரிபாளையம்", "ondipudur", "ஒண்டிப்புதூர்", "masakalipalayam"]
     },
     {
         "name": "Coimbatore Central, Coimbatore District",
@@ -355,6 +681,7 @@ TAMIL_NADU_DISTRICT_LOCATIONS: List[Dict] = [
         "longitude": "76.955800",
         "keywords": ["coimbatore", "kovai", "கோயம்புத்தூர்", "கோவை", "coimbatore junction", "coimbatore north", "coimbatore south", "coimbatore corporation"]
     },
+
 
 
     # --------------------------------------------------------------------------
