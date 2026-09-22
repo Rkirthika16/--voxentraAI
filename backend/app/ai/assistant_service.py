@@ -459,26 +459,27 @@ class AssistantService:
                 session_id=active_session_id
             )
 
-        # 8. Still missing required fields: Ask the next question naturally
+        # 8. Still missing required fields: Ask the next question naturally with contextual awareness
         session["state"] = "COLLECTING"
         session["current_field_prompted"] = next_missing
         meta = FIELD_METADATA[next_missing]
 
-        # Select question & spoken text according to detected language
-        if detected_lang == "Tamil":
-            question_text = meta["question_ta"]
-            spoken_text = meta["spoken_ta"]
-        elif detected_lang == "Tanglish":
-            question_text = meta["question_tanglish"]
-            spoken_text = meta["spoken_tanglish"]
-        else:
-            question_text = meta["question_en"]
-            spoken_text = meta["spoken_en"]
+        # Generate contextual question tailored to previously collected details
+        question_text, spoken_text = complaint_collector.get_contextual_question(session, next_missing, detected_lang)
 
-        # Build acknowledgement if some fields were just filled
+        # Build acknowledgement or clarification prefix
         completed_count = sum(1 for k in FIELD_KEYS if session["fields"].get(k))
         ack = ""
-        if completed_count == 1:
+
+        # Check if user entered a vague location
+        if current_field in ["district_area", "street_road_name", "exact_location"] and complaint_collector.is_vague_location(raw_text):
+            if detected_lang == "Tamil":
+                ack = "⚠️ நீங்கள் குறிப்பிட்ட இடம் போதுமானதாக இல்லை. துல்லியமான இடம் தேவை.\n\n"
+            elif detected_lang == "Tanglish":
+                ack = "⚠️ Neenga sonna location konjam unclear-ah irukku. Specific details sollunga.\n\n"
+            else:
+                ack = "⚠️ The provided location is unclear. Please provide more specific details.\n\n"
+        elif completed_count == 1:
             if detected_lang == "Tamil":
                 ack = "உங்கள் பிரச்சனை விவரம் பெறப்பட்டது. 👍\n\n"
             elif detected_lang == "Tanglish":
@@ -489,12 +490,17 @@ class AssistantService:
             prev_label = FIELD_METADATA.get(current_field, {}).get("label_" + ("ta" if detected_lang == "Tamil" else "en"), "Detail")
             if detected_lang == "Tamil":
                 ack = f"நன்றி, பதிவு செய்யப்பட்டது. ({completed_count}/10 விவரங்கள்)\n\n"
+            elif detected_lang == "Tanglish":
+                ack = f"Noted. ({completed_count}/10 details gathered)\n\n"
             else:
                 ack = f"Thank you, noted. ({completed_count}/10 details gathered)\n\n"
 
+        step_num = FIELD_KEYS.index(next_missing) + 1
+        step_label = meta.get('label_' + ('ta' if detected_lang == 'Tamil' else ('tanglish' if detected_lang == 'Tanglish' else 'en')), meta['label_en'])
+
         full_reply = (
             f"{ack}"
-            f"**Step {FIELD_KEYS.index(next_missing) + 1} of 10: {meta.get('label_' + ('ta' if detected_lang == 'Tamil' else 'en'))}**\n\n"
+            f"**Step {step_num} of 10: {step_label}**\n\n"
             f"{question_text}"
         )
 

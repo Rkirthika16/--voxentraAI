@@ -53,10 +53,10 @@ import {
 
 const FIELD_CONFIG = [
   { key: 'problem_description', labelEn: 'Problem Description', labelTa: 'பிரச்சனை விவரம்', icon: FileText },
-  { key: 'exact_location', labelEn: 'Exact Location', labelTa: 'சரியான இடம்', icon: Navigation },
-  { key: 'street_road_name', labelEn: 'Street / Road Name', labelTa: 'தெரு / சாலை பெயர்', icon: Milestone },
   { key: 'district_area', labelEn: 'District / Area', labelTa: 'மாவட்டம் / பகுதி', icon: Map },
-  { key: 'landmark', labelEn: 'Landmark', labelTa: 'அடையாளம்', icon: Landmark },
+  { key: 'street_road_name', labelEn: 'Street / Road Name', labelTa: 'தெரு / சாலை பெயர்', icon: Milestone },
+  { key: 'landmark', labelEn: 'Nearby Landmark', labelTa: 'முக்கிய அடையாளம்', icon: Landmark },
+  { key: 'exact_location', labelEn: 'Exact / Specific Spot', labelTa: 'குறிப்பிட்ட இடம்', icon: Navigation },
   { key: 'date_and_time', labelEn: 'Date & Time', labelTa: 'தேதி & நேரம்', icon: Calendar },
   { key: 'frequency', labelEn: 'Frequency', labelTa: 'நிகழ்வு வீதம்', icon: Repeat },
   { key: 'current_status', labelEn: 'Current Status', labelTa: 'தற்போதைய நிலை', icon: Activity },

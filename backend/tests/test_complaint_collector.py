@@ -122,3 +122,55 @@ def test_reset_collection_endpoint(client: TestClient):
     )
     assert reset_res.status_code == 200
     assert reset_res.json()["success"] is True
+
+
+def test_tanglish_multilingual_flow(client: TestClient):
+    session_id = f"test_tanglish_{uuid.uuid4().hex[:8]}"
+
+    res = client.post(
+        "/api/v1/assistant/chat",
+        json={"message": "Gandhipuram-la water pipe odanjuruchu romba leak aagudhu", "session_id": session_id}
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["detected_language"] in ["Tanglish", "Tamil", "English"]
+    assert data["intent"] == "COLLECTING_FIELD"
+    assert data["collection_state"]["fields"]["problem_description"] is not None
+
+
+def test_location_no_assumption_clarification(client: TestClient):
+    session_id = f"test_no_assume_{uuid.uuid4().hex[:8]}"
+
+    # Citizen says only the area name
+    res = client.post(
+        "/api/v1/assistant/chat",
+        json={"message": "I want to report sewage overflow in Peelamedu, Coimbatore", "session_id": session_id}
+    )
+    assert res.status_code == 200
+    data = res.json()
+
+    # AI should have captured district_area but NOT assumed street or landmark
+    assert data["collection_state"]["fields"]["district_area"] is not None
+    assert data["collection_state"]["fields"]["street_road_name"] is None
+    assert data["collection_state"]["current_field_prompted"] == "street_road_name"
+    assert "street" in data["reply_text"].lower() or "road" in data["reply_text"].lower() or "தெரு" in data["reply_text"]
+
+
+def test_vague_location_clarification(client: TestClient):
+    session_id = f"test_vague_{uuid.uuid4().hex[:8]}"
+
+    # Citizen states problem
+    client.post(
+        "/api/v1/assistant/chat",
+        json={"message": "Streetlight not working", "session_id": session_id}
+    )
+
+    # Citizen provides vague location
+    res = client.post(
+        "/api/v1/assistant/chat",
+        json={"message": "near my house", "session_id": session_id}
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["intent"] == "COLLECTING_FIELD"
+
