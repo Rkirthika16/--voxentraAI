@@ -22,6 +22,19 @@ class ComplaintDraft(BaseModel):
     summary: str
 
 
+class ComplaintCollectionStateSchema(BaseModel):
+    session_id: str
+    stage: str = Field(..., description="GREETING, COLLECTING, CONFIRMATION_PENDING, REGISTERED")
+    language: str
+    fields: Dict[str, Optional[str]]
+    current_field_prompted: Optional[str] = None
+    completed_fields_count: int = 0
+    total_fields: int = 10
+    completion_percentage: int = 0
+    created_complaint_number: Optional[str] = None
+    created_complaint_id: Optional[int] = None
+
+
 class AssistantChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
     session_id: Optional[str] = None
@@ -36,6 +49,7 @@ class AssistantResponse(BaseModel):
     intent: str
     draft_complaint: Optional[ComplaintDraft] = None
     status_info: Optional[Dict[str, Any]] = None
+    collection_state: Optional[ComplaintCollectionStateSchema] = None
     suggested_actions: List[ActionSuggestion] = Field(default_factory=list)
     session_id: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -51,3 +65,4 @@ class SuggestionsResponse(BaseModel):
     sample_questions: List[Dict[str, str]]
     emergency_helplines: List[Dict[str, str]]
     quick_categories: List[Dict[str, str]]
+

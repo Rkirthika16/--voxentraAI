@@ -40,4 +40,12 @@ export const assistantApi = {
     const res = await apiClient.get<SuggestionsResponse>('/assistant/suggestions');
     return res.data;
   },
+
+  resetCollectionSession: async (sessionId: string): Promise<{ success: boolean; message: string }> => {
+    const formData = new FormData();
+    formData.append('session_id', sessionId);
+    const res = await apiClient.post<{ success: boolean; message: string }>('/assistant/reset-collection', formData);
+    return res.data;
+  },
 };
+

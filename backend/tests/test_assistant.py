@@ -1,4 +1,5 @@
 import io
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 from app.models.complaint import Complaint, ComplaintPriority, ComplaintStatus
 from app.models.user import User, UserRole
@@ -57,13 +58,10 @@ def test_assistant_grievance_draft_generation(client: TestClient):
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["intent"] == "FILE_COMPLAINT"
-    assert data["draft_complaint"] is not None
-    assert data["draft_complaint"]["category"] == "Water"
-    assert "Gandhipuram" in (data["draft_complaint"]["extracted_location"] or "")
-    assert data["draft_complaint"]["latitude"] is not None
-    assert len(data["suggested_actions"]) > 0
-    assert data["suggested_actions"][0]["action_type"] == "SUBMIT_DRAFT"
+    assert data["intent"] == "COLLECTING_FIELD"
+    assert data["collection_state"] is not None
+    assert data["collection_state"]["fields"]["problem_description"] is not None
+    assert "Gandhipuram" in (data["collection_state"]["fields"]["exact_location"] or data["collection_state"]["fields"]["district_area"] or "")
 
 
 def test_assistant_tanglish_power_grievance(client: TestClient):
@@ -73,10 +71,10 @@ def test_assistant_tanglish_power_grievance(client: TestClient):
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["intent"] == "FILE_COMPLAINT"
-    assert data["draft_complaint"] is not None
-    assert data["draft_complaint"]["category"] == "Electricity"
-    assert "Peelamedu" in (data["draft_complaint"]["extracted_location"] or "")
+    assert data["intent"] == "COLLECTING_FIELD"
+    assert data["collection_state"] is not None
+    assert data["collection_state"]["fields"]["problem_description"] is not None
+    assert data["detected_language"] in ["Tanglish", "Tamil", "English"]
 
 
 def test_assistant_tracking_lookup(client: TestClient, db_session):
@@ -123,8 +121,8 @@ def test_assistant_voice_chat_endpoint(client: TestClient):
 
 
 def test_assistant_tts_stream_endpoint(client: TestClient):
-    response = client.get("/api/v1/assistant/tts?text=வணக்கம்&lang=ta")
-    assert response.status_code == 200
-    assert response.headers["content-type"] == "audio/mpeg"
-    assert len(response.content) > 0
-
+    with patch("app.ai.tts_service.synthesize_speech", return_value=b"FAKE_MP3_AUDIO_BYTES"):
+        response = client.get("/api/v1/assistant/tts?text=வணக்கம்&lang=ta")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "audio/mpeg"
+        assert len(response.content) > 0

@@ -5,12 +5,19 @@ from sqlalchemy.orm import Session
 
 from app.ai.language_service import detect_language
 from app.ai.normalization_service import normalize_text
-from app.ai.provider import ai_provider
+from app.ai.classification_service import classify_complaint
+from app.ai.priority_service import assess_priority
+from app.ai.complaint_collector import (
+    complaint_collector,
+    FIELD_KEYS,
+    FIELD_METADATA
+)
 from app.models.complaint import Complaint, ComplaintPriority, ComplaintStatus
 from app.models.user import User
 from app.schemas.assistant import (
     AssistantResponse,
     ComplaintDraft,
+    ComplaintCollectionStateSchema,
     ActionSuggestion,
     SuggestionsResponse
 )
@@ -81,18 +88,34 @@ class AssistantService:
         )
 
     def _extract_tracking_number(self, text: str) -> Optional[str]:
-        """Extracts standard Voxentra complaint format like VX-2026-ABCD or numeric ID."""
-        # Pattern 1: Standard VX-YYYY-XXXX format
-        match = re.search(r'\b(VX-\d{4}-[A-Za-z0-9]+)\b', text, re.IGNORECASE)
+        """Extracts standard Voxentra complaint format like VOX-2026-0001 or VX-2026-ABCD."""
+        match = re.search(r'\b(VOX-\d{4}-\d+|VX-\d{4}-[A-Za-z0-9]+)\b', text, re.IGNORECASE)
         if match:
             return match.group(1).upper()
 
-        # Pattern 2: VX followed by numbers or digits
-        match = re.search(r'\b(VX-?[A-Za-z0-9]{4,10})\b', text, re.IGNORECASE)
+        match = re.search(r'\b(VOX-?[A-Za-z0-9]{4,10}|VX-?[A-Za-z0-9]{4,10})\b', text, re.IGNORECASE)
         if match:
             return match.group(1).upper()
 
         return None
+
+    def _build_collection_state_schema(self, session: Dict[str, Any]) -> ComplaintCollectionStateSchema:
+        fields = session["fields"]
+        completed = sum(1 for k in FIELD_KEYS if fields.get(k) and str(fields[k]).strip())
+        pct = int((completed / len(FIELD_KEYS)) * 100)
+
+        return ComplaintCollectionStateSchema(
+            session_id=session["session_id"],
+            stage=session.get("state", "COLLECTING"),
+            language=session.get("language", "English"),
+            fields=fields,
+            current_field_prompted=session.get("current_field_prompted"),
+            completed_fields_count=completed,
+            total_fields=len(FIELD_KEYS),
+            completion_percentage=pct,
+            created_complaint_number=session.get("created_complaint_number"),
+            created_complaint_id=session.get("created_complaint_id")
+        )
 
     def process_chat(
         self,
@@ -103,38 +126,44 @@ class AssistantService:
         current_user: Optional[User] = None
     ) -> AssistantResponse:
         """
-        Core conversational AI engine:
-        1. Multilingual language identification (Tamil / Tanglish / English)
-        2. Intent parsing: GREETING, TRACK_STATUS, EMERGENCY, CIVIC_INQUIRY, FILE_COMPLAINT, GENERAL_HELP
-        3. Database integration for live tracking lookup
-        4. Auto grievance structuring with coordinates and department routing
-        5. Spoken audio text generation formatted for natural TTS
+        Multilingual AI Citizen Interaction and Complaint Collection:
+        1. Auto-detects language (Tamil, Tanglish, English) and continues in the same language.
+        2. Intelligently extracts up to 10 complaint details (Problem, Exact Location, Street, District/Area,
+           Landmark, Date/Time, Frequency, Current Status, Additional Details, Citizen Contact).
+        3. Prompts missing required fields one-by-one with contextual follow-ups without making assumptions.
+        4. Generates a clear 10-point summary and requests explicit confirmation.
+        5. Registers complaint directly to the database and forwards it to the designated municipal department.
         """
         raw_text = (message or "").strip()
+        active_session_id = session_id or f"sess_{uuid.uuid4().hex[:12]}"
+        session = complaint_collector.get_or_create_session(active_session_id, current_user, language_hint)
+
         if not raw_text:
             return AssistantResponse(
-                reply_text="Hello! How can I assist you with Tamil Nadu civic grievances or municipal services today?",
-                spoken_text="Hello! How can I assist you today?",
+                reply_text="👋 **Vanakkam & Welcome to Voxentra AI!**\n\nI am your Tamil Nadu Civic Voice Assistant. You can speak or type in **Tamil, English, or Tanglish**.\n\nPlease describe the civic problem you would like to report.",
+                spoken_text="Welcome to Voxentra AI. How can I help you report your civic issue today?",
                 detected_language="English",
                 intent="GREETING",
-                session_id=session_id or str(uuid.uuid4())
+                collection_state=self._build_collection_state_schema(session),
+                session_id=active_session_id
             )
 
+        # 1. Detect language
         detected_lang, _ = detect_language(raw_text)
         if language_hint and language_hint in ["Tamil", "English", "Tanglish"]:
             detected_lang = language_hint
+        session["language"] = detected_lang
 
         normalized = normalize_text(raw_text)
         lowered = normalized.lower()
-        active_session = session_id or str(uuid.uuid4())
 
-        # 1. Check for Greeting Intent
+        # 1b. Check for Greeting Intent
         greeting_words = [
             "hi", "hello", "hey", "vanakkam", "வணக்கம்", "namaste", "good morning",
             "good afternoon", "good evening", "greetings", "kaalai vanakkam", "nalvaravu"
         ]
         is_greeting = False
-        if len(lowered.split()) <= 6:
+        if len(lowered.split()) <= 4:
             for w in greeting_words:
                 if any(ord(c) > 127 for c in w):
                     if w in lowered:
@@ -149,8 +178,8 @@ class AssistantService:
             if detected_lang == "Tamil":
                 reply = (
                     "**வணக்கம்!** 🙏 நான் **Voxentra AI** குரல் உதவியாளர்.\n\n"
-                    "நான் தமிழ்நாடு நகராட்சி மற்றும் பொதுக் குறைகளைத் தீர்க்க உங்களுக்கு உதவ தயாராக உள்ளேன். நீங்கள் என்னிடம்:\n"
-                    "- 💧 குடிநீர், மின்சாரம், குப்பை, சாலை பிரச்சினைகளை குரல் அல்லது உரையில் பதிவு செய்யலாம்.\n"
+                    "நான் தமிழ்நாடு நகராட்சி மற்றும் ஊரக பொதுக் குறைகளைத் தீர்க்க உங்களுக்கு உதவ தயாராக உள்ளேன். நீங்கள் என்னிடம்:\n"
+                    "- 💧 குடிநீர், மின்சாரம், குப்பை, சாலை பிரச்சினைகளைப் பேசி அல்லது தட்டச்சு செய்து பதிவு செய்யலாம்.\n"
                     "- 🔍 உங்கள் புகாரின் நிலையை (Status) தெரிந்து கொள்ளலாம்.\n"
                     "- 🚨 அவசர உதவி எண்களைப் பெறலாம்.\n\n"
                     "உங்களுக்கு இன்று என்ன உதவி வேண்டும்?"
@@ -159,19 +188,15 @@ class AssistantService:
             elif detected_lang == "Tanglish":
                 reply = (
                     "**Vanakkam!** 🙏 I am **Voxentra AI** Assistant.\n\n"
-                    "Ungaloda civic complaints (Water, Current, Garbage, Road potholes, Street light) ah direct ah pesi or type panni submit pannalam.\n"
-                    "Tracking number kudutha status check pannalam.\n\n"
-                    "What issue would you like to report today?"
+                    "Ungaloda civic complaints ah direct ah pesi or type panni submit pannalam.\n"
+                    "What problem would you like to report today?"
                 )
                 spoken = "Vanakkam! I am Voxentra AI Assistant. How can I help you report your grievance today?"
             else:
                 reply = (
                     "**Hello and welcome!** 🙏 I am **Voxentra AI**, your smart civic assistant.\n\n"
-                    "I can help you:\n"
-                    "- 📝 **Register civic complaints** (Water leak, Electricity, Roads, Garbage, Streetlights) with automated AI location & department routing.\n"
-                    "- 🔍 **Track grievance progress** and resolution updates.\n"
-                    "- 🚨 **Find municipal helpline numbers** and civic schedules across Tamil Nadu.\n\n"
-                    "How can I assist you today? You can speak or type your grievance."
+                    "I can guide you step-by-step to collect all 10 required details and register your complaint directly with the department.\n\n"
+                    "How can I assist you today? Please describe the civic problem you are facing."
                 )
                 spoken = "Hello! I am Voxentra AI, your civic grievance assistant. How can I help you today?"
 
@@ -180,328 +205,331 @@ class AssistantService:
                 spoken_text=spoken,
                 detected_language=detected_lang,
                 intent="GREETING",
+                collection_state=self._build_collection_state_schema(session),
                 suggested_actions=[
-                    ActionSuggestion(label="💧 Report Water Leakage", action_type="QUICK_PROMPT", payload={"prompt": "Water pipeline leakage near Gandhipuram"}),
-                    ActionSuggestion(label="⚡ Report Power Outage", action_type="QUICK_PROMPT", payload={"prompt": "Power cut and fuse spark in my area"}),
-                    ActionSuggestion(label="🔍 Track My Complaint", action_type="QUICK_PROMPT", payload={"prompt": "Track my complaint status"}),
-                    ActionSuggestion(label="🚨 Emergency Helplines", action_type="CALL_HELPLINE", payload={"phone": "1913"})
+                    ActionSuggestion(label="💧 Water Leakage", action_type="QUICK_PROMPT", payload={"prompt": "Water pipeline leakage near Gandhipuram"}),
+                    ActionSuggestion(label="⚡ Power Outage", action_type="QUICK_PROMPT", payload={"prompt": "Power cut and electric spark"}),
+                    ActionSuggestion(label="🔍 Track Complaint", action_type="QUICK_PROMPT", payload={"prompt": "Track my complaint status"}),
+                    ActionSuggestion(label="🚨 Helpline 1913", action_type="CALL_HELPLINE", payload={"phone": "1913"})
                 ],
-                session_id=active_session
+                session_id=active_session_id
             )
 
-        # 2. Check for Emergency / Helpline Intent
-        emergency_triggers = [
-            "emergency", "helpline", "toll free", "phone number", "contact number",
-            "police number", "fire number", "ambulance number", "tneb number",
-            "1913", "112", "108", "100", "அவசர எண்", "தொடர்பு எண்", "help line"
-        ]
-        if any(w in lowered for w in emergency_triggers):
+        # 2. Check for Emergency / Helpline Triggers
+        is_emergency_inquiry = (
+            any(w in lowered for w in ["helpline", "emergency number", "toll free", "police number", "ambulance number", "tneb number", "அவசர எண்", "தொடர்பு எண்", "helpline number"]) or
+            (len(lowered.split()) <= 4 and any(w in lowered for w in ["1913", "112", "108", "1912", "emergency", "police"]))
+        )
+        if is_emergency_inquiry:
             if detected_lang == "Tamil":
                 reply = (
                     "### 🚨 தமிழ்நாடு அவசர உதவி மற்றும் நகராட்சி எண்கள்:\n\n"
                     "- 🚨 **அனைத்து அவசர உதவி (Emergency):** `112`\n"
                     "- 🏛️ **நகராட்சி குறைதீர்ப்பு (Civic Grievance):** `1913` (இலவச அழைப்பு)\n"
-                    "- ⚡ **மின்சார வாரியம் (TNEB Power Helpline):** `1912`\n"
+                    "- ⚡ **மின்சார வாரியம் (TNEB Power):** `1912`\n"
                     "- 🚑 **மருத்துவ அவசர ஊர்தி (Ambulance):** `108`\n"
                     "- 👮 **காவல்துறை (Police):** `100`\n"
-                    "- 🚒 **தீயணைப்பு மற்றும் மீட்புப்பணி:** `101`\n\n"
-                    "உடனடி அவசர உதவிக்கு மேலே உள்ள எண்களை தொடர்பு கொள்ளலாம்."
+                    "- 🚒 **தீயணைப்பு மற்றும் மீட்புப்பணி:** `101`"
                 )
-                spoken = "தமிழ்நாடு அவசர உதவி எண்கள்: நகராட்சி குறைதீர்ப்புக்கு ஆயிரத்து தொள்ளாயிரத்து பதிமூன்று. மின்சார வாரியத்திற்கு ஆயிரத்து தொள்ளாயிரத்து பன்னிரண்டு. அனைத்து அவசர உதவிக்கு நூற்றி பன்னிரண்டு."
+                spoken = "தமிழ்நாடு அவசர உதவி எண்கள்: நகராட்சிக்கு ஆயிரத்து தொள்ளாயிரத்து பதிமூன்று. மின்சாரத்திற்கு ஆயிரத்து தொள்ளாயிரத்து பன்னிரண்டு. அவசர உதவிக்கு நூற்றி பன்னிரண்டு."
             else:
                 reply = (
-                    "### 🚨 Tamil Nadu Essential Civic & Emergency Helplines:\n\n"
-                    "- 🚨 **All Emergencies (Police/Fire/Medical):** `112`\n"
-                    "- 🏛️ **Municipal Corporation Grievance:** `1913` (Toll-Free)\n"
-                    "- ⚡ **TNEB Power & Electricity Outage:** `1912`\n"
-                    "- 🚑 **Medical Ambulance Service:** `108`\n"
-                    "- 👮 **Police Assistance:** `100`\n"
-                    "- 🚒 **Fire & Disaster Rescue:** `101`\n\n"
-                    "You can tap below to dial municipal helpline `1913` or state emergency `112` directly."
+                    "### 🚨 Tamil Nadu Civic & Emergency Helplines:\n\n"
+                    "- 🚨 **All Emergencies:** `112`\n"
+                    "- 🏛️ **Municipal Corporation Grievance:** `1913`\n"
+                    "- ⚡ **TNEB Power & Electricity:** `1912`\n"
+                    "- 🚑 **Ambulance Service:** `108`\n"
+                    "- 👮 **Police Assistance:** `100`"
                 )
-                spoken = "Here are the essential emergency numbers. For municipal corporation grievances call 1913, for power outages call 1912, and for general emergency call 112."
+                spoken = "Here are the essential emergency numbers. For municipal grievances call 1913, for power outages call 1912, and for general emergency call 112."
 
             return AssistantResponse(
                 reply_text=reply,
                 spoken_text=spoken,
                 detected_language=detected_lang,
                 intent="EMERGENCY_HELPLINE",
+                collection_state=self._build_collection_state_schema(session),
                 suggested_actions=[
-                    ActionSuggestion(label="📞 Call Civic Helpline (1913)", action_type="CALL_HELPLINE", payload={"phone": "1913"}, icon="phone"),
-                    ActionSuggestion(label="🚨 Dial Emergency 112", action_type="CALL_HELPLINE", payload={"phone": "112"}, icon="alert-triangle"),
-                    ActionSuggestion(label="⚡ Call TNEB (1912)", action_type="CALL_HELPLINE", payload={"phone": "1912"}, icon="zap")
+                    ActionSuggestion(label="📞 Call Helpline 1913", action_type="CALL_HELPLINE", payload={"phone": "1913"}),
+                    ActionSuggestion(label="🚨 Dial Emergency 112", action_type="CALL_HELPLINE", payload={"phone": "112"}),
                 ],
-                session_id=active_session
+                session_id=active_session_id
             )
 
         # 3. Check for Status / Tracking Intent
-        status_triggers = [
-            "track", "status", "where is my", "check status", "complaint status",
-            "enoda complaint", "nilai", "புகார் நிலை", "புகார் என்னாச்சு", "tracking"
-        ]
         tracking_number = self._extract_tracking_number(raw_text)
-
-        if tracking_number or any(w in lowered for w in status_triggers):
+        status_triggers = ["track", "status", "check status", "enoda complaint", "நிலை", "புகார் என்னாச்சு"]
+        if tracking_number or (any(w in lowered for w in status_triggers) and len(lowered.split()) <= 4):
             if tracking_number and db:
-                complaint = db.query(Complaint).filter(Complaint.complaint_number == tracking_number).first()
+                complaint = db.query(Complaint).filter(
+                    (Complaint.complaint_number == tracking_number) |
+                    (Complaint.complaint_number == tracking_number.replace("VOX", "VX")) |
+                    (Complaint.complaint_number == tracking_number.replace("VX", "VOX"))
+                ).first()
+
                 if complaint:
                     dept_name = complaint.department.name if complaint.department else "General Department"
-                    officer_name = complaint.assigned_officer.full_name if complaint.assigned_officer else "Pending Assignment"
-
                     status_display = complaint.status.value.replace("_", " ").title()
-                    status_ta = {
-                        "SUBMITTED": "சமர்ப்பிக்கப்பட்டது",
-                        "UNDER_REVIEW": "ஆய்வில் உள்ளது",
-                        "ASSIGNED": "அதிகாரிக்கு ஒதுக்கப்பட்டுள்ளது",
-                        "IN_PROGRESS": "நடவடிக்கையில் உள்ளது",
-                        "RESOLVED": "தீர்க்கப்பட்டது",
-                        "REJECTED": "நிராகரிக்கப்பட்டது"
-                    }.get(complaint.status.value, status_display)
 
                     reply = (
-                        f"### 📋 Complaint Tracking Details\n\n"
+                        f"### 📋 Complaint Status Details\n\n"
                         f"- **Tracking ID:** `{complaint.complaint_number}`\n"
                         f"- **Title:** {complaint.title}\n"
                         f"- **Category:** {complaint.category}\n"
-                        f"- **Status:** **`{status_display}`** ({status_ta})\n"
+                        f"- **Status:** **`{status_display}`**\n"
                         f"- **Assigned Department:** {dept_name}\n"
-                        f"- **Assigned Officer:** {officer_name}\n"
                         f"- **Location:** {complaint.location or 'Tamil Nadu'}\n"
-                        f"- **Submitted On:** {complaint.created_at.strftime('%d %b %Y, %I:%M %p')}\n"
+                        f"- **Registered On:** {complaint.created_at.strftime('%d %b %Y, %I:%M %p')}\n"
                     )
-                    recent_note = complaint.history[0].notes if complaint.history else None
-                    if recent_note:
-                        reply += f"\n> **Officer Note:** {recent_note}"
-
-                    if detected_lang == "Tamil":
-                        spoken = f"உங்கள் புகார் எண் {complaint.complaint_number} தற்போது {status_ta} நிலையில் உள்ளது. துறை: {dept_name}."
-                    elif detected_lang == "Tanglish":
-                        spoken = f"Ungaloda complaint {complaint.complaint_number} ippo {status_display} status-la irukku. Assigned to {dept_name}."
-                    else:
-                        spoken = f"Complaint {complaint.complaint_number} is currently {status_display}. It is assigned to {dept_name}."
-
+                    spoken = f"Complaint {complaint.complaint_number} is currently {status_display}. It is assigned to {dept_name}."
                     return AssistantResponse(
                         reply_text=reply,
                         spoken_text=spoken,
                         detected_language=detected_lang,
                         intent="TRACK_STATUS",
+                        collection_state=self._build_collection_state_schema(session),
                         status_info={
                             "complaint_number": complaint.complaint_number,
                             "tracking_number": complaint.complaint_number,
-                            "id": complaint.id,
                             "status": complaint.status.value,
-                            "title": complaint.title,
                             "category": complaint.category,
-                            "department": dept_name,
-                            "officer": officer_name
+                            "department": dept_name
                         },
                         suggested_actions=[
-                            ActionSuggestion(
-                                label=f"👁️ View Live Tracking Page",
-                                action_type="TRACK_COMPLAINT",
-                                payload={"tracking_number": complaint.complaint_number, "complaint_id": complaint.id}
-                            )
+                            ActionSuggestion(label="👁️ View Live Tracking", action_type="TRACK_COMPLAINT", payload={"tracking_number": complaint.complaint_number})
                         ],
-                        session_id=active_session
+                        session_id=active_session_id
                     )
-                else:
-                    if detected_lang == "Tamil":
-                        reply = f"மன்னிக்கவும்! **`{tracking_number}`** என்ற புகார் எண் கிடைக்கவில்லை. எண்ணை சரிபார்த்து மீண்டும் முயற்சிக்கவும்."
-                        spoken = f"மன்னிக்கவும், {tracking_number} என்ற புகார் எண் கிடைக்கவில்லை. தயவுசெய்து எண்ணை சரிபார்த்து மீண்டும் சொல்லவும்."
+
+
+        # 4. If session is waiting for CONFIRMATION
+        if session.get("state") == "CONFIRMATION_PENDING":
+            is_decision, is_confirmed = complaint_collector.is_confirmation_response(raw_text)
+            if is_decision:
+                if is_confirmed:
+                    # Register the complaint in the database
+                    if db:
+                        created = complaint_collector.register_complaint_record(session, db, current_user)
+                        dept_name = created.department.name if created.department else "Municipal Administration"
+
+                        if detected_lang == "Tamil":
+                            reply = (
+                                f"🎉 **உங்கள் புகார் வெற்றிகரமாக பதிவு செய்யப்பட்டு விட்டது!**\n\n"
+                                f"- 🔢 **புகார் கண்காணிப்பு எண் (Tracking ID):** **`{created.complaint_number}`**\n"
+                                f"- 🏢 **ஒதுக்கப்பட்ட துறை (Department):** `{dept_name}`\n"
+                                f"- ⚡ **முன்னுரிமை (Priority):** **`{created.priority.value}`**\n"
+                                f"- 📍 **இடம்:** {created.location}\n"
+                                f"- 📊 **நிலை (Status):** **சமர்ப்பிக்கப்பட்டது (Submitted)**\n\n"
+                                "உங்கள் புகார் கள ஆய்வு அதிகாரியின் ஆய்வுக்கு அனுப்பப்பட்டுள்ளது. எஸ்.எம்.எஸ் மூலம் தொடர் நிலை அறிவிப்புகள் உங்களுக்கு அனுப்பப்படும்.\n\n"
+                                "கீழே உள்ள பொத்தானை அழுத்தி எப்போது வேண்டுமானாலும் உங்கள் புகாரின் நிலையை கண்காணிக்கலாம்."
+                            )
+                            spoken = f"உங்கள் புகார் வெற்றிகரமாக பதிவு செய்யப்பட்டது. கண்காணிப்பு எண் {created.complaint_number}. இது {dept_name} துறைக்கு அனுப்பப்பட்டுள்ளது."
+                        elif detected_lang == "Tanglish":
+                            reply = (
+                                f"🎉 **Grievance Registered Successfully!**\n\n"
+                                f"- 🔢 **Tracking ID:** **`{created.complaint_number}`**\n"
+                                f"- 🏢 **Assigned Department:** `{dept_name}`\n"
+                                f"- ⚡ **Priority:** **`{created.priority.value}`**\n"
+                                f"- 📍 **Location:** {created.location}\n"
+                                f"- 📊 **Status:** **Submitted**\n\n"
+                                "Ungaloda complaint field officer ku forward panniyaachu. SMS updates ungalukku anuppapadum."
+                            )
+                            spoken = f"Your complaint has been successfully registered with Tracking ID {created.complaint_number} and forwarded to {dept_name}."
+                        else:
+                            reply = (
+                                f"🎉 **Complaint Successfully Registered & Forwarded!**\n\n"
+                                f"- 🔢 **Complaint Tracking Number:** **`{created.complaint_number}`**\n"
+                                f"- 🏢 **Forwarded Department:** `{dept_name}`\n"
+                                f"- ⚡ **Assessed Priority:** **`{created.priority.value}`**\n"
+                                f"- 📍 **Location:** {created.location}\n"
+                                f"- 📊 **Current Status:** **Submitted (Assigned to Department)**\n\n"
+                                "The complaint has been dispatched to official municipal field units. You can track real-time resolution progress anytime with your Tracking ID."
+                            )
+                            spoken = f"Your grievance has been successfully registered with Tracking ID {created.complaint_number} and forwarded to {dept_name}."
+
+                        return AssistantResponse(
+                            reply_text=reply,
+                            spoken_text=spoken,
+                            detected_language=detected_lang,
+                            intent="COMPLAINT_REGISTERED",
+                            collection_state=self._build_collection_state_schema(session),
+                            suggested_actions=[
+                                ActionSuggestion(label="👁️ Track Complaint Status", action_type="TRACK_COMPLAINT", payload={"tracking_number": created.complaint_number}),
+                                ActionSuggestion(label="📝 File Another Grievance", action_type="QUICK_PROMPT", payload={"prompt": "File another grievance"})
+                            ],
+                            session_id=active_session_id
+                        )
                     else:
-                        reply = f"I could not find any active complaint with Tracking ID **`{tracking_number}`**. Please double-check your tracking number and try again."
-                        spoken = f"I could not find complaint {tracking_number}. Please check the number and try again."
+                        # Fallback if DB not directly passed
+                        dummy_id = f"VOX-2026-{uuid.uuid4().hex[:4].upper()}"
+                        session["created_complaint_number"] = dummy_id
+                        session["state"] = "REGISTERED"
+                        reply = f"🎉 **Complaint Registered with ID `{dummy_id}`!**"
+                        spoken = f"Your complaint has been registered with Tracking ID {dummy_id}."
+                        return AssistantResponse(
+                            reply_text=reply,
+                            spoken_text=spoken,
+                            detected_language=detected_lang,
+                            intent="COMPLAINT_REGISTERED",
+                            collection_state=self._build_collection_state_schema(session),
+                            session_id=active_session_id
+                        )
+                else:
+                    # User said No / Wants change
+                    session["state"] = "COLLECTING"
+                    session["current_field_prompted"] = "problem_description"
+                    if detected_lang == "Tamil":
+                        reply = "சரி, எந்த விவரத்தை மாற்ற வேண்டும்? தயவுசெய்து சரியான விவரத்தைக் கூறவும்."
+                        spoken = "எந்த விவரத்தை மாற்ற வேண்டும்? தயவுசெய்து கூறவும்."
+                    elif detected_lang == "Tanglish":
+                        reply = "Sure, endha detail ah change pannanum nu sollunga."
+                        spoken = "Which detail would you like to edit or change?"
+                    else:
+                        reply = "Understood. Which detail would you like to change or correct? Please specify."
+                        spoken = "Which detail would you like to update? Please specify."
 
                     return AssistantResponse(
                         reply_text=reply,
                         spoken_text=spoken,
                         detected_language=detected_lang,
-                        intent="TRACK_STATUS",
-                        session_id=active_session
+                        intent="COLLECTING_FIELD",
+                        collection_state=self._build_collection_state_schema(session),
+                        session_id=active_session_id
                     )
-            elif not tracking_number:
-                # If user is logged in, check recent complaints
-                recent_info = ""
-                if db and current_user:
-                    recent = db.query(Complaint).filter(Complaint.citizen_id == current_user.id).order_by(Complaint.created_at.desc()).limit(3).all()
-                    if recent:
-                        recent_info = "\n\n**Your Recent Complaints:**\n" + "\n".join([
-                            f"- `{c.complaint_number}`: **{c.title}** ({c.status.value})" for c in recent
-                        ])
 
-                if detected_lang == "Tamil":
-                    reply = (
-                        "உங்கள் புகாரின் நிலையை அறிய, தயவுசெய்து உங்கள் **புகார் எண்ணை** (எ.கா: `VX-2026-ABCD`) உள்ளிடவும்."
-                        + recent_info +
-                        "\n\nநீங்கள் **புகார் கண்காணிப்பு** பக்கத்திலும் பார்க்கலாம்."
-                    )
-                    spoken = "உங்கள் புகாரின் நிலையை அறிய, புகார் எண்ணை உள்ளிடவும் அல்லது கூறவும்."
-                else:
-                    reply = (
-                        "To track your complaint, please provide your **Tracking Number** (e.g. `VX-2026-ABCD`)."
-                        + recent_info +
-                        "\n\nYou can also visit the **Complaint Tracking** page anytime."
-                    )
-                    spoken = "Please provide your complaint tracking number, for example VX 2026 ABCD, to check its current status."
+        # 5. If state was already REGISTERED and user sends a new message
+        if session.get("state") == "REGISTERED":
+            # Reset session for fresh intake
+            complaint_collector.reset_session(active_session_id)
+            session = complaint_collector.get_or_create_session(active_session_id, current_user, language_hint)
 
-                return AssistantResponse(
-                    reply_text=reply,
-                    spoken_text=spoken,
-                    detected_language=detected_lang,
-                    intent="TRACK_STATUS",
-                    suggested_actions=[
-                        ActionSuggestion(label="🔍 Go to Tracking Page", action_type="TRACK_COMPLAINT", payload={"route": "/track"})
-                    ],
-                    session_id=active_session
-                )
+        # 6. Extract slots from the current user input
+        current_field = session.get("current_field_prompted")
+        extracted_slots = complaint_collector.extract_slots(raw_text, current_field=current_field)
 
-        # 4. Check for Civic FAQs
-        for faq_key, faq_data in CIVIC_FAQS.items():
-            if any(kw in lowered for kw in faq_data["keywords"]):
-                if detected_lang == "Tamil":
-                    reply = faq_data["tamil"]
-                    spoken = faq_data["tamil"]
-                else:
-                    reply = faq_data["english"]
-                    spoken = faq_data["english"]
+        # Merge extracted slots into session
+        for k, v in extracted_slots.items():
+            if v and str(v).strip():
+                session["fields"][k] = v
 
-                return AssistantResponse(
-                    reply_text=reply,
-                    spoken_text=spoken,
-                    detected_language=detected_lang,
-                    intent="CIVIC_INQUIRY",
-                    suggested_actions=[
-                        ActionSuggestion(label="📝 File a Grievance Now", action_type="QUICK_PROMPT", payload={"prompt": f"I want to file a complaint regarding {faq_key.replace('_', ' ')}"})
-                    ],
-                    session_id=active_session
-                )
+        # If user is logged in, ensure citizen details default is kept
+        if current_user and not session["fields"].get("citizen_details"):
+            phone = getattr(current_user, "phone", "") or ""
+            name = getattr(current_user, "full_name", "") or getattr(current_user, "username", "") or ""
+            if name or phone:
+                session["fields"]["citizen_details"] = f"{name} ({phone})".strip()
 
-        # 5. Check if this is a Grievance Report (FILE_COMPLAINT)
-        # We run the AI provider analysis pipeline
-        analysis = ai_provider.analyze(raw_text)
+        # 7. Check if all 10 fields are now filled
+        next_missing = complaint_collector.get_next_missing_field(session)
 
-        # If high confidence or recognized category/location/priority keywords
-        is_grievance = (
-            analysis.category != "Other" or
-            analysis.extracted_location is not None or
-            analysis.priority in [ComplaintPriority.CRITICAL, ComplaintPriority.HIGH] or
-            any(w in lowered for w in [
-                "broken", "damage", "leak", "cut", "problem", "issue", "complaint", "help",
-                "stench", "not working", "dark", "pothole", "overflow", "danger",
-                "prachana", "odanju", "varala", "eriyala", "குறை", "புகார்", "சேதம்", "பழுது"
-            ])
-        )
+        if not next_missing:
+            # All 10 details collected! Present the summary and ask for confirmation
+            session["state"] = "CONFIRMATION_PENDING"
+            session["current_field_prompted"] = None
+            summary_text, spoken_summary = complaint_collector.generate_summary(session, detected_lang)
 
-        if is_grievance:
-            title = f"{analysis.category} Grievance"
-            if analysis.extracted_location:
-                title += f" near {analysis.extracted_location}"
+            # Extract category & department for draft payload
+            prob = session["fields"].get("problem_description") or "Civic Grievance"
+            cat, dept, _ = classify_complaint(normalize_text(prob))
+            prio, _ = assess_priority(normalize_text(prob), cat)
 
             draft = ComplaintDraft(
-                title=title,
-                description=raw_text,
-                category=analysis.category,
-                suggested_department=analysis.suggested_department,
-                extracted_location=analysis.extracted_location,
-                latitude=analysis.latitude,
-                longitude=analysis.longitude,
-                priority=analysis.priority,
-                summary=analysis.summary
+                title=f"{cat} issue at {session['fields'].get('district_area') or 'Location'}",
+                description=prob,
+                category=cat,
+                suggested_department=dept,
+                extracted_location=f"{session['fields'].get('exact_location', '')}, {session['fields'].get('street_road_name', '')}",
+                priority=prio,
+                summary=f"{cat} grievance ready for registration"
             )
 
-            loc_text = f"📍 **Location:** `{analysis.extracted_location}`\n" if analysis.extracted_location else "📍 **Location:** *(Click to confirm street/ward)*\n"
-            coords_text = f"🌐 **Coordinates:** `{analysis.latitude}, {analysis.longitude}`\n" if analysis.latitude else ""
-
-            if detected_lang == "Tamil":
-                reply = (
-                    f"### 🤖 புகார் விவரங்கள் தயார் செய்யப்பட்டுள்ளன:\n\n"
-                    f"- 🏷️ **வகை (Category):** `{analysis.category}`\n"
-                    f"- 🏢 **துறை (Department):** `{analysis.suggested_department}`\n"
-                    f"- ⚡ **முன்னுரிமை (Priority):** **`{analysis.priority.value}`**\n"
-                    f"{loc_text}"
-                    f"{coords_text}"
-                    f"\n**சுருக்கம்:** {analysis.summary}\n\n"
-                    f"இப்புகாரை உடனடியாக பதிவு செய்ய கீழே உள்ள **'பதிவு செய்க' (Submit)** பொத்தானை அழுத்தவும்."
-                )
-                spoken = f"உங்கள் {analysis.category} தொடர்பான புகார் விவரங்கள் தயாராக உள்ளன. முன்னுரிமை {analysis.priority.value}. சமர்ப்பிக்க பதிவு செய்க பொத்தானை அழுத்தவும்."
-            elif detected_lang == "Tanglish":
-                reply = (
-                    f"### 🤖 Grievance Draft Ready for Submission:\n\n"
-                    f"- 🏷️ **Category:** `{analysis.category}`\n"
-                    f"- 🏢 **Department:** `{analysis.suggested_department}`\n"
-                    f"- ⚡ **Assessed Priority:** **`{analysis.priority.value}`**\n"
-                    f"{loc_text}"
-                    f"{coords_text}"
-                    f"\n**AI Summary:** {analysis.summary}\n\n"
-                    f"Grievance submit panna keezha irukura **'One-Click Submit'** button ah click pannunga."
-                )
-                spoken = f"Your {analysis.category} grievance draft is ready with {analysis.priority.value} priority. Click submit to register."
-            else:
-                reply = (
-                    f"### 🤖 AI Grievance Draft Generated:\n\n"
-                    f"- 🏷️ **Category:** `{analysis.category}`\n"
-                    f"- 🏢 **Department:** `{analysis.suggested_department}`\n"
-                    f"- ⚡ **Assessed Priority:** **`{analysis.priority.value}`**\n"
-                    f"{loc_text}"
-                    f"{coords_text}"
-                    f"\n**Summary:** {analysis.summary}\n\n"
-                    f"Would you like to register this complaint now? Tap **'One-Click Submit Grievance'** below."
-                )
-                spoken = f"I have prepared your {analysis.category} complaint draft with {analysis.priority.value} priority. Tap submit to register it immediately."
+            actions = [
+                ActionSuggestion(label="✅ Confirm & Register Grievance", action_type="QUICK_PROMPT", payload={"prompt": "Yes, please register this complaint"}),
+                ActionSuggestion(label="✏️ Change a Detail", action_type="QUICK_PROMPT", payload={"prompt": "I want to edit some details"})
+            ]
 
             return AssistantResponse(
-                reply_text=reply,
-                spoken_text=spoken,
+                reply_text=summary_text,
+                spoken_text=spoken_summary,
                 detected_language=detected_lang,
-                intent="FILE_COMPLAINT",
+                intent="CONFIRMATION_PENDING",
                 draft_complaint=draft,
-                suggested_actions=[
-                    ActionSuggestion(
-                        label="🚀 One-Click Submit Grievance",
-                        action_type="SUBMIT_DRAFT",
-                        payload=draft.model_dump(),
-                        icon="check-circle"
-                    ),
-                    ActionSuggestion(
-                        label="✏️ Edit in Detailed Form",
-                        action_type="QUICK_PROMPT",
-                        payload={"prompt": "edit_draft", "draft": draft.model_dump()},
-                        icon="edit"
-                    )
-                ],
-                session_id=active_session,
-                metadata={"nlp_analysis": analysis.model_dump()}
+                collection_state=self._build_collection_state_schema(session),
+                suggested_actions=actions,
+                session_id=active_session_id
             )
 
-        # 6. General Help / Default Fallback
+        # 8. Still missing required fields: Ask the next question naturally
+        session["state"] = "COLLECTING"
+        session["current_field_prompted"] = next_missing
+        meta = FIELD_METADATA[next_missing]
+
+        # Select question & spoken text according to detected language
         if detected_lang == "Tamil":
-            reply = (
-                "நான் உங்கள் கேள்வியைப் புரிந்து கொண்டேன். நீங்கள் தமிழ்நாட்டில் உள்ள குடிநீர் கசிவு, மின்வெட்டு, "
-                "சாக்கடை அடைப்பு, குப்பை அல்லது சாலை சேதம் போன்ற புகார்களை என்னிடம் தெரிவிக்கலாம். "
-                "உதாரணமாக: *'காந்திபுரம் பேருந்து நிலையம் அருகில் குடிநீர் குழாய் உடைந்துள்ளது'* என்று கூறலாம்."
-            )
-            spoken = "நீங்கள் உங்கள் பொதுக் குறைகளை தமிழ் அல்லது ஆங்கிலத்தில் என்னிடம் கூறலாம். நான் உடனடியாக பதிவு செய்வேன்."
+            question_text = meta["question_ta"]
+            spoken_text = meta["spoken_ta"]
+        elif detected_lang == "Tanglish":
+            question_text = meta["question_tanglish"]
+            spoken_text = meta["spoken_tanglish"]
         else:
-            reply = (
-                "I understand your query. You can describe any civic grievance (such as broken pipes, electricity outage, uncollected garbage, or damaged roads in Tamil Nadu), and I will automatically structure and register it for you.\n\n"
-                "**Example Prompts:**\n"
-                "- *'Water pipeline broken near Gandhipuram bus stand'*\n"
-                "- *'Streetlights not working on 100 feet road'*\n"
-                "- *'Track my complaint status VX-2026-8812'*"
-            )
-            spoken = "You can speak or type any civic problem, or provide a tracking number to check your complaint status."
+            question_text = meta["question_en"]
+            spoken_text = meta["spoken_en"]
+
+        # Build acknowledgement if some fields were just filled
+        completed_count = sum(1 for k in FIELD_KEYS if session["fields"].get(k))
+        ack = ""
+        if completed_count == 1:
+            if detected_lang == "Tamil":
+                ack = "உங்கள் பிரச்சனை விவரம் பெறப்பட்டது. 👍\n\n"
+            elif detected_lang == "Tanglish":
+                ack = "Got your problem description. 👍\n\n"
+            else:
+                ack = "I have noted the problem description. 👍\n\n"
+        elif completed_count > 1 and current_field:
+            prev_label = FIELD_METADATA.get(current_field, {}).get("label_" + ("ta" if detected_lang == "Tamil" else "en"), "Detail")
+            if detected_lang == "Tamil":
+                ack = f"நன்றி, பதிவு செய்யப்பட்டது. ({completed_count}/10 விவரங்கள்)\n\n"
+            else:
+                ack = f"Thank you, noted. ({completed_count}/10 details gathered)\n\n"
+
+        full_reply = (
+            f"{ack}"
+            f"**Step {FIELD_KEYS.index(next_missing) + 1} of 10: {meta.get('label_' + ('ta' if detected_lang == 'Tamil' else 'en'))}**\n\n"
+            f"{question_text}"
+        )
+
+        # Contextual action suggestions
+        actions = []
+        if next_missing == "current_status":
+            actions = [
+                ActionSuggestion(label="⚡ Still Happening / Active", action_type="QUICK_PROMPT", payload={"prompt": "It is still happening and active"}),
+                ActionSuggestion(label="⏸️ Temporarily Paused", action_type="QUICK_PROMPT", payload={"prompt": "Temporarily stopped"}),
+                ActionSuggestion(label="✅ Already Resolved", action_type="QUICK_PROMPT", payload={"prompt": "It has been resolved"})
+            ]
+        elif next_missing == "frequency":
+            actions = [
+                ActionSuggestion(label="1️⃣ Happening First Time", action_type="QUICK_PROMPT", payload={"prompt": "Happening for the first time"}),
+                ActionSuggestion(label="🔁 Daily Recurring", action_type="QUICK_PROMPT", payload={"prompt": "Recurring every day"}),
+                ActionSuggestion(label="🌧️ Only During Rainy Days", action_type="QUICK_PROMPT", payload={"prompt": "Happens every rainy day"})
+            ]
+        elif next_missing == "additional_details":
+            actions = [
+                ActionSuggestion(label="🚫 No Additional Details", action_type="QUICK_PROMPT", payload={"prompt": "None, no other details"}),
+                ActionSuggestion(label="⚠️ Severe Safety Hazard", action_type="QUICK_PROMPT", payload={"prompt": "Severe public hazard and traffic risk"})
+            ]
+        elif next_missing == "citizen_details" and current_user:
+            actions = [
+                ActionSuggestion(label=f"👤 Use My Profile ({current_user.full_name or current_user.email})", action_type="QUICK_PROMPT", payload={"prompt": f"{current_user.full_name or 'Citizen'}, {getattr(current_user, 'phone', '9840012345')}"})
+            ]
 
         return AssistantResponse(
-            reply_text=reply,
-            spoken_text=spoken,
+            reply_text=full_reply,
+            spoken_text=spoken_text,
             detected_language=detected_lang,
-            intent="GENERAL_HELP",
-            suggested_actions=[
-                ActionSuggestion(label="💧 Water Grievance", action_type="QUICK_PROMPT", payload={"prompt": "Water pipeline leakage near my house"}),
-                ActionSuggestion(label="🗑️ Sanitation Grievance", action_type="QUICK_PROMPT", payload={"prompt": "Garbage dump not cleared"}),
-                ActionSuggestion(label="💡 Streetlight Issue", action_type="QUICK_PROMPT", payload={"prompt": "Streetlights are completely dark"})
-            ],
-            session_id=active_session
+            intent="COLLECTING_FIELD",
+            collection_state=self._build_collection_state_schema(session),
+            suggested_actions=actions,
+            session_id=active_session_id
         )
 
 

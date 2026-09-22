@@ -32,10 +32,13 @@ backend/.venv/
 *.sqlite
 *.sqlite3
 *.db
+voxentra.db
 backend/voxentra.db
+uploads/
 backend/uploads/
 backend/audio_uploads/
 !backend/uploads/.gitkeep
+
 
 # Environment variables
 .env

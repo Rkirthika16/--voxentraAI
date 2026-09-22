@@ -177,6 +177,31 @@ export interface ComplaintDraft {
   summary: string;
 }
 
+export interface ComplaintCollectionState {
+  session_id: string;
+  stage: 'GREETING' | 'COLLECTING' | 'CONFIRMATION_PENDING' | 'REGISTERED' | string;
+  language: string;
+  fields: {
+    problem_description?: string | null;
+    exact_location?: string | null;
+    street_road_name?: string | null;
+    district_area?: string | null;
+    landmark?: string | null;
+    date_and_time?: string | null;
+    frequency?: string | null;
+    current_status?: string | null;
+    additional_details?: string | null;
+    citizen_details?: string | null;
+    [key: string]: string | null | undefined;
+  };
+  current_field_prompted?: string | null;
+  completed_fields_count: number;
+  total_fields: number;
+  completion_percentage: number;
+  created_complaint_number?: string | null;
+  created_complaint_id?: number | null;
+}
+
 export interface AssistantResponse {
   reply_text: string;
   spoken_text: string;
@@ -184,6 +209,7 @@ export interface AssistantResponse {
   intent: string;
   draft_complaint?: ComplaintDraft;
   status_info?: Record<string, any>;
+  collection_state?: ComplaintCollectionState;
   suggested_actions: ActionSuggestion[];
   session_id?: string;
   metadata?: Record<string, any>;
@@ -201,10 +227,12 @@ export interface AssistantMessage {
   intent?: string;
   draft_complaint?: ComplaintDraft;
   status_info?: Record<string, any>;
+  collection_state?: ComplaintCollectionState;
   suggested_actions?: ActionSuggestion[];
   timestamp: Date;
   isAudio?: boolean;
 }
+
 
 export interface SuggestionsResponse {
   sample_questions: Array<{ label: string; query: string }>;

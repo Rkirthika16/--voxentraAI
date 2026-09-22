@@ -151,3 +151,14 @@ def stream_tts_audio(text: str, lang: Optional[str] = None):
         }
     )
 
+
+@router.post("/reset-collection")
+def reset_collection_session(session_id: str = Form(...)):
+    """
+    Resets the 10-point complaint collection state for the session.
+    """
+    from app.ai.complaint_collector import complaint_collector
+    complaint_collector.reset_session(session_id)
+    return {"success": True, "message": "Session reset successfully", "session_id": session_id}
+
+
