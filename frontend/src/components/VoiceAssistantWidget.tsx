@@ -41,6 +41,7 @@ export const VoiceAssistantWidget: React.FC = () => {
       ]
     }
   ]);
+  const [widgetLang, setWidgetLang] = useState<'Auto' | 'ta-IN' | 'Tanglish' | 'en-IN'>('Auto');
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -59,9 +60,13 @@ export const VoiceAssistantWidget: React.FC = () => {
 
   const handleSpeak = (text: string, lang?: string) => {
     if (!text) return;
+    speech.unlock();
     setIsSpeaking(true);
+
+    const effectiveLang = lang || (widgetLang === 'ta-IN' ? 'Tamil' : widgetLang === 'Tanglish' ? 'Tanglish' : widgetLang === 'en-IN' ? 'English' : undefined);
+
     speech.speak(text, {
-      language: lang,
+      language: effectiveLang,
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
       onError: () => setIsSpeaking(false),
@@ -72,6 +77,7 @@ export const VoiceAssistantWidget: React.FC = () => {
     const textToSend = (customPrompt || inputText).trim();
     if (!textToSend || isLoading) return;
 
+    speech.unlock();
     speech.stop();
     setIsSpeaking(false);
 
@@ -87,7 +93,8 @@ export const VoiceAssistantWidget: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const res = await assistantApi.chat(textToSend, sessionId);
+      const langHint = widgetLang === 'ta-IN' ? 'Tamil' : widgetLang === 'en-IN' ? 'English' : widgetLang === 'Tanglish' ? 'Tanglish' : undefined;
+      const res = await assistantApi.chat(textToSend, sessionId, langHint);
       const botMsg: AssistantMessage = {
         id: `a_${Date.now()}`,
         sender: 'assistant',
@@ -103,7 +110,7 @@ export const VoiceAssistantWidget: React.FC = () => {
       setMessages(prev => [...prev, botMsg]);
 
       if (autoSpeak && res.spoken_text) {
-        handleSpeak(res.spoken_text, res.detected_language);
+        handleSpeak(res.spoken_text, langHint || res.detected_language);
       }
     } catch (e) {
       console.error(e);
@@ -230,6 +237,27 @@ export const VoiceAssistantWidget: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <select
+                value={widgetLang}
+                onChange={(e) => setWidgetLang(e.target.value as any)}
+                style={{
+                  background: 'rgba(15, 23, 42, 0.8)',
+                  border: '1px solid var(--border-color)',
+                  color: '#93c5fd',
+                  fontSize: '0.72rem',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '2px 4px',
+                  cursor: 'pointer',
+                  outline: 'none',
+                }}
+                title="Select Assistant Language"
+              >
+                <option value="Auto" style={{ background: '#1e293b' }}>🌐 Auto</option>
+                <option value="ta-IN" style={{ background: '#1e293b' }}>🇮🇳 தமிழ்</option>
+                <option value="Tanglish" style={{ background: '#1e293b' }}>🗣️ Tanglish</option>
+                <option value="en-IN" style={{ background: '#1e293b' }}>🇬🇧 English</option>
+              </select>
+
               <button
                 type="button"
                 onClick={() => setAutoSpeak(!autoSpeak)}

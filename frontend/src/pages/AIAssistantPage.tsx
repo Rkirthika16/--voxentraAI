@@ -63,7 +63,7 @@ export const AIAssistantPage: React.FC = () => {
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
-  const [selectedLang, setSelectedLang] = useState<'Auto' | 'ta-IN' | 'en-IN'>('Auto');
+  const [selectedLang, setSelectedLang] = useState<'Auto' | 'ta-IN' | 'en-IN' | 'Tanglish'>('Auto');
   const [speechRate, setSpeechRate] = useState<number>(1.0);
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestionsResponse | null>(null);
@@ -100,8 +100,11 @@ export const AIAssistantPage: React.FC = () => {
     if (!textToSpeak) return;
     speech.unlock();
     setIsSpeaking(true);
+
+    const effectiveLanguage = language || (selectedLang === 'ta-IN' ? 'Tamil' : selectedLang === 'Tanglish' ? 'Tanglish' : selectedLang === 'en-IN' ? 'English' : undefined);
+
     speech.speak(textToSpeak, {
-      language: language || (selectedLang === 'ta-IN' ? 'Tamil' : 'English'),
+      language: effectiveLanguage,
       rate: speechRate,
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
@@ -136,7 +139,7 @@ export const AIAssistantPage: React.FC = () => {
     setError(null);
 
     try {
-      const langHint = selectedLang === 'ta-IN' ? 'Tamil' : selectedLang === 'en-IN' ? 'English' : undefined;
+      const langHint = selectedLang === 'ta-IN' ? 'Tamil' : selectedLang === 'en-IN' ? 'English' : selectedLang === 'Tanglish' ? 'Tanglish' : undefined;
       const res = await assistantApi.chat(textToSend, sessionId, langHint);
 
       const assistantMsg: AssistantMessage = {
@@ -156,7 +159,8 @@ export const AIAssistantPage: React.FC = () => {
 
       // Auto-speak AI response if enabled
       if (autoSpeak && res.spoken_text) {
-        handleSpeakText(res.spoken_text, res.detected_language);
+        const speakLanguage = langHint || res.detected_language;
+        handleSpeakText(res.spoken_text, speakLanguage);
       }
     } catch (err: any) {
       console.error('Assistant error:', err);
@@ -461,9 +465,10 @@ export const AIAssistantPage: React.FC = () => {
               onChange={(e) => setSelectedLang(e.target.value as any)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: '0.8rem', cursor: 'pointer', outline: 'none' }}
             >
-              <option value="Auto" style={{ background: '#1e293b' }}>Auto Detect</option>
-              <option value="en-IN" style={{ background: '#1e293b' }}>English (India)</option>
-              <option value="ta-IN" style={{ background: '#1e293b' }}>தமிழ் (Tamil)</option>
+              <option value="Auto" style={{ background: '#1e293b' }}>🌐 Auto Detect</option>
+              <option value="ta-IN" style={{ background: '#1e293b' }}>🇮🇳 தமிழ் (Tamil)</option>
+              <option value="Tanglish" style={{ background: '#1e293b' }}>🗣️ Tanglish (Tamil in English)</option>
+              <option value="en-IN" style={{ background: '#1e293b' }}>🇬🇧 English (India)</option>
             </select>
           </div>
 

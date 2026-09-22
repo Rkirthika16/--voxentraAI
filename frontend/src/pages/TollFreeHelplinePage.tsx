@@ -252,14 +252,14 @@ export const TollFreeHelplinePage: React.FC = () => {
       setCallState('DONE');
 
       // AI Spoken Voice Response formulation
-      let replyText = res.confirmation_spoken_tamil;
+      let replyText = res.confirmation_spoken_tamil || `வணக்கம். உங்கள் ${res.category} புகார் எண் ${res.complaint_number} வெற்றிகரமாக பதிவு செய்யப்பட்டது. இது ${res.suggested_department} துறைக்கு அனுப்பப்பட்டுள்ளது.`;
       let spokenLang = 'Tamil';
 
       if (language === 'hi') {
         replyText = `धन्यवाद! आपकी ${res.category} शिकायत संख्या ${res.complaint_number} दर्ज हो चुकी है और ${res.suggested_department} विभाग को तुरंत भेज दी गई है. आपके मोबाइल पर एसएमएस भेजा गया है.`;
         spokenLang = 'Hindi';
-      } else if (res.detected_language !== 'Tamil' && language === 'en') {
-        replyText = res.confirmation_spoken_english;
+      } else if (language === 'en' || (res.detected_language === 'English' && language !== 'ta')) {
+        replyText = res.confirmation_spoken_english || `Thank you. Your ${res.category} grievance ${res.complaint_number} has been registered and forwarded to ${res.suggested_department}.`;
         spokenLang = 'English';
       }
 

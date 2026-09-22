@@ -249,12 +249,21 @@ class AssistantService:
                     officer_name = complaint.assigned_officer.full_name if complaint.assigned_officer else "Pending Assignment"
 
                     status_display = complaint.status.value.replace("_", " ").title()
+                    status_ta = {
+                        "SUBMITTED": "சமர்ப்பிக்கப்பட்டது",
+                        "UNDER_REVIEW": "ஆய்வில் உள்ளது",
+                        "ASSIGNED": "அதிகாரிக்கு ஒதுக்கப்பட்டுள்ளது",
+                        "IN_PROGRESS": "நடவடிக்கையில் உள்ளது",
+                        "RESOLVED": "தீர்க்கப்பட்டது",
+                        "REJECTED": "நிராகரிக்கப்பட்டது"
+                    }.get(complaint.status.value, status_display)
+
                     reply = (
                         f"### 📋 Complaint Tracking Details\n\n"
                         f"- **Tracking ID:** `{complaint.complaint_number}`\n"
                         f"- **Title:** {complaint.title}\n"
                         f"- **Category:** {complaint.category}\n"
-                        f"- **Status:** **`{status_display}`**\n"
+                        f"- **Status:** **`{status_display}`** ({status_ta})\n"
                         f"- **Assigned Department:** {dept_name}\n"
                         f"- **Assigned Officer:** {officer_name}\n"
                         f"- **Location:** {complaint.location or 'Tamil Nadu'}\n"
@@ -264,7 +273,12 @@ class AssistantService:
                     if recent_note:
                         reply += f"\n> **Officer Note:** {recent_note}"
 
-                    spoken = f"Complaint {complaint.complaint_number} is currently {status_display}. It is assigned to {dept_name}."
+                    if detected_lang == "Tamil":
+                        spoken = f"உங்கள் புகார் எண் {complaint.complaint_number} தற்போது {status_ta} நிலையில் உள்ளது. துறை: {dept_name}."
+                    elif detected_lang == "Tanglish":
+                        spoken = f"Ungaloda complaint {complaint.complaint_number} ippo {status_display} status-la irukku. Assigned to {dept_name}."
+                    else:
+                        spoken = f"Complaint {complaint.complaint_number} is currently {status_display}. It is assigned to {dept_name}."
 
                     return AssistantResponse(
                         reply_text=reply,
@@ -291,8 +305,13 @@ class AssistantService:
                         session_id=active_session
                     )
                 else:
-                    reply = f"I could not find any active complaint with Tracking ID **`{tracking_number}`**. Please double-check your tracking number and try again."
-                    spoken = f"I could not find complaint {tracking_number}. Please check the number and try again."
+                    if detected_lang == "Tamil":
+                        reply = f"மன்னிக்கவும்! **`{tracking_number}`** என்ற புகார் எண் கிடைக்கவில்லை. எண்ணை சரிபார்த்து மீண்டும் முயற்சிக்கவும்."
+                        spoken = f"மன்னிக்கவும், {tracking_number} என்ற புகார் எண் கிடைக்கவில்லை. தயவுசெய்து எண்ணை சரிபார்த்து மீண்டும் சொல்லவும்."
+                    else:
+                        reply = f"I could not find any active complaint with Tracking ID **`{tracking_number}`**. Please double-check your tracking number and try again."
+                        spoken = f"I could not find complaint {tracking_number}. Please check the number and try again."
+
                     return AssistantResponse(
                         reply_text=reply,
                         spoken_text=spoken,
@@ -310,12 +329,21 @@ class AssistantService:
                             f"- `{c.complaint_number}`: **{c.title}** ({c.status.value})" for c in recent
                         ])
 
-                reply = (
-                    "To track your complaint, please provide your **Tracking Number** (e.g. `VX-2026-ABCD`)."
-                    + recent_info +
-                    "\n\nYou can also visit the **Complaint Tracking** page anytime."
-                )
-                spoken = "Please provide your complaint tracking number, for example VX 2026 ABCD, to check its current status."
+                if detected_lang == "Tamil":
+                    reply = (
+                        "உங்கள் புகாரின் நிலையை அறிய, தயவுசெய்து உங்கள் **புகார் எண்ணை** (எ.கா: `VX-2026-ABCD`) உள்ளிடவும்."
+                        + recent_info +
+                        "\n\nநீங்கள் **புகார் கண்காணிப்பு** பக்கத்திலும் பார்க்கலாம்."
+                    )
+                    spoken = "உங்கள் புகாரின் நிலையை அறிய, புகார் எண்ணை உள்ளிடவும் அல்லது கூறவும்."
+                else:
+                    reply = (
+                        "To track your complaint, please provide your **Tracking Number** (e.g. `VX-2026-ABCD`)."
+                        + recent_info +
+                        "\n\nYou can also visit the **Complaint Tracking** page anytime."
+                    )
+                    spoken = "Please provide your complaint tracking number, for example VX 2026 ABCD, to check its current status."
+
                 return AssistantResponse(
                     reply_text=reply,
                     spoken_text=spoken,
