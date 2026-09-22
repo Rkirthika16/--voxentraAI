@@ -202,10 +202,11 @@ export const TollFreeHelplinePage: React.FC = () => {
       setRecordSeconds(0);
       setSpokenText('');
 
-      // Continuous Speech Recognition with auto-language capture
+      // Continuous Speech Recognition with multilingual Indian accent & English capture
+      // 'en-IN' accurately transcribes English and Tanglish words without forcing Tamil script
       if (speech.isSTTSupported()) {
         const rec = speech.createRecognition(
-          'ta-IN' as any,
+          'en-IN' as any,
           (transcript) => {
             setSpokenText(transcript);
           },
