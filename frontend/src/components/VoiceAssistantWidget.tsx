@@ -57,10 +57,11 @@ export const VoiceAssistantWidget: React.FC = () => {
     }
   }, [messages, isOpen]);
 
-  const handleSpeak = (text: string) => {
+  const handleSpeak = (text: string, lang?: string) => {
     if (!text) return;
     setIsSpeaking(true);
     speech.speak(text, {
+      language: lang,
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
       onError: () => setIsSpeaking(false),
@@ -102,7 +103,7 @@ export const VoiceAssistantWidget: React.FC = () => {
       setMessages(prev => [...prev, botMsg]);
 
       if (autoSpeak && res.spoken_text) {
-        handleSpeak(res.spoken_text);
+        handleSpeak(res.spoken_text, res.detected_language);
       }
     } catch (e) {
       console.error(e);

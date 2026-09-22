@@ -107,43 +107,50 @@ class SpeechController {
       .trim();
   }
 
-  private selectVoiceForLanguage(lang: string): { voice: SpeechSynthesisVoice | null; isFallback: boolean } {
+  private selectVoiceForLanguage(lang: string, hasTamilScript = false): { voice: SpeechSynthesisVoice | null; targetLang: string } {
     const voices = this.getVoices();
-    const l = lang.toLowerCase();
+    const l = (lang || '').toLowerCase();
 
-    // 1. TAMIL (தமிழ்)
-    if (l.includes('tamil') || l.includes('ta')) {
+    // 1. TAMIL (தமிழ்) - explicit or auto-detected from Tamil script
+    if (hasTamilScript || l.includes('tamil') || l.includes('ta')) {
       const tamilVoice = voices.find(
         (v) =>
-          v.lang.startsWith('ta') ||
+          v.lang.toLowerCase().startsWith('ta') ||
           v.name.toLowerCase().includes('tamil') ||
-          v.name.toLowerCase().includes('valluvar')
+          v.name.toLowerCase().includes('valluvar') ||
+          v.name.toLowerCase().includes('pallava') ||
+          v.name.toLowerCase().includes('tamizh')
       );
-      if (tamilVoice) return { voice: tamilVoice, isFallback: false };
+      return { voice: tamilVoice || null, targetLang: 'ta-IN' };
     }
 
     // 2. HINDI (हिन्दी)
     if (l.includes('hindi') || l.includes('hi')) {
       const hindiVoice = voices.find(
         (v) =>
-          v.lang.startsWith('hi') ||
+          v.lang.toLowerCase().startsWith('hi') ||
           v.name.toLowerCase().includes('hindi') ||
           v.name.toLowerCase().includes('hemant') ||
-          v.name.toLowerCase().includes('kalpana')
+          v.name.toLowerCase().includes('kalpana') ||
+          v.name.toLowerCase().includes('swara') ||
+          v.name.toLowerCase().includes('madhur')
       );
-      if (hindiVoice) return { voice: hindiVoice, isFallback: false };
+      return { voice: hindiVoice || null, targetLang: 'hi-IN' };
     }
 
-    // 3. INDIAN ENGLISH / TANGLISH
-    const indianVoice = voices.find(
-      (v) =>
-        v.lang === 'en-IN' ||
-        v.name.toLowerCase().includes('india') ||
-        v.name.toLowerCase().includes('ravi') ||
-        v.name.toLowerCase().includes('heera') ||
-        v.name.toLowerCase().includes('neerja')
-    );
-    if (indianVoice) return { voice: indianVoice, isFallback: true };
+    // 3. TANGLISH / INDIAN ENGLISH
+    if (l.includes('tanglish') || l.includes('en-in') || l.includes('india')) {
+      const indianVoice = voices.find(
+        (v) =>
+          v.lang === 'en-IN' ||
+          v.name.toLowerCase().includes('india') ||
+          v.name.toLowerCase().includes('ravi') ||
+          v.name.toLowerCase().includes('heera') ||
+          v.name.toLowerCase().includes('neerja') ||
+          v.name.toLowerCase().includes('prabhat')
+      );
+      return { voice: indianVoice || null, targetLang: 'en-IN' };
+    }
 
     // 4. NATURAL ENGLISH
     const generalEnglish = voices.find(
@@ -154,55 +161,12 @@ class SpeechController {
           v.name.toLowerCase().includes('siri') ||
           v.name.toLowerCase().includes('samantha') ||
           v.name.toLowerCase().includes('zira') ||
-          v.name.toLowerCase().includes('david'))
+          v.name.toLowerCase().includes('david') ||
+          v.name.toLowerCase().includes('jenny'))
     );
-    if (generalEnglish) return { voice: generalEnglish, isFallback: true };
+    if (generalEnglish) return { voice: generalEnglish, targetLang: 'en-US' };
 
-    return { voice: voices[0] || null, isFallback: true };
-  }
-
-  /**
-   * Translates high-frequency Tamil status sentences to clean phonetic Tanglish
-   * if the user's OS has no Tamil TTS engine installed, ensuring clear audio.
-   */
-  public getPhoneticTamilFallback(text: string): string {
-    if (!text) return '';
-    // If text already contains mostly latin characters, return as is
-    const hasTamilScript = /[\u0B80-\u0BFF]/.test(text);
-    if (!hasTamilScript) return text;
-
-    // Common greetings & IVR responses converted to audible phonetic speech
-    if (text.includes('வணக்கம்') && text.includes('நல்வரவு')) {
-      return "Vanakkam! Welcome to Voxentra Tamil Nadu Government Toll-Free Civic Grievance Helpline. Please state your village problem or complaint now.";
-    }
-
-    if (text.includes('வெற்றிகரமாக பதிவு செய்யப்பட்டது') || text.includes('புகார் எண்') || text.includes('பதிவு செய்யப்பட்டது')) {
-      // Extract complaint number if present
-      const match = text.match(/VOX[-\s]\d{4}[-\s]\d+/i) || text.match(/VOX-\d+/i) || text.match(/\d{4,}/);
-      const ticket = match ? match[0].replace(/-/g, ' ') : "";
-
-      // Detect specific department mentioned
-      let dept = "concerned civic department";
-      if (text.includes("Street Lighting") || text.includes("தெருவிளக்கு") || text.includes("லைட்")) {
-        dept = "Street Lighting Department";
-      } else if (text.includes("Water Supply") || text.includes("குடிநீர்") || text.includes("தண்ணீர்")) {
-        dept = "Water Supply and Sewage Department";
-      } else if (text.includes("Electricity") || text.includes("மின்சாரம்") || text.includes("கரண்ட்")) {
-        dept = "Electricity and Power Department";
-      } else if (text.includes("Roads") || text.includes("சாலை") || text.includes("ரோடு")) {
-        dept = "Roads and Transport Department";
-      } else if (text.includes("Sanitation") || text.includes("குப்பை") || text.includes("தூய்மை")) {
-        dept = "Sanitation and Solid Waste Department";
-      } else if (text.includes("Drainage") || text.includes("சாக்கடை") || text.includes("வடிகால்")) {
-        dept = "Drainage and Stormwater Department";
-      } else if (text.includes("Public Safety") || text.includes("ரேஷன்") || text.includes("அவசரம்")) {
-        dept = "Public Safety and Emergency Department";
-      }
-
-      return `Vanakkam. Your grievance has been registered successfully with Complaint ID ${ticket}, and assigned directly to the ${dept}. A confirmation SMS has been dispatched to your mobile.`;
-    }
-
-    return "Vanakkam. Your complaint has been received and routed to the municipal department.";
+    return { voice: voices[0] || null, targetLang: 'en-US' };
   }
 
   /**
@@ -222,27 +186,33 @@ class SpeechController {
     setTimeout(() => {
       if (!this.synth) return;
 
-      const lang = options.language || 'Tamil';
-      const { voice, isFallback } = this.selectVoiceForLanguage(lang);
+      const textToSpeak = this.cleanTextForSpeech(text);
+      if (!textToSpeak) return;
 
-      let textToSpeak = this.cleanTextForSpeech(text);
+      const hasTamilScript = /[\u0B80-\u0BFF]/.test(textToSpeak);
+      const hasHindiScript = /[\u0900-\u097F]/.test(textToSpeak);
 
-      // If Tamil script is requested but browser has NO Tamil TTS voice, use audible phonetic speech
-      if ((lang.toLowerCase().includes('ta') || lang.toLowerCase().includes('tamil')) && isFallback && /[\u0B80-\u0BFF]/.test(textToSpeak)) {
-        textToSpeak = this.getPhoneticTamilFallback(textToSpeak);
+      let effectiveLang = options.language || 'English';
+      if (hasTamilScript) {
+        effectiveLang = 'Tamil';
+      } else if (hasHindiScript) {
+        effectiveLang = 'Hindi';
       }
+
+      const { voice, targetLang } = this.selectVoiceForLanguage(effectiveLang, hasTamilScript);
 
       const utterance = new SpeechSynthesisUtterance(textToSpeak);
       this.currentUtterance = utterance;
 
+      // Assign voice and exact BCP 47 language tag
       if (voice) {
         utterance.voice = voice;
-        utterance.lang = voice.lang;
+        utterance.lang = voice.lang || targetLang;
       } else {
-        utterance.lang = 'en-IN';
+        utterance.lang = targetLang;
       }
 
-      utterance.rate = options.rate ?? 0.95;
+      utterance.rate = options.rate ?? (effectiveLang === 'Tamil' ? 0.90 : 0.95);
       utterance.pitch = options.pitch ?? 1.0;
       utterance.volume = options.volume ?? 1.0;
 
