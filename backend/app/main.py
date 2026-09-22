@@ -1,3 +1,12 @@
+import sys
+import os
+
+# Guarantee backend directory is in sys.path in all hosting environments
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,6 +46,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

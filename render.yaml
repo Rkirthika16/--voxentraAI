@@ -15,6 +15,10 @@ services:
         value: false
       - key: SECRET_KEY
         generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///./voxentra.db
+      - key: BACKEND_CORS_ORIGINS
+        value: "*"
 
   # React Frontend Static Site
   - type: web
@@ -30,3 +34,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 18.20.0
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: voxentra-backend
+          property: host
