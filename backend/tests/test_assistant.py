@@ -120,3 +120,11 @@ def test_assistant_voice_chat_endpoint(client: TestClient):
     assert "reply_text" in data
     assert "spoken_text" in data
     assert "speech_status" in data
+
+
+def test_assistant_tts_stream_endpoint(client: TestClient):
+    response = client.get("/api/v1/assistant/tts?text=வணக்கம்&lang=ta")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "audio/mpeg"
+    assert len(response.content) > 0
+

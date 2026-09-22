@@ -109,8 +109,9 @@ export const VoiceAssistantWidget: React.FC = () => {
 
       setMessages(prev => [...prev, botMsg]);
 
-      if (autoSpeak && res.spoken_text) {
-        handleSpeak(res.spoken_text, langHint || res.detected_language);
+      const textToSpeak = res.spoken_text || res.reply_text;
+      if (autoSpeak && textToSpeak) {
+        handleSpeak(textToSpeak, langHint || res.detected_language || (widgetLang === 'ta-IN' ? 'Tamil' : undefined));
       }
     } catch (e) {
       console.error(e);

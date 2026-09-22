@@ -158,11 +158,13 @@ export const AIAssistantPage: React.FC = () => {
       setMessages(prev => [...prev, assistantMsg]);
 
       // Auto-speak AI response if enabled
-      if (autoSpeak && res.spoken_text) {
-        const speakLanguage = langHint || res.detected_language;
-        handleSpeakText(res.spoken_text, speakLanguage);
+      const textToSpeak = res.spoken_text || res.reply_text;
+      if (autoSpeak && textToSpeak) {
+        const speakLanguage = langHint || res.detected_language || (selectedLang === 'ta-IN' ? 'Tamil' : undefined);
+        handleSpeakText(textToSpeak, speakLanguage);
       }
     } catch (err: any) {
+
       console.error('Assistant error:', err);
       setError(err.response?.data?.detail || 'Failed to get response from AI assistant.');
     } finally {

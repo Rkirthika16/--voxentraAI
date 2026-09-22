@@ -570,3 +570,24 @@ async def twilio_sms_callback(request: Request, db: Session = Depends(get_db)):
     )
     return simulate_inbound_village_sms(req, db)
 
+
+@router.get("/tts")
+def stream_ivr_tts_audio(text: str, lang: Optional[str] = None):
+    """
+    Generates high-definition streaming MP3 voice audio for IVR telephone dialogue.
+    """
+    from app.ai.tts_service import synthesize_speech
+    if not text or not text.strip():
+        return Response(content=b"", media_type="audio/mpeg")
+
+    audio_bytes = synthesize_speech(text, lang=lang)
+    return Response(
+        content=audio_bytes,
+        media_type="audio/mpeg",
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "Content-Disposition": "inline; filename=ivr_speech.mp3"
+        }
+    )
+
+

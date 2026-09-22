@@ -121,9 +121,33 @@ async def voice_chat_with_assistant(
         )
 
 
+from fastapi.responses import Response
+from app.ai.tts_service import synthesize_speech
+
 @router.get("/suggestions", response_model=SuggestionsResponse)
 def get_assistant_suggestions():
     """
     Returns curated sample prompts, category quick-starters, and emergency helplines.
     """
     return assistant_service.get_suggestions()
+
+
+@router.get("/tts")
+def stream_tts_audio(text: str, lang: Optional[str] = None):
+    """
+    Generates high-definition streaming MP3 voice audio for Tamil, Hindi, or English.
+    Enables crystal-clear spoken Tamil responses on any browser, device, or operating system.
+    """
+    if not text or not text.strip():
+        return Response(content=b"", media_type="audio/mpeg")
+
+    audio_bytes = synthesize_speech(text, lang=lang)
+    return Response(
+        content=audio_bytes,
+        media_type="audio/mpeg",
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "Content-Disposition": "inline; filename=speech.mp3"
+        }
+    )
+

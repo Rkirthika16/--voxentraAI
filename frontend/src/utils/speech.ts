@@ -23,6 +23,8 @@ class SpeechController {
   private audioCtx: AudioContext | null = null;
   private ringOscillators: OscillatorNode[] = [];
   private ringInterval: any = null;
+  private resumeInterval: any = null;
+
 
   // DTMF Frequency standard matrix
   private dtmfFrequencies: { [key: string]: [number, number] } = {
@@ -169,7 +171,7 @@ class SpeechController {
     return { voice: voices[0] || null, targetLang: 'en-US' };
   }
 
-  private resumeInterval: any = null;
+  private currentAudio: HTMLAudioElement | null = null;
 
   public unlock(): void {
     if (typeof window === 'undefined') return;
@@ -187,51 +189,86 @@ class SpeechController {
   }
 
   /**
-   * Speaks out the text clearly in the requested language (Tamil, Hindi, English, Tanglish).
+   * Speaks out the text clearly in Tamil, Hindi, English, or Tanglish.
+   * Uses high-definition streaming TTS engine for authentic human-like speech in Tamil & Indian languages,
+   * with automatic browser SpeechSynthesis fallback.
    */
   public speak(text: string, options: TTSOptions = {}): void {
-    if (!this.synth || !text) return;
+    if (!text) return;
 
     this.unlock();
+    this.stop();
 
-    // Clear previous keep-alive interval
-    if (this.resumeInterval) {
-      clearInterval(this.resumeInterval);
-      this.resumeInterval = null;
-    }
+    const textToSpeak = this.cleanTextForSpeech(text);
+    if (!textToSpeak) return;
 
-    // Cancel previous speech safely
+    const hasTamilScript = /[\u0B80-\u0BFF]/.test(textToSpeak);
+    const hasHindiScript = /[\u0900-\u097F]/.test(textToSpeak);
+
+    let effectiveLang = options.language || (hasTamilScript ? 'Tamil' : hasHindiScript ? 'Hindi' : 'English');
+    if (hasTamilScript) effectiveLang = 'Tamil';
+
+    const langCode = effectiveLang === 'Tamil' || effectiveLang === 'ta-IN' ? 'ta' : effectiveLang === 'Hindi' || effectiveLang === 'hi-IN' ? 'hi' : 'en';
+
+    // Primary High-Fidelity Streaming Engine (Produces crystal clear natural human voice)
     try {
-      this.synth.cancel();
-      if (this.synth.paused) {
-        this.synth.resume();
+      const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+      const ttsUrl = `${apiBase}/api/v1/assistant/tts?text=${encodeURIComponent(textToSpeak)}&lang=${encodeURIComponent(langCode)}`;
+
+      const audio = new Audio(ttsUrl);
+      this.currentAudio = audio;
+      audio.volume = Math.max(0, Math.min(1, options.volume ?? 1.0));
+      audio.playbackRate = Math.max(0.7, Math.min(1.5, options.rate ?? 1.0));
+
+      audio.onplay = () => {
+        if (options.onStart) options.onStart();
+      };
+
+      audio.onended = () => {
+        this.currentAudio = null;
+        if (options.onEnd) options.onEnd();
+      };
+
+      audio.onerror = (err) => {
+        console.warn('Streaming TTS failed, falling back to Web Speech API:', err);
+        this.currentAudio = null;
+        this.speakWithWebSpeech(textToSpeak, effectiveLang, hasTamilScript, options);
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((playErr) => {
+          console.warn('Audio play prevented by browser autoplay policy, falling back to Web Speech:', playErr);
+          this.currentAudio = null;
+          this.speakWithWebSpeech(textToSpeak, effectiveLang, hasTamilScript, options);
+        });
       }
-    } catch (e) {}
+      return;
+    } catch (streamErr) {
+      console.warn('Error initializing audio stream, falling back to Web Speech:', streamErr);
+      this.speakWithWebSpeech(textToSpeak, effectiveLang, hasTamilScript, options);
+    }
+  }
+
+  private speakWithWebSpeech(
+    textToSpeak: string,
+    effectiveLang: string,
+    hasTamilScript: boolean,
+    options: TTSOptions
+  ): void {
+    if (!this.synth) {
+      if (options.onError) options.onError(new Error('SpeechSynthesis not available'));
+      return;
+    }
 
     setTimeout(() => {
       if (!this.synth) return;
 
-      const textToSpeak = this.cleanTextForSpeech(text);
-      if (!textToSpeak) return;
-
-      const hasTamilScript = /[\u0B80-\u0BFF]/.test(textToSpeak);
-      const hasHindiScript = /[\u0900-\u097F]/.test(textToSpeak);
-
-      let effectiveLang = options.language || 'English';
-      if (hasTamilScript) {
-        effectiveLang = 'Tamil';
-      } else if (hasHindiScript) {
-        effectiveLang = 'Hindi';
-      }
-
       const { voice, targetLang } = this.selectVoiceForLanguage(effectiveLang, hasTamilScript);
-
       const utterance = new SpeechSynthesisUtterance(textToSpeak);
       this.currentUtterance = utterance;
-      // Anchor to window to prevent Chromium garbage collection bug
       (window as any).__voxentra_utterance = utterance;
 
-      // Assign voice and exact BCP 47 language tag
       if (voice) {
         utterance.voice = voice;
         utterance.lang = voice.lang || targetLang;
@@ -271,17 +308,6 @@ class SpeechController {
         }
         this.currentUtterance = null;
         (window as any).__voxentra_utterance = null;
-        console.warn('TTS speak error:', err);
-
-        // Fallback: If browser failed due to language-unavailable, retry with default system voice
-        if (err && (err as any).error === 'language-unavailable' && targetLang !== 'en-US') {
-          try {
-            const fallbackUtt = new SpeechSynthesisUtterance(textToSpeak);
-            fallbackUtt.lang = 'en-IN';
-            fallbackUtt.rate = 0.95;
-            this.synth?.speak(fallbackUtt);
-          } catch (e) {}
-        }
 
         if (options.onError) options.onError(err);
       };
@@ -291,11 +317,9 @@ class SpeechController {
           this.synth.resume();
         }
         this.synth.speak(utterance);
-        if (this.synth.paused) {
-          this.synth.resume();
-        }
       } catch (e) {
-        console.warn('TTS speak error:', e);
+        console.warn('Web Speech API speak exception:', e);
+        if (options.onError) options.onError(e);
       }
     }, 50);
   }
@@ -305,6 +329,15 @@ class SpeechController {
       clearInterval(this.resumeInterval);
       this.resumeInterval = null;
     }
+
+    if (this.currentAudio) {
+      try {
+        this.currentAudio.pause();
+        this.currentAudio.currentTime = 0;
+        this.currentAudio = null;
+      } catch (e) {}
+    }
+
     if (this.synth) {
       try {
         this.synth.cancel();
@@ -316,8 +349,9 @@ class SpeechController {
   }
 
   public isSpeaking(): boolean {
-    return !!(this.synth && this.synth.speaking);
+    return !!(this.currentAudio && !this.currentAudio.paused) || !!(this.synth && this.synth.speaking);
   }
+
 
   // -------------------------------------------------------------
   // DTMF Telephone Keypad Audio Generator
