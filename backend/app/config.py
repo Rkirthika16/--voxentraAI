@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./voxentra.db"
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
@@ -38,11 +38,22 @@ class Settings(BaseSettings):
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",") if i.strip()]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+        if isinstance(v, str):
+            clean_str = v.strip().strip("'\"")
+            if clean_str == "*":
+                return ["*"]
+            if clean_str.startswith("[") and clean_str.endswith("]"):
+                try:
+                    import json
+                    parsed = json.loads(clean_str)
+                    if isinstance(parsed, list):
+                        return [str(i).strip() for i in parsed if str(i).strip()]
+                except Exception:
+                    pass
+            return [i.strip() for i in clean_str.split(",") if i.strip()]
+        elif isinstance(v, list):
+            return [str(i).strip() for i in v if str(i).strip()]
+        return ["*"]
 
     # AI & Speech Service
     WHISPER_MODEL_SIZE: str = "base"
