@@ -83,104 +83,185 @@ def handle_ivr_dialogue_turn(
     db: Session = Depends(get_db)
 ):
     """
-    Conversational turn handler for the speaking AI during a toll-free call.
-    Maintains dialogue context, asks clarifying questions if location is missing,
-    or registers the grievance when sufficient information is gathered.
+    Multilingual Conversational Turn Handler for IVR Toll-Free Helpline:
+    1. Supports Tamil, English, and Tanglish.
+    2. Enforces 'No Assumptions' hierarchical location clarification (District -> Area -> Street -> Landmark -> Exact Spot).
+    3. Detects vague or contradictory inputs and prompts targeted clarification.
+    4. Presents complete 10-point breakdown and obtains citizen confirmation before database registration.
+    5. Sends instant SMS notification upon grievance creation.
     """
-    user_speech = req.user_speech.strip()
-    analysis = ai_provider.analyze(user_speech)
-    detected_lang = analysis.detected_language
+    from app.ai.complaint_collector import complaint_collector, FIELD_KEYS, FIELD_METADATA
+    from app.ai.language_service import detect_language
+    from app.ai.normalization_service import normalize_text
+    from app.ai.classification_service import classify_complaint
 
-    # Check if we have sufficient details (category + location)
-    has_location = bool(analysis.extracted_location and analysis.extracted_location != "Tamil Nadu")
-    has_category = bool(analysis.category and analysis.category != "Other")
+    user_speech = (req.user_speech or "").strip()
+    session = complaint_collector.get_or_create_session(
+        req.call_sid,
+        language_hint=req.language_preference if req.language_preference != "Auto" else None
+    )
 
-    # If first turn and missing location, ask for specific village/panchayat conversationally
-    if req.dialogue_turn == 1 and not has_location and has_category:
-        if detected_lang == "Tamil":
-            reply_ta = f"புரிந்தது. உங்கள் {analysis.category} புகார் பதிவு செய்ய, எந்த கிராமம், ஊராட்சி அல்லது பகுதியில் இந்த பிரச்சனை உள்ளது என்பதை கூறவும்."
-            reply_en = f"Understood. To register your {analysis.category} complaint, please state your village, panchayat, or landmark."
-        elif detected_lang == "Tanglish":
-            reply_ta = f"Got it. Unga {analysis.category} issue endha gramam or panchayat-la irukku nu sollunga."
-            reply_en = f"Got it. Please specify the village, panchayat or area where the {analysis.category} issue occurred."
-        else:
-            reply_ta = f"உங்கள் {analysis.category} புகார் பதிவு செய்ய கிராமம் அல்லது இடத்தை கூறவும்."
-            reply_en = f"Understood. To route your {analysis.category} complaint, please tell me your village name or location."
+    # Pre-populate citizen phone if caller_phone provided
+    if req.caller_phone and not session["fields"].get("citizen_details"):
+        session["fields"]["citizen_details"] = req.caller_phone
 
-        spoken_reply = reply_ta if detected_lang in ["Tamil", "Tanglish"] else reply_en
+    # Detect language
+    detected_lang, _ = detect_language(user_speech)
+    if req.language_preference in ["Tamil", "English", "Tanglish"]:
+        detected_lang = req.language_preference
+    session["language"] = detected_lang
+
+    # 1. If currently in CONFIRMATION_PENDING stage
+    if session.get("state") == "CONFIRMATION_PENDING":
+        is_decision, is_confirmed = complaint_collector.is_confirmation_response(user_speech)
+        if is_decision:
+            if is_confirmed:
+                # Register complaint
+                created_complaint = complaint_collector.register_complaint_record(session, db)
+                dept_name = created_complaint.department.name if created_complaint.department else "Municipal Administration"
+
+                if detected_lang == "Tamil":
+                    reply_ta = (
+                        f"நன்றி! உங்கள் புகார் எண் {created_complaint.complaint_number} என வெற்றிகரமாக பதிவு செய்யப்பட்டது. "
+                        f"இது {dept_name} துறைக்கு அனுப்பப்பட்டுள்ளது. உங்கள் கைபேசிக்கு குறுஞ்செய்தி அனுப்பப்பட்டுள்ளது."
+                    )
+                    reply_en = f"Grievance #{created_complaint.complaint_number} registered and forwarded to {dept_name}."
+                    spoken = reply_ta
+                elif detected_lang == "Tanglish":
+                    reply_ta = f"Thank you! Unga complaint #{created_complaint.complaint_number} register aagi {dept_name} ku forward panniyaachu. SMS unga mobile ku anupiyachu."
+                    reply_en = f"Grievance #{created_complaint.complaint_number} registered and forwarded to {dept_name}."
+                    spoken = reply_ta
+                else:
+                    reply_ta = f"புகார் எண் {created_complaint.complaint_number} பதிவு செய்யப்பட்டது."
+                    reply_en = (
+                        f"Thank you! Your grievance has been registered under ID {created_complaint.complaint_number} "
+                        f"and forwarded to {dept_name}. A confirmation SMS has been sent to your phone."
+                    )
+                    spoken = reply_en
+
+                sms_text = (
+                    f"[Govt of TN / Voxentra] Grievance #{created_complaint.complaint_number} registered. "
+                    f"Dept: {dept_name}. Status: Assigned to Field Officer."
+                )
+                dispatch_sms_notification(req.caller_phone or "+919843098765", sms_text)
+
+                return IVRCallDialogueResponse(
+                    call_sid=req.call_sid,
+                    dialogue_turn=req.dialogue_turn + 1,
+                    ai_spoken_reply=spoken,
+                    ai_spoken_reply_tamil=reply_ta,
+                    ai_spoken_reply_english=reply_en,
+                    detected_language=detected_lang,
+                    intent="CONFIRMED",
+                    extracted_category=created_complaint.category,
+                    extracted_location=created_complaint.location,
+                    suggested_department=dept_name,
+                    is_confirmation_pending=False,
+                    is_completed=True,
+                    collection_state=session["fields"],
+                    complaint_id=created_complaint.id,
+                    complaint_number=created_complaint.complaint_number,
+                    sms_sent=True
+                )
+            else:
+                # Caller wants edits
+                session["state"] = "COLLECTING"
+                session["current_field_prompted"] = "problem_description"
+                if detected_lang == "Tamil":
+                    reply_ta = "சரி, எந்த விவரத்தை மாற்ற வேண்டும்? தயவுசெய்து கூறவும்."
+                    reply_en = "Sure, which detail would you like to update? Please specify."
+                    spoken = reply_ta
+                elif detected_lang == "Tanglish":
+                    reply_ta = "Sure, endha detail ah maathanum nu sollunga."
+                    reply_en = "Which detail would you like to update?"
+                    spoken = reply_ta
+                else:
+                    reply_ta = "எந்த விவரத்தை மாற்ற வேண்டும்?"
+                    reply_en = "Understood. Which detail would you like to correct or update?"
+                    spoken = reply_en
+
+                return IVRCallDialogueResponse(
+                    call_sid=req.call_sid,
+                    dialogue_turn=req.dialogue_turn + 1,
+                    ai_spoken_reply=spoken,
+                    ai_spoken_reply_tamil=reply_ta,
+                    ai_spoken_reply_english=reply_en,
+                    detected_language=detected_lang,
+                    intent="GATHER_MORE_INFO",
+                    is_confirmation_pending=False,
+                    is_completed=False,
+                    collection_state=session["fields"]
+                )
+
+    # 2. Extract slots from user speech
+    current_field = session.get("current_field_prompted")
+    extracted_slots = complaint_collector.extract_slots(user_speech, current_field=current_field)
+
+    for k, v in extracted_slots.items():
+        if v and str(v).strip():
+            session["fields"][k] = v
+
+    # 3. Check for next missing field
+    next_missing = complaint_collector.get_next_missing_field(session)
+
+    if not next_missing:
+        # All 10 details collected -> Present confirmation summary
+        session["state"] = "CONFIRMATION_PENDING"
+        session["current_field_prompted"] = None
+        summary_text, spoken_summary = complaint_collector.generate_summary(session, detected_lang)
+
+        prob = session["fields"].get("problem_description") or "Civic Grievance"
+        cat, dept, _ = classify_complaint(normalize_text(prob))
+
         return IVRCallDialogueResponse(
             call_sid=req.call_sid,
             dialogue_turn=req.dialogue_turn + 1,
-            ai_spoken_reply=spoken_reply,
-            ai_spoken_reply_tamil=reply_ta,
-            ai_spoken_reply_english=reply_en,
+            ai_spoken_reply=spoken_summary,
+            ai_spoken_reply_tamil=summary_text if detected_lang == "Tamil" else spoken_summary,
+            ai_spoken_reply_english=spoken_summary if detected_lang == "English" else summary_text,
             detected_language=detected_lang,
-            intent="GATHER_MORE_INFO",
-            extracted_category=analysis.category,
-            extracted_location=analysis.extracted_location,
-            suggested_department=analysis.suggested_department,
-            is_completed=False
+            intent="CONFIRMATION_PENDING",
+            extracted_category=cat,
+            extracted_location=f"{session['fields'].get('district_area', '')}, {session['fields'].get('street_road_name', '')}",
+            suggested_department=dept,
+            is_confirmation_pending=True,
+            is_completed=False,
+            collection_state=session["fields"],
+            summary=summary_text
         )
 
-    # If ready or turn >= 2, register grievance directly
-    title = f"{analysis.category} Grievance (Toll-Free Call)"
-    if analysis.extracted_location:
-        title += f" near {analysis.extracted_location}"
+    # 4. Still missing fields -> Generate contextual question without assumptions
+    session["state"] = "COLLECTING"
+    session["current_field_prompted"] = next_missing
+    meta = FIELD_METADATA.get(next_missing, {})
 
-    complaint_in = ComplaintCreate(
-        title=title,
-        description=user_speech,
-        category=analysis.category,
-        location=analysis.extracted_location or "Tamil Nadu",
-        latitude=analysis.latitude,
-        longitude=analysis.longitude,
-        priority=analysis.priority,
-        language=analysis.detected_language,
-        source=ComplaintSource.TELEPHONY_IVR,
-        citizen_confirmed=True,
-        ai_metadata={
-            "call_sid": req.call_sid,
-            "caller_phone": req.caller_phone,
-            "summary": analysis.summary,
-            "analysis_method": "conversational_ivr_dialogue",
-            "detected_language": analysis.detected_language,
-            "suggested_department": analysis.suggested_department
-        }
-    )
+    question_text, spoken_text = complaint_collector.get_contextual_question(session, next_missing, detected_lang)
 
-    created_complaint = complaint_service.create_complaint(db, complaint_in, citizen_id=None)
+    # Detect if previous location input was vague
+    if current_field in ["district_area", "street_road_name", "exact_location"] and complaint_collector.is_vague_location(user_speech):
+        if detected_lang == "Tamil":
+            spoken_text = f"நீங்கள் கூறிய இடம் போதுமானதாக இல்லை. {spoken_text}"
+        elif detected_lang == "Tanglish":
+            spoken_text = f"Neenga sonna location clear ah illa. {spoken_text}"
+        else:
+            spoken_text = f"The location provided is unclear. {spoken_text}"
 
-    reply_ta = (
-        f"நன்றி! உங்கள் {analysis.category} புகார் எண் {created_complaint.complaint_number} என பதிவு செய்யப்பட்டது. "
-        f"இது உடனடியாக {analysis.suggested_department} துறைக்கு அனுப்பப்பட்டுள்ளது."
-    )
-    reply_en = (
-        f"Thank you! Your grievance regarding {analysis.category} has been registered under ID {created_complaint.complaint_number} "
-        f"and forwarded to {analysis.suggested_department}."
-    )
-    spoken_reply = reply_ta if detected_lang == "Tamil" else (f"{reply_ta} {reply_en}" if detected_lang == "Tanglish" else reply_en)
-
-    sms_text = (
-        f"[Govt of TN / Voxentra] Grievance #{created_complaint.complaint_number} registered for {analysis.category}. "
-        f"Assigned Dept: {analysis.suggested_department}. Status: Assigned to Field Officer."
-    )
-    exotel_adapter.send_sms(req.caller_phone or "+919843098765", sms_text)
+    q_ta, _ = complaint_collector.get_contextual_question(session, next_missing, "Tamil")
+    q_en, _ = complaint_collector.get_contextual_question(session, next_missing, "English")
 
     return IVRCallDialogueResponse(
         call_sid=req.call_sid,
         dialogue_turn=req.dialogue_turn + 1,
-        ai_spoken_reply=spoken_reply,
-        ai_spoken_reply_tamil=reply_ta,
-        ai_spoken_reply_english=reply_en,
+        ai_spoken_reply=spoken_text,
+        ai_spoken_reply_tamil=q_ta,
+        ai_spoken_reply_english=q_en,
         detected_language=detected_lang,
-        intent="CONFIRMED",
-        extracted_category=analysis.category,
-        extracted_location=analysis.extracted_location,
-        suggested_department=analysis.suggested_department,
-        is_completed=True,
-        complaint_id=created_complaint.id,
-        complaint_number=created_complaint.complaint_number,
-        sms_sent=True
+        intent="GATHER_MORE_INFO",
+        extracted_category=session["fields"].get("problem_description"),
+        extracted_location=session["fields"].get("district_area"),
+        is_confirmation_pending=False,
+        is_completed=False,
+        collection_state=session["fields"]
     )
 
 

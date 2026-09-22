@@ -37,18 +37,23 @@ interface ChatMessage {
 export const TollFreeHelplinePage: React.FC = () => {
   // Call States: 'IDLE' -> 'CALLING' -> 'CONNECTED' -> 'RECORDING' -> 'PROCESSING' -> 'DONE'
   const [callState, setCallState] = useState<'IDLE' | 'CALLING' | 'CONNECTED' | 'RECORDING' | 'PROCESSING' | 'DONE'>('IDLE');
-  const [language, setLanguage] = useState<'ta' | 'en' | 'hi'>('ta');
+  const [language, setLanguage] = useState<'ta' | 'en' | 'tanglish' | 'hi'>('ta');
   const [callerPhone, setCallerPhone] = useState('+91 98430 98765');
   const tollFreeNumber = '1913';
 
-  // Voice Interaction State
+  // Voice & Turn Interaction State
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [spokenText, setSpokenText] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [result, setResult] = useState<IVRProcessSpeechResponse | null>(null);
+  const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [dialogueTurn, setDialogueTurn] = useState(1);
+  const [currentCallSid, setCurrentCallSid] = useState('');
+  const [collectionFields, setCollectionFields] = useState<Record<string, any>>({});
+  const [isConfirmationPending, setIsConfirmationPending] = useState(false);
+  const [summaryText, setSummaryText] = useState('');
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -90,12 +95,17 @@ export const TollFreeHelplinePage: React.FC = () => {
     setMessages([]);
     setSpokenText('');
     setIsAiSpeaking(false);
+    setDialogueTurn(1);
+    setCollectionFields({});
+    setIsConfirmationPending(false);
+    setSummaryText('');
 
     // Play phone ringtone
     speech.playRingTone(2.0);
 
     try {
       const initData = await ivrApi.initiateCall(callerPhone, tollFreeNumber);
+      setCurrentCallSid(initData.call_sid);
 
       setTimeout(() => {
         speech.stopRingTone();
@@ -112,6 +122,9 @@ export const TollFreeHelplinePage: React.FC = () => {
         } else if (language === 'en') {
           greeting = initData.greeting_english + " " + initData.prompt_english;
           langName = 'English';
+        } else if (language === 'tanglish') {
+          greeting = "Vanakkam! Voxentra Tamil Nadu Civic & Grievance Helpline ku welcome. Ungaloda problem enna nu sollunga.";
+          langName = 'Tanglish';
         }
 
         const aiMsg: ChatMessage = {
@@ -180,18 +193,16 @@ export const TollFreeHelplinePage: React.FC = () => {
       setRecordSeconds(0);
       setSpokenText('');
 
-      // Continuous Speech Recognition in Tamil / English
+      // Continuous Speech Recognition in Tamil / English / Tanglish
       if (speech.isSTTSupported()) {
         const sttLang = language === 'ta' ? 'ta-IN' : (language === 'hi' ? 'hi-IN' : 'en-IN');
         const rec = speech.createRecognition(
           sttLang as any,
-          (transcript, isFinal) => {
+          (transcript) => {
             setSpokenText(transcript);
           },
           (err) => console.log('STT status:', err),
-          () => {
-            // Finished recognition turn
-          }
+          () => {}
         );
         if (rec) {
           recognitionRef.current = rec;
@@ -207,7 +218,7 @@ export const TollFreeHelplinePage: React.FC = () => {
     }
   };
 
-  // 4. SUBMIT SPOKEN GRIEVANCE (AI AUTOMATICALLY CLASSIFIES DEPT & RESPONDS WITH VOICE)
+  // 4. SUBMIT SPOKEN GRIEVANCE TURN-BY-TURN WITH NO ASSUMPTIONS LOCATION CLARIFICATION
   const handleSubmitSpokenProblem = async (customText?: string) => {
     speech.unlock();
     const textToProcess = (customText || spokenText).trim();
@@ -240,28 +251,45 @@ export const TollFreeHelplinePage: React.FC = () => {
     setCallState('PROCESSING');
 
     try {
-      // Backend automatically extracts Department, Location, Priority, and registers Ticket
-      const res = await ivrApi.processSpeech({
+      const activeSid = currentCallSid || `CA_${Date.now()}`;
+      const langPref = language === 'ta' ? 'Tamil' : (language === 'tanglish' ? 'Tanglish' : (language === 'hi' ? 'Hindi' : 'English'));
+
+      // Use dialogue turn endpoint for intelligent clarification & confirmation flow
+      const res = await ivrApi.dialogueTurn({
+        call_sid: activeSid,
         caller_phone: callerPhone,
-        speech_text: textToProcess,
-        language_hint: language,
+        dialogue_turn: dialogueTurn,
+        user_speech: textToProcess,
+        language_preference: langPref,
       });
 
-      speech.playSuccessChime();
-      setResult(res);
-      setCallState('DONE');
-
-      // AI Spoken Voice Response formulation
-      let replyText = res.confirmation_spoken_tamil || `வணக்கம். உங்கள் ${res.category} புகார் எண் ${res.complaint_number} வெற்றிகரமாக பதிவு செய்யப்பட்டது. இது ${res.suggested_department} துறைக்கு அனுப்பப்பட்டுள்ளது.`;
-      let spokenLang = 'Tamil';
-
-      if (language === 'hi') {
-        replyText = `धन्यवाद! आपकी ${res.category} शिकायत संख्या ${res.complaint_number} दर्ज हो चुकी है और ${res.suggested_department} विभाग को तुरंत भेज दी गई है. आपके मोबाइल पर एसएमएस भेजा गया है.`;
-        spokenLang = 'Hindi';
-      } else if (language === 'en' || (res.detected_language === 'English' && language !== 'ta')) {
-        replyText = res.confirmation_spoken_english || `Thank you. Your ${res.category} grievance ${res.complaint_number} has been registered and forwarded to ${res.suggested_department}.`;
-        spokenLang = 'English';
+      setDialogueTurn(res.dialogue_turn);
+      if (res.collection_state) {
+        setCollectionFields(res.collection_state);
       }
+      setIsConfirmationPending(Boolean(res.is_confirmation_pending));
+      if (res.summary) {
+        setSummaryText(res.summary);
+      }
+
+      if (res.is_completed) {
+        speech.playSuccessChime();
+        setResult({
+          complaint_number: res.complaint_number || 'VOX-2026-0001',
+          complaint_id: res.complaint_id || 1,
+          category: res.extracted_category || 'General Civic',
+          suggested_department: res.suggested_department || 'Municipal Administration',
+          extracted_location: res.extracted_location || 'Tamil Nadu',
+          status: 'SUBMITTED',
+          sms_text: `[Govt of TN / Voxentra] Grievance #${res.complaint_number} registered. Dept: ${res.suggested_department}. Status: Assigned to Field Officer.`
+        });
+        setCallState('DONE');
+      } else {
+        setCallState('CONNECTED');
+      }
+
+      const replyText = res.ai_spoken_reply;
+      const spokenLang = res.detected_language || (language === 'ta' ? 'Tamil' : (language === 'tanglish' ? 'Tanglish' : 'English'));
 
       const aiReply: ChatMessage = {
         id: `ai_${Date.now()}`,
@@ -271,12 +299,13 @@ export const TollFreeHelplinePage: React.FC = () => {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages((prev) => [...prev, aiReply]);
+      setSpokenText('');
 
       // AI speaks out loud to the citizen
       playVoice(replyText, spokenLang);
 
     } catch (err: any) {
-      setError('Failed to process spoken grievance. Please try again.');
+      setError('Failed to process spoken turn. Please try again.');
       setCallState('CONNECTED');
     }
   };
@@ -340,6 +369,13 @@ export const TollFreeHelplinePage: React.FC = () => {
             English
           </button>
           <button
+            onClick={() => setLanguage('tanglish')}
+            className={`btn btn-sm ${language === 'tanglish' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+          >
+            Tanglish
+          </button>
+          <button
             onClick={() => setLanguage('hi')}
             className={`btn btn-sm ${language === 'hi' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
@@ -397,7 +433,7 @@ export const TollFreeHelplinePage: React.FC = () => {
             1913
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.75rem', maxWidth: '600px' }}>
-            Call from any basic mobile phone or click below. The AI answers, listens to your problem, automatically assigns the responsible Tamil Nadu department, and speaks your ticket ID back to you.
+            Call from any basic mobile phone or click below. The AI answers, clarifies missing location & problem details without making assumptions, asks confirmation, and dispatches to the government department.
           </p>
         </div>
 
@@ -435,7 +471,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                 <span>End Call</span>
               </button>
               <span style={{ fontSize: '0.85rem', color: '#34d399', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.6rem 1.2rem', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
-                ● Call Connected (AI Audio Active)
+                ● Call Connected • Turn {dialogueTurn} (AI Audio Active)
               </span>
             </div>
           )}
@@ -457,6 +493,53 @@ export const TollFreeHelplinePage: React.FC = () => {
               </span>
             )}
           </div>
+
+          {/* 10-Point Intake HUD Indicator */}
+          {Object.keys(collectionFields).length > 0 && (
+            <div style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: 'var(--radius-md)', padding: '0.85rem 1.2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Sparkles size={14} /> 10-Point Grievance Intake Progress:
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 700 }}>
+                  {Object.values(collectionFields).filter(v => v && String(v).trim()).length}/10 Details Collected
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                {[
+                  { k: 'problem_description', label: 'Problem' },
+                  { k: 'district_area', label: 'District/Area' },
+                  { k: 'street_road_name', label: 'Street/Road' },
+                  { k: 'landmark', label: 'Landmark' },
+                  { k: 'exact_location', label: 'Exact Spot' },
+                  { k: 'date_and_time', label: 'Time' },
+                  { k: 'frequency', label: 'Frequency' },
+                  { k: 'current_status', label: 'Status' },
+                  { k: 'additional_details', label: 'Hazards' },
+                  { k: 'citizen_details', label: 'Citizen Phone' }
+                ].map(item => {
+                  const val = collectionFields[item.k];
+                  const isFilled = val && String(val).trim();
+                  return (
+                    <span
+                      key={item.k}
+                      style={{
+                        fontSize: '0.7rem',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: isFilled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+                        border: isFilled ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(100, 116, 139, 0.3)',
+                        color: isFilled ? '#34d399' : '#94a3b8',
+                        fontWeight: 600
+                      }}
+                    >
+                      {isFilled ? '✓' : '○'} {item.label}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Dialogue Message History */}
           <div
@@ -497,7 +580,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                     color: '#ffffff',
                   }}
                 >
-                  <p>{msg.text}</p>
+                  <p style={{ whiteSpace: 'pre-line' }}>{msg.text}</p>
                   {msg.sender === 'ai' && (
                     <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.5rem' }}>
                       <button
@@ -505,7 +588,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                         className="btn btn-secondary btn-sm"
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', padding: '0.25rem 0.65rem' }}
                       >
-                        <Volume2 size={13} /> Replay AI Voice
+                        <Volume2 size={13} /> Replay Voice
                       </button>
                       {isAiSpeaking && (
                         <button
@@ -524,59 +607,81 @@ export const TollFreeHelplinePage: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick 1-Click Problem Test Pills for Instant Redressal */}
+          {/* Confirmation Action Card if pending confirmation */}
+          {isConfirmationPending && callState !== 'DONE' && (
+            <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.25))', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '1.25rem', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#34d399', fontWeight: 700 }}>
+                <CheckCircle2 size={18} />
+                <span>All 10 Details Gathered • Please Confirm with AI:</span>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: '#e2e8f0', margin: 0 }}>
+                Shall we register this grievance and forward it to the department now?
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => handleSubmitSpokenProblem('Yes, confirm and register this complaint now')}
+                  className="btn btn-primary btn-sm"
+                  style={{ background: '#10b981', borderColor: '#059669', fontWeight: 700 }}
+                >
+                  <Check size={16} /> ✅ ஆமாம் / Yes, Confirm & Submit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSubmitSpokenProblem('I want to change some details')}
+                  className="btn btn-secondary btn-sm"
+                >
+                  ✏️ விவரத்தை மாற்று / Edit
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Quick 1-Click Dialogue Clarification Presets */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(15, 23, 42, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Sparkles size={14} color="#38bdf8" /> Fast 1-Tap Civic Grievance Presets (Test Any Department Instantly):
+              <Sparkles size={14} color="#38bdf8" /> Fast Voice Clarification Responses (Click to Speak to AI):
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               <button
                 type="button"
-                onClick={() => { setSpokenText('திருவாரூர்ல ஸ்ட்ரீட் லைட் எரியல.'); handleSubmitSpokenProblem('திருவாரூர்ல ஸ்ட்ரீட் லைட் எரியல.'); }}
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.4)', color: '#fbbf24' }}
-              >
-                🏮 Thiruvarur Streetlight (திருவாரூர் ஸ்ட்ரீட் லைட்)
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSpokenText('மதுரை பஞ்சாயத்து குடிநீர் பைப் உடைஞ்சு தண்ணி வீணாகுது.'); handleSubmitSpokenProblem('மதுரை பஞ்சாயத்து குடிநீர் பைப் உடைஞ்சு தண்ணி வீணாகுது.'); }}
+                onClick={() => { setSpokenText('Water pipe is broken and leaking'); handleSubmitSpokenProblem('Water pipe is broken and leaking'); }}
                 className="btn btn-secondary btn-sm"
                 style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.4)', color: '#38bdf8' }}
               >
-                💧 Madurai Water Leak (குடிநீர் பைப் உடைப்பு)
+                💧 1. Water pipe leak (பிரச்சனை)
               </button>
               <button
                 type="button"
-                onClick={() => { setSpokenText('ஈரோடு கிராமத்துல கரண்ட் கட் ஆயிடுச்சு மின்சாரம் இல்ல.'); handleSubmitSpokenProblem('ஈரோடு கிராமத்துல கரண்ட் கட் ஆயிடுச்சு மின்சாரம் இல்ல.'); }}
+                onClick={() => { setSpokenText('Gandhipuram, Coimbatore'); handleSubmitSpokenProblem('Gandhipuram, Coimbatore'); }}
                 className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(234, 179, 8, 0.15)', borderColor: 'rgba(234, 179, 8, 0.4)', color: '#fef08a' }}
+                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.4)', color: '#fbbf24' }}
               >
-                ⚡ Erode Power Cut (மின்வெட்டு கரண்ட் கட்)
+                🏙️ 2. Gandhipuram, Coimbatore (பகுதி)
               </button>
               <button
                 type="button"
-                onClick={() => { setSpokenText('சேலம் மெயின் ரோடு ரொம்ப பள்ளமா இருக்கு விபத்து நடக்குது.'); handleSubmitSpokenProblem('சேலம் மெயின் ரோடு ரொம்ப பள்ளமா இருக்கு விபத்து நடக்குது.'); }}
+                onClick={() => { setSpokenText('Cross Cut Road'); handleSubmitSpokenProblem('Cross Cut Road'); }}
                 className="btn btn-secondary btn-sm"
                 style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(249, 115, 22, 0.15)', borderColor: 'rgba(249, 115, 22, 0.4)', color: '#fdba74' }}
               >
-                🛣️ Salem Damaged Road (ரோடு பள்ளம்)
+                🛣️ 3. Cross Cut Road (தெரு)
               </button>
               <button
                 type="button"
-                onClick={() => { setSpokenText('திருச்சி தெருவுல குப்பை அள்ளவில்லை ரொம்ப துர்நாற்றம்.'); handleSubmitSpokenProblem('திருச்சி தெருவுல குப்பை அள்ளவில்லை ரொம்ப துர்நாற்றம்.'); }}
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#6ee7b7' }}
-              >
-                🗑️ Trichy Garbage (குப்பை அள்ளவில்லை)
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSpokenText('வேலூர் சாக்கடை அடைத்து கழிவுநீர் தெருவில் தேங்கி உள்ளது.'); handleSubmitSpokenProblem('வேலூர் சாக்கடை அடைத்து கழிவுநீர் தெருவில் தேங்கி உள்ளது.'); }}
+                onClick={() => { setSpokenText('Opposite City Hospital near Indian Bank ATM'); handleSubmitSpokenProblem('Opposite City Hospital near Indian Bank ATM'); }}
                 className="btn btn-secondary btn-sm"
                 style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.4)', color: '#c4b5fd' }}
               >
-                🌊 Vellore Drainage (சாக்கடை அடைப்பு)
+                🏛️ 4. Opp City Hospital (Landmark)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSpokenText('Near Pole #14, Door 45'); handleSubmitSpokenProblem('Near Pole #14, Door 45'); }}
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#6ee7b7' }}
+              >
+                📍 5. Near Pole #14 (Exact Spot)
               </button>
             </div>
           </div>

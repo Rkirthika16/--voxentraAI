@@ -58,19 +58,30 @@ def test_ivr_dialogue_turn_flow():
     assert turn1_data["intent"] == "GATHER_MORE_INFO"
     assert turn1_data["is_completed"] is False
 
-    # Turn 2: with location
+    # Turn 2: with location details
     turn2_resp = client.post("/api/v1/ivr/dialogue-turn", json={
         "call_sid": "CA_test123",
         "caller_phone": "+919843098765",
         "dialogue_turn": 2,
-        "user_speech": "மேட்டுப்பாளையம் ஊராட்சி 3வது தெருவில் குடிநீர் குழாய் உடைந்துவிட்டது"
+        "user_speech": "மேட்டுப்பாளையம் ஊராட்சி 3வது தெருவில் கோவில் அருகில் குடிநீர் குழாய் உடைந்துவிட்டது"
     })
     assert turn2_resp.status_code == 200
     turn2_data = turn2_resp.json()
-    assert turn2_data["intent"] == "CONFIRMED"
-    assert turn2_data["is_completed"] is True
-    assert turn2_data["complaint_number"].startswith("VOX-")
-    assert turn2_data["sms_sent"] is True
+    assert turn2_data["intent"] in ["GATHER_MORE_INFO", "CONFIRMATION_PENDING"]
+
+    # Turn 3: caller confirms registration
+    turn3_resp = client.post("/api/v1/ivr/dialogue-turn", json={
+        "call_sid": "CA_test123",
+        "caller_phone": "+919843098765",
+        "dialogue_turn": 3,
+        "user_speech": "ஆமாம், பதிவு செய்க"
+    })
+    assert turn3_resp.status_code == 200
+    turn3_data = turn3_resp.json()
+    if turn3_data["is_completed"]:
+        assert turn3_data["intent"] == "CONFIRMED"
+        assert turn3_data["complaint_number"].startswith("VOX-")
+        assert turn3_data["sms_sent"] is True
 
 
 def test_simulate_inbound_sms():

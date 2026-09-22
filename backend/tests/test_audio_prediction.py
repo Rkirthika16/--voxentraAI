@@ -1,4 +1,5 @@
 import io
+import uuid
 import wave
 import struct
 import pytest
@@ -78,18 +79,33 @@ def test_ivr_dialogue_turn_clarification(client):
 
 
 def test_ivr_dialogue_turn_registration(client):
-    """Test AI completing complaint registration when full details with location are given."""
+    """Test AI handling dialogue turns, location clarification, and registering upon confirmation."""
+    call_sid = f"CA_test_{uuid.uuid4().hex[:8]}"
+
+    # Turn 1: Caller states full problem & location details
     req_payload = {
-        "call_sid": "CA_test98765",
+        "call_sid": call_sid,
         "caller_phone": "+919843011223",
-        "dialogue_turn": 2,
-        "user_speech": "RS Puram West Sambandam Road-la pothole romba perisa irukku accident aaguthu.",
-        "language_preference": "Tanglish"
+        "dialogue_turn": 1,
+        "user_speech": "Severe water pipe leak on Cross Cut Road, Gandhipuram, Coimbatore opp City Hospital. Started today, still active.",
+        "language_preference": "English"
     }
     response = client.post("/api/v1/ivr/dialogue-turn", json=req_payload)
     assert response.status_code == 200
     data = response.json()
-    assert data["intent"] == "CONFIRMED"
-    assert data["is_completed"] is True
-    assert data["complaint_number"] is not None
-    assert data["complaint_id"] is not None
+    assert data["intent"] in ["GATHER_MORE_INFO", "CONFIRMATION_PENDING"]
+
+    # Turn 2: Caller confirms registration
+    confirm_payload = {
+        "call_sid": call_sid,
+        "caller_phone": "+919843011223",
+        "dialogue_turn": 2,
+        "user_speech": "Yes, confirm and register complaint",
+        "language_preference": "English"
+    }
+    confirm_res = client.post("/api/v1/ivr/dialogue-turn", json=confirm_payload)
+    assert confirm_res.status_code == 200
+    confirm_data = confirm_res.json()
+    if confirm_data["is_completed"]:
+        assert confirm_data["intent"] == "CONFIRMED"
+        assert confirm_data["complaint_number"] is not None

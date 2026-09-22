@@ -63,11 +63,14 @@ class IVRCallDialogueResponse(BaseModel):
     ai_spoken_reply_tamil: str
     ai_spoken_reply_english: str
     detected_language: str
-    intent: str  # 'GATHER_MORE_INFO' | 'READY_TO_REGISTER' | 'CONFIRMED' | 'GENERAL_HELP'
+    intent: str  # 'GATHER_MORE_INFO' | 'CONFIRMATION_PENDING' | 'CONFIRMED' | 'GENERAL_HELP'
     extracted_category: Optional[str] = None
     extracted_location: Optional[str] = None
     suggested_department: Optional[str] = None
+    is_confirmation_pending: bool = False
     is_completed: bool = False
+    collection_state: Optional[Dict[str, Any]] = None
+    summary: Optional[str] = None
     complaint_id: Optional[int] = None
     complaint_number: Optional[str] = None
     sms_sent: bool = False

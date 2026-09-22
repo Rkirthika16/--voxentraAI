@@ -317,11 +317,14 @@ export interface IVRCallDialogueResponse {
   ai_spoken_reply_tamil: string;
   ai_spoken_reply_english: string;
   detected_language: string;
-  intent: 'GATHER_MORE_INFO' | 'READY_TO_REGISTER' | 'CONFIRMED' | 'GENERAL_HELP';
+  intent: 'GATHER_MORE_INFO' | 'CONFIRMATION_PENDING' | 'READY_TO_REGISTER' | 'CONFIRMED' | 'GENERAL_HELP';
   extracted_category?: string;
   extracted_location?: string;
   suggested_department?: string;
+  is_confirmation_pending?: boolean;
   is_completed: boolean;
+  collection_state?: Record<string, any>;
+  summary?: string;
   complaint_id?: number;
   complaint_number?: string;
   sms_sent: boolean;
