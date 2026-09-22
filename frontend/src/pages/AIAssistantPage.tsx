@@ -96,11 +96,12 @@ export const AIAssistantPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const handleSpeakText = (textToSpeak: string, language = 'English') => {
+  const handleSpeakText = (textToSpeak: string, language?: string) => {
     if (!textToSpeak) return;
+    speech.unlock();
     setIsSpeaking(true);
     speech.speak(textToSpeak, {
-      language,
+      language: language || (selectedLang === 'ta-IN' ? 'Tamil' : 'English'),
       rate: speechRate,
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
@@ -117,6 +118,8 @@ export const AIAssistantPage: React.FC = () => {
     const textToSend = (customMessage || inputText).trim();
     if (!textToSend || isLoading) return;
 
+    // Unlock browser audio context immediately on user click
+    speech.unlock();
     // Stop speaking previous response
     stopSpeaking();
 

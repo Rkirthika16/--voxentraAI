@@ -83,6 +83,7 @@ export const TollFreeHelplinePage: React.FC = () => {
 
   // 1. INITIATE TOLL-FREE CALL
   const handleStartCall = async () => {
+    speech.unlock();
     setError(null);
     setCallState('CALLING');
     setResult(null);
@@ -208,6 +209,7 @@ export const TollFreeHelplinePage: React.FC = () => {
 
   // 4. SUBMIT SPOKEN GRIEVANCE (AI AUTOMATICALLY CLASSIFIES DEPT & RESPONDS WITH VOICE)
   const handleSubmitSpokenProblem = async (customText?: string) => {
+    speech.unlock();
     const textToProcess = (customText || spokenText).trim();
     if (!textToProcess) {
       setError('Please speak your grievance clearly into the microphone.');

@@ -169,11 +169,36 @@ class SpeechController {
     return { voice: voices[0] || null, targetLang: 'en-US' };
   }
 
+  private resumeInterval: any = null;
+
+  public unlock(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const ctx = this.getAudioContext();
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      if (this.synth) {
+        if (this.synth.paused) {
+          this.synth.resume();
+        }
+      }
+    } catch (e) {}
+  }
+
   /**
    * Speaks out the text clearly in the requested language (Tamil, Hindi, English, Tanglish).
    */
   public speak(text: string, options: TTSOptions = {}): void {
     if (!this.synth || !text) return;
+
+    this.unlock();
+
+    // Clear previous keep-alive interval
+    if (this.resumeInterval) {
+      clearInterval(this.resumeInterval);
+      this.resumeInterval = null;
+    }
 
     // Cancel previous speech safely
     try {
@@ -203,6 +228,8 @@ class SpeechController {
 
       const utterance = new SpeechSynthesisUtterance(textToSpeak);
       this.currentUtterance = utterance;
+      // Anchor to window to prevent Chromium garbage collection bug
+      (window as any).__voxentra_utterance = utterance;
 
       // Assign voice and exact BCP 47 language tag
       if (voice) {
@@ -217,36 +244,72 @@ class SpeechController {
       utterance.volume = options.volume ?? 1.0;
 
       utterance.onstart = () => {
+        if (this.resumeInterval) clearInterval(this.resumeInterval);
+        this.resumeInterval = setInterval(() => {
+          if (this.synth && this.synth.speaking) {
+            this.synth.resume();
+          }
+        }, 1500);
+
         if (options.onStart) options.onStart();
       };
 
       utterance.onend = () => {
+        if (this.resumeInterval) {
+          clearInterval(this.resumeInterval);
+          this.resumeInterval = null;
+        }
         this.currentUtterance = null;
+        (window as any).__voxentra_utterance = null;
         if (options.onEnd) options.onEnd();
       };
 
       utterance.onerror = (err) => {
+        if (this.resumeInterval) {
+          clearInterval(this.resumeInterval);
+          this.resumeInterval = null;
+        }
         this.currentUtterance = null;
+        (window as any).__voxentra_utterance = null;
+        console.warn('TTS speak error:', err);
+
+        // Fallback: If browser failed due to language-unavailable, retry with default system voice
+        if (err && (err as any).error === 'language-unavailable' && targetLang !== 'en-US') {
+          try {
+            const fallbackUtt = new SpeechSynthesisUtterance(textToSpeak);
+            fallbackUtt.lang = 'en-IN';
+            fallbackUtt.rate = 0.95;
+            this.synth?.speak(fallbackUtt);
+          } catch (e) {}
+        }
+
         if (options.onError) options.onError(err);
       };
 
       try {
+        if (this.synth.paused) {
+          this.synth.resume();
+        }
         this.synth.speak(utterance);
-        // Workaround for Chrome/Edge long utterance garbage collection bug
         if (this.synth.paused) {
           this.synth.resume();
         }
       } catch (e) {
         console.warn('TTS speak error:', e);
       }
-    }, 60);
+    }, 50);
   }
 
   public stop(): void {
+    if (this.resumeInterval) {
+      clearInterval(this.resumeInterval);
+      this.resumeInterval = null;
+    }
     if (this.synth) {
       try {
         this.synth.cancel();
         this.currentUtterance = null;
+        (window as any).__voxentra_utterance = null;
       } catch (e) {}
     }
     this.stopRingTone();
