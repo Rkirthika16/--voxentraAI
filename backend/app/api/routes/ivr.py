@@ -114,6 +114,89 @@ def handle_ivr_dialogue_turn(
 
     from app.ai.location_service import extract_location
 
+    # 0a. Check if session has a pending slot confirmation (misheard word or spelling candidate)
+    if session.get("pending_slot_confirmation"):
+        is_resolved, resolved_val, ack_reply, ack_spoken = complaint_collector.handle_slot_confirmation_turn(session, user_speech, detected_lang)
+        if not is_resolved:
+            return IVRCallDialogueResponse(
+                call_sid=req.call_sid,
+                dialogue_turn=req.dialogue_turn + 1,
+                ai_spoken_reply=ack_spoken,
+                ai_spoken_reply_tamil=ack_reply if detected_lang == "Tamil" else ack_spoken,
+                ai_spoken_reply_english=ack_spoken if detected_lang == "English" else ack_reply,
+                detected_language=detected_lang,
+                language_confidence=lang_conf,
+                intent="SLOT_CONFIRMATION_PENDING",
+                is_confirmation_pending=False,
+                is_completed=False,
+                collection_state=session["fields"]
+            )
+        else:
+            # Slot resolved! Proceed to check next missing field
+            next_missing = complaint_collector.get_next_missing_field(session)
+            if not next_missing:
+                session["state"] = "CONFIRMATION_PENDING"
+                session["current_field_prompted"] = None
+                summary_text, spoken_summary = complaint_collector.generate_summary(session, detected_lang)
+                prob = session["fields"].get("problem_description") or "Civic Grievance"
+                cat, dept, _ = classify_complaint(normalize_text(prob))
+                return IVRCallDialogueResponse(
+                    call_sid=req.call_sid,
+                    dialogue_turn=req.dialogue_turn + 1,
+                    ai_spoken_reply=f"{ack_spoken} {spoken_summary}",
+                    ai_spoken_reply_tamil=f"{ack_reply} {summary_text}" if detected_lang == "Tamil" else f"{ack_spoken} {spoken_summary}",
+                    ai_spoken_reply_english=f"{ack_spoken} {spoken_summary}" if detected_lang == "English" else f"{ack_reply} {summary_text}",
+                    detected_language=detected_lang,
+                    language_confidence=lang_conf,
+                    intent="CONFIRMATION_PENDING",
+                    extracted_category=cat,
+                    extracted_location=f"{session['fields'].get('district_area', '')}, {session['fields'].get('street_road_name', '')}",
+                    suggested_department=dept,
+                    is_confirmation_pending=True,
+                    is_completed=False,
+                    collection_state=session["fields"],
+                    summary=summary_text
+                )
+            else:
+                session["state"] = "COLLECTING"
+                session["current_field_prompted"] = next_missing
+                meta = FIELD_METADATA.get(next_missing, {})
+                q_text, sp_text = complaint_collector.get_contextual_question(session, next_missing, detected_lang)
+                q_ta, _ = complaint_collector.get_contextual_question(session, next_missing, "Tamil")
+                q_en, _ = complaint_collector.get_contextual_question(session, next_missing, "English")
+                return IVRCallDialogueResponse(
+                    call_sid=req.call_sid,
+                    dialogue_turn=req.dialogue_turn + 1,
+                    ai_spoken_reply=f"{ack_spoken} {sp_text}",
+                    ai_spoken_reply_tamil=f"{ack_reply} {q_ta}" if detected_lang == "Tamil" else f"{ack_spoken} {q_ta}",
+                    ai_spoken_reply_english=f"{ack_spoken} {q_en}" if detected_lang == "English" else f"{ack_reply} {q_en}",
+                    detected_language=detected_lang,
+                    language_confidence=lang_conf,
+                    intent="GATHER_MORE_INFO",
+                    is_confirmation_pending=False,
+                    is_completed=False,
+                    collection_state=session["fields"]
+                )
+
+    # 0b. Check if speech is unclear/misheard/corrupted
+    if complaint_collector.detect_unclear_speech(user_speech):
+        unclear_reply, unclear_spoken = complaint_collector.get_unclear_prompt(detected_lang)
+        q_ta, _ = complaint_collector.get_unclear_prompt("Tamil")
+        q_en, _ = complaint_collector.get_unclear_prompt("English")
+        return IVRCallDialogueResponse(
+            call_sid=req.call_sid,
+            dialogue_turn=req.dialogue_turn + 1,
+            ai_spoken_reply=unclear_spoken,
+            ai_spoken_reply_tamil=q_ta,
+            ai_spoken_reply_english=q_en,
+            detected_language=detected_lang,
+            language_confidence=lang_conf,
+            intent="UNCLEAR_INPUT",
+            is_confirmation_pending=False,
+            is_completed=False,
+            collection_state=session["fields"]
+        )
+
     # 1. If currently in CONFIRMATION_PENDING stage
     if session.get("state") == "CONFIRMATION_PENDING":
         is_decision, is_confirmed = complaint_collector.is_confirmation_response(user_speech)
@@ -250,13 +333,40 @@ def handle_ivr_dialogue_turn(
                     collection_state=session["fields"]
                 )
 
-    # 2. Extract slots from user speech
+    # 1b. Check for spelling / recognition candidate variation on the currently prompted field
     current_field = session.get("current_field_prompted")
+    if current_field:
+        variation_candidate = complaint_collector.find_spelling_or_recognition_variation(current_field, user_speech)
+        if variation_candidate:
+            session["pending_slot_confirmation"] = {
+                "field": current_field,
+                "original_input": user_speech,
+                "detected_word": variation_candidate
+            }
+            conf_text, conf_spoken = complaint_collector.get_spelling_or_correction_prompt(variation_candidate, detected_lang)
+            q_ta, _ = complaint_collector.get_spelling_or_correction_prompt(variation_candidate, "Tamil")
+            q_en, _ = complaint_collector.get_spelling_or_correction_prompt(variation_candidate, "English")
+            return IVRCallDialogueResponse(
+                call_sid=req.call_sid,
+                dialogue_turn=req.dialogue_turn + 1,
+                ai_spoken_reply=conf_spoken,
+                ai_spoken_reply_tamil=q_ta,
+                ai_spoken_reply_english=q_en,
+                detected_language=detected_lang,
+                language_confidence=lang_conf,
+                intent="SLOT_CONFIRMATION_PENDING",
+                is_confirmation_pending=False,
+                is_completed=False,
+                collection_state=session["fields"]
+            )
+
+    # 2. Extract slots from user speech
     extracted_slots = complaint_collector.extract_slots(user_speech, current_field=current_field)
 
     for k, v in extracted_slots.items():
         if v and str(v).strip():
             session["fields"][k] = v
+
 
     # Extract location and geocoordinates using Tamil Nadu OpenStreetMap GIS engine
     loc_components = [

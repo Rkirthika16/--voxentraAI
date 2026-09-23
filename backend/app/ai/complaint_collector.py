@@ -188,6 +188,7 @@ class ComplaintCollector:
                     "citizen_details": user_details
                 },
                 "current_field_prompted": None,
+                "pending_slot_confirmation": None,
                 "history": [],
                 "created_complaint_number": None,
                 "created_complaint_id": None
@@ -557,6 +558,178 @@ class ComplaintCollector:
             return True, False
 
         return False, False
+
+    def detect_unclear_speech(self, text: str) -> bool:
+        """
+        Detects if citizen's speech appears unclear, unintelligible, heavily corrupted,
+        or just mumbles/filler noise that cannot be processed reliably.
+        """
+        raw = text.strip()
+        lowered = raw.lower()
+        if not raw:
+            return True
+        # Strip punctuation to check root word
+        cleaned = re.sub(r'[\.\?\!\,\-\_\s]+', '', lowered)
+        if not cleaned:
+            return True
+        # Filter mumbling or filler sounds
+        mumbles = ["umm", "uhh", "aaa", "hmm", "huh", "enna", "mm", "ah", "err", "uh", "um", "er", "ha", "zzz", "oho"]
+        if cleaned in mumbles or len(cleaned) <= 1:
+            return True
+        # Excessive repeated characters (e.g. "aaaaaa", "zzzzz", "xxxxxx")
+        if re.search(r'(.)\1{3,}', cleaned):
+            return True
+        # Only punctuation, special characters or non-alphanumeric noise
+        if not re.search(r'[A-Za-z0-9\u0B80-\u0BFF]', raw):
+            return True
+        return False
+
+
+    def clean_spelled_out_input(self, text: str) -> str:
+        """
+        Cleans and reconstructs spelled-out inputs like 'G A N D H I', 'P-E-E-L-A-M-E-D-U',
+        or phrases like 'No it is Peelamedu'.
+        """
+        raw = text.strip()
+        # Remove common prefixes like 'no it is', 'spelling is', 'correct is', 'illai'
+        prefix_pattern = r'^(?:no\s*,?\s*(?:it\s*is|its)?|correct\s*(?:is|spelling\s*is)?|illai\s*,?|illa\s*,?|thappu\s*,?|மாற்றி\s*,?|இல்லை\s*,?)\s*'
+        cleaned = re.sub(prefix_pattern, '', raw, flags=re.IGNORECASE).strip()
+
+        # Check if text is spelled out letter-by-letter with spaces or hyphens (e.g., 'P E E L A M E D U' or 'P-E-E-L-A-M-E-D-U')
+        if re.match(r'^[A-Za-z\u0B80-\u0BFF](?:[\s\-\.][A-Za-z\u0B80-\u0BFF]){2,}$', cleaned):
+            joined = re.sub(r'[\s\-\.]+', '', cleaned)
+            return joined.title() if joined.isascii() else joined
+
+        return cleaned or raw
+
+    def find_spelling_or_recognition_variation(self, field: Optional[str], text: str) -> Optional[str]:
+        """
+        Checks if the citizen's input has a potential spelling mistake or speech recognition variation
+        for crucial slots (especially location details: district, area, street, landmark).
+        Returns the formatted candidate name for confirmation without silently guessing.
+        """
+        if not text or not field:
+            return None
+
+        # Check location-related fields
+        if field in ["district_area", "street_road_name", "landmark", "exact_location"]:
+            from app.ai.location_service import find_fuzzy_location_candidate
+            candidate_tuple = find_fuzzy_location_candidate(text)
+            if candidate_tuple:
+                candidate_name, _, _, conf = candidate_tuple
+                # Extract clean primary name (e.g., 'Gandhipuram' or 'Peelamedu')
+                primary_name = candidate_name.split(",")[0].strip()
+                # Check if it differs from raw text (case-insensitive)
+                if primary_name.lower() != text.strip().lower() and candidate_name.lower() != text.strip().lower():
+                    return primary_name
+
+        return None
+
+    def get_unclear_prompt(self, lang: str) -> Tuple[str, str]:
+        """
+        Returns polite re-prompt when speech is unclear, misheard, or unrecognized.
+        """
+        if lang == "Tamil":
+            text = "மன்னிக்கவும், நான் அதை சரியாக புரிந்து கொள்ளவில்லை என நினைக்கிறேன். தயவுசெய்து மீண்டும் கூற முடியுமா அல்லது சரியான எழுத்துக் கூட்டலை (spelling) கூற முடியுமா?"
+            spoken = "மன்னிக்கவும், நான் அதை சரியாக புரிந்து கொள்ளவில்லை. தயவுசெய்து மீண்டும் கூற முடியுமா அல்லது சரியான பெயரை கூற முடியுமா?"
+        elif lang == "Tanglish":
+            text = "I’m sorry, naan adha sariya purinjikkala. Marubadiyum solreengala illa correct spelling solreengala?"
+            spoken = "Sorry, sariya purinjukala. Marubadiyum sollunga or correct spelling sollunga?"
+        else:
+            text = "I’m sorry, I may not have understood that correctly. Could you please say it again or provide the correct spelling?"
+            spoken = "I'm sorry, I may not have understood that correctly. Could you please say it again or provide the correct spelling?"
+        return text, spoken
+
+    def get_spelling_or_correction_prompt(self, candidate: str, lang: str) -> Tuple[str, str]:
+        """
+        Returns polite confirmation question when a possible spelling or recognition variation is detected.
+        Never assumes or silently replaces the citizen's input.
+        """
+        if lang == "Tamil":
+            text = f"நான் இதை '{candidate}' என்று புரிந்து கொண்டேன். இது சரியானதா, அல்லது சரியான எழுத்துக் கூட்டலை (spelling) கூற முடியுமா?"
+            spoken = f"நான் இதை '{candidate}' என்று புரிந்து கொண்டேன். இது சரியானதா, அல்லது சரியான பெயரை கூற முடியுமா?"
+        elif lang == "Tanglish":
+            text = f"Naan idhai '{candidate}' nu purinjikiten. Idhu correct-ah, illa correct spelling solreengala?"
+            spoken = f"Naan idhai '{candidate}' nu purinjikiten. Idhu correct-ah, illa correct spelling solreengala?"
+        else:
+            text = f"I understood it as {candidate}. Is that correct, or could you please provide the correct spelling?"
+            spoken = f"I understood it as {candidate}. Is that correct, or could you please provide the correct spelling?"
+        return text, spoken
+
+    def handle_slot_confirmation_turn(
+        self,
+        session: Dict[str, Any],
+        user_text: str,
+        lang: str
+    ) -> Tuple[bool, Optional[str], Optional[str], Optional[str]]:
+        """
+        Handles turn when session has a pending slot confirmation.
+        Returns: (is_resolved, resolved_value, reply_text, spoken_text)
+        """
+        pending = session.get("pending_slot_confirmation")
+        if not pending:
+            return False, None, None, None
+
+        field = pending.get("field")
+        detected_word = pending.get("detected_word")
+        is_decision, is_confirmed = self.is_confirmation_response(user_text)
+
+        if is_decision and is_confirmed:
+            # Citizen confirmed the detected word
+            session["fields"][field] = detected_word
+            session["pending_slot_confirmation"] = None
+
+            if lang == "Tamil":
+                ack_reply = f"நன்றி, **{detected_word}** உறுதிப்படுத்தப்பட்டது. 👍\n\n"
+                ack_spoken = f"நன்றி, {detected_word} உறுதிப்படுத்தப்பட்டது."
+            elif lang == "Tanglish":
+                ack_reply = f"Thanks, **{detected_word}** confirm panniyaachu. 👍\n\n"
+                ack_spoken = f"Thanks, {detected_word} confirm panniyaachu."
+            else:
+                ack_reply = f"Thank you, **{detected_word}** has been confirmed. 👍\n\n"
+                ack_spoken = f"Thank you, {detected_word} has been confirmed."
+
+            return True, detected_word, ack_reply, ack_spoken
+
+        # Check if citizen rejected or provided a corrected spelling / name
+        cleaned_correction = self.clean_spelled_out_input(user_text)
+        lowered = user_text.strip().lower()
+        rejection_words = ["no", "wrong", "thappu", "illa", "illai", "இல்லை", "தவறு", "வேண்டாம்", "மாற்று"]
+
+        # If user only said 'no' without providing replacement
+        if lowered in rejection_words:
+            if lang == "Tamil":
+                reply = "சரி, தயவுசெய்து சரியான பெயர் அல்லது எழுத்துக் கூட்டலை (spelling) கூறவும்."
+                spoken = "தயவுசெய்து சரியான பெயரை அல்லது எழுத்துக்களைக் கூறவும்."
+            elif lang == "Tanglish":
+                reply = "Sure, please correct place name or spelling sollunga."
+                spoken = "Please correct place name or spelling sollunga."
+            else:
+                reply = "Understood. Please provide the correct name or spelling."
+                spoken = "Please provide the correct name or spelling."
+            return False, None, reply, spoken
+
+        # Citizen provided the new spelling or place name
+        if cleaned_correction and len(cleaned_correction) >= 2:
+            session["fields"][field] = cleaned_correction
+            session["pending_slot_confirmation"] = None
+
+            if lang == "Tamil":
+                ack_reply = f"நன்றி, நீங்கள் கூறிய **{cleaned_correction}** பதிவு செய்யப்பட்டது. 👍\n\n"
+                ack_spoken = f"நன்றி, {cleaned_correction} பதிவு செய்யப்பட்டது."
+            elif lang == "Tanglish":
+                ack_reply = f"Thanks, **{cleaned_correction}** noted. 👍\n\n"
+                ack_spoken = f"Thanks, {cleaned_correction} noted."
+            else:
+                ack_reply = f"Thank you, **{cleaned_correction}** has been noted. 👍\n\n"
+                ack_spoken = f"Thank you, {cleaned_correction} has been noted."
+
+            return True, cleaned_correction, ack_reply, ack_spoken
+
+        # Fallback unclear
+        unclear_reply, unclear_spoken = self.get_unclear_prompt(lang)
+        return False, None, unclear_reply, unclear_spoken
+
 
     def generate_summary(self, session: Dict[str, Any], lang: str) -> Tuple[str, str]:
         """

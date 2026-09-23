@@ -302,6 +302,92 @@ class AssistantService:
                     )
 
 
+        # 3b. Check if session has a pending slot confirmation (e.g., confirming a misheard word or spelling candidate)
+        if session.get("pending_slot_confirmation"):
+            is_resolved, resolved_val, ack_reply, ack_spoken = complaint_collector.handle_slot_confirmation_turn(session, raw_text, detected_lang)
+            if not is_resolved:
+                # Still waiting for proper confirmation or correct spelling
+                pending = session.get("pending_slot_confirmation", {})
+                cand = pending.get("detected_word", "the detail")
+                actions = [
+                    ActionSuggestion(label=f"✅ Yes, {cand}", action_type="QUICK_PROMPT", payload={"prompt": f"Yes, {cand} is correct"}),
+                    ActionSuggestion(label="✏️ Provide Spelling", action_type="QUICK_PROMPT", payload={"prompt": "Let me provide the correct spelling"})
+                ]
+                return AssistantResponse(
+                    reply_text=ack_reply,
+                    spoken_text=ack_spoken,
+                    detected_language=detected_lang,
+                    intent="SLOT_CONFIRMATION_PENDING",
+                    collection_state=self._build_collection_state_schema(session),
+                    suggested_actions=actions,
+                    session_id=active_session_id
+                )
+            else:
+                # Slot successfully confirmed or corrected! Continue to check next missing field.
+                next_missing = complaint_collector.get_next_missing_field(session)
+                if not next_missing:
+                    session["state"] = "CONFIRMATION_PENDING"
+                    session["current_field_prompted"] = None
+                    summary_text, spoken_summary = complaint_collector.generate_summary(session, detected_lang)
+                    prob = session["fields"].get("problem_description") or "Civic Grievance"
+                    cat, dept, _ = classify_complaint(normalize_text(prob))
+                    prio, _ = assess_priority(normalize_text(prob), cat)
+                    draft = ComplaintDraft(
+                        title=f"{cat} issue at {session['fields'].get('district_area') or 'Location'}",
+                        description=prob,
+                        category=cat,
+                        suggested_department=dept,
+                        extracted_location=f"{session['fields'].get('exact_location', '')}, {session['fields'].get('street_road_name', '')}",
+                        priority=prio,
+                        summary=f"{cat} grievance ready for registration"
+                    )
+                    return AssistantResponse(
+                        reply_text=f"{ack_reply}\n\n{summary_text}",
+                        spoken_text=f"{ack_spoken} {spoken_summary}",
+                        detected_language=detected_lang,
+                        intent="CONFIRMATION_PENDING",
+                        draft_complaint=draft,
+                        collection_state=self._build_collection_state_schema(session),
+                        suggested_actions=[
+                            ActionSuggestion(label="✅ Confirm & Register Grievance", action_type="QUICK_PROMPT", payload={"prompt": "Yes, please register this complaint"}),
+                            ActionSuggestion(label="✏️ Change a Detail", action_type="QUICK_PROMPT", payload={"prompt": "I want to edit some details"})
+                        ],
+                        session_id=active_session_id
+                    )
+                else:
+                    session["state"] = "COLLECTING"
+                    session["current_field_prompted"] = next_missing
+                    meta = FIELD_METADATA[next_missing]
+                    q_text, sp_text = complaint_collector.get_contextual_question(session, next_missing, detected_lang)
+                    step_num = FIELD_KEYS.index(next_missing) + 1
+                    step_label = meta.get('label_' + ('ta' if detected_lang == 'Tamil' else ('tanglish' if detected_lang == 'Tanglish' else 'en')), meta['label_en'])
+                    full_reply = f"{ack_reply}**Step {step_num} of 10: {step_label}**\n\n{q_text}"
+                    return AssistantResponse(
+                        reply_text=full_reply,
+                        spoken_text=f"{ack_spoken} {sp_text}",
+                        detected_language=detected_lang,
+                        intent="COLLECTING_FIELD",
+                        collection_state=self._build_collection_state_schema(session),
+                        session_id=active_session_id
+                    )
+
+        # 3c. Check if speech/input is unclear, corrupted, or unintelligible noise
+        if complaint_collector.detect_unclear_speech(raw_text):
+            unclear_reply, unclear_spoken = complaint_collector.get_unclear_prompt(detected_lang)
+            return AssistantResponse(
+                reply_text=unclear_reply,
+                spoken_text=unclear_spoken,
+                detected_language=detected_lang,
+                intent="UNCLEAR_INPUT",
+                collection_state=self._build_collection_state_schema(session),
+                suggested_actions=[
+                    ActionSuggestion(label="💧 Water Pipe Leak", action_type="QUICK_PROMPT", payload={"prompt": "Water pipeline leakage near bus stand"}),
+                    ActionSuggestion(label="⚡ Power Outage", action_type="QUICK_PROMPT", payload={"prompt": "Power outage and transformer spark"}),
+                    ActionSuggestion(label="🗑️ Garbage Waste", action_type="QUICK_PROMPT", payload={"prompt": "Garbage not collected for days"})
+                ],
+                session_id=active_session_id
+            )
+
         # 4. If session is waiting for CONFIRMATION
         if session.get("state") == "CONFIRMATION_PENDING":
             is_decision, is_confirmed = complaint_collector.is_confirmation_response(raw_text)
@@ -403,14 +489,39 @@ class AssistantService:
             complaint_collector.reset_session(active_session_id)
             session = complaint_collector.get_or_create_session(active_session_id, current_user, language_hint)
 
-        # 6. Extract slots from the current user input
+        # 5b. Check for spelling / recognition variation on the currently prompted field before saving
         current_field = session.get("current_field_prompted")
+        if current_field:
+            variation_candidate = complaint_collector.find_spelling_or_recognition_variation(current_field, raw_text)
+            if variation_candidate:
+                session["pending_slot_confirmation"] = {
+                    "field": current_field,
+                    "original_input": raw_text,
+                    "detected_word": variation_candidate
+                }
+                conf_text, conf_spoken = complaint_collector.get_spelling_or_correction_prompt(variation_candidate, detected_lang)
+                actions = [
+                    ActionSuggestion(label=f"✅ Yes, {variation_candidate}", action_type="QUICK_PROMPT", payload={"prompt": f"Yes, {variation_candidate} is correct"}),
+                    ActionSuggestion(label="✏️ Provide Correct Spelling", action_type="QUICK_PROMPT", payload={"prompt": "Let me provide the correct spelling"})
+                ]
+                return AssistantResponse(
+                    reply_text=conf_text,
+                    spoken_text=conf_spoken,
+                    detected_language=detected_lang,
+                    intent="SLOT_CONFIRMATION_PENDING",
+                    collection_state=self._build_collection_state_schema(session),
+                    suggested_actions=actions,
+                    session_id=active_session_id
+                )
+
+        # 6. Extract slots from the current user input
         extracted_slots = complaint_collector.extract_slots(raw_text, current_field=current_field)
 
         # Merge extracted slots into session
         for k, v in extracted_slots.items():
             if v and str(v).strip():
                 session["fields"][k] = v
+
 
         # If user is logged in, ensure citizen details default is kept
         if current_user and not session["fields"].get("citizen_details"):

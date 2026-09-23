@@ -1819,3 +1819,62 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
 
     return None, None, None, 0.0
 
+
+def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, str, str, float]]:
+    """
+    Detects when a citizen enters a location with a slight spelling or speech-to-text variation.
+    Returns (candidate_display_name, latitude, longitude, confidence) if a candidate is found
+    that warrants polite citizen confirmation (confidence between 0.65 and 0.94),
+    ensuring AI never silently guesses or replaces locations.
+    """
+    if not text:
+        return None
+
+    raw = text.strip()
+    lowered = raw.lower()
+    # Strip common postpositions and fillers
+    cleaned = re.sub(r'\b(la|le|kitta|pakkam|pakathula|near|in|at|area|nagar|theru|street|road|district)\b', '', lowered).strip()
+    norm_text = unicodedata.normalize("NFC", cleaned or lowered)
+
+    if len(norm_text) < 3:
+        return None
+
+    # If exact match exists with high confidence, no need for clarification
+    for loc in TAMIL_NADU_DISTRICT_LOCATIONS:
+        for kw in loc["keywords"]:
+            kw_norm = unicodedata.normalize("NFC", kw.lower())
+            if kw_norm == norm_text or kw_norm == lowered:
+                return None  # Confident exact match
+
+    # Search for fuzzy spelling candidates (ratio between 68 and 94)
+    best_loc = None
+    best_kw = None
+    highest_score = 0.0
+
+    for loc in TAMIL_NADU_DISTRICT_LOCATIONS:
+        for kw in loc["keywords"]:
+            kw_norm = unicodedata.normalize("NFC", kw.lower())
+            # Skip very short keywords to avoid spurious matches
+            if len(kw_norm) < 4:
+                continue
+
+            # Compare token ratio and standard ratio
+            r_ratio = fuzz.ratio(kw_norm, norm_text)
+            t_ratio = fuzz.token_sort_ratio(kw_norm, norm_text)
+            ratio = max(r_ratio, t_ratio)
+
+            if 68 <= ratio <= 94:
+                calc_score = ratio / 100.0
+                if calc_score > highest_score:
+                    highest_score = calc_score
+                    best_loc = loc
+                    best_kw = kw
+
+    if best_loc and highest_score >= 0.68:
+        # Return cleaned concise location name (e.g. "Gandhipuram, Coimbatore" or "Peelamedu, Coimbatore")
+        loc_name = best_loc["name"]
+        return loc_name, best_loc.get("latitude"), best_loc.get("longitude"), highest_score
+
+    return None
+
+
