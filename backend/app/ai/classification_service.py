@@ -133,21 +133,24 @@ CATEGORY_ROOTS: Dict[str, Dict[str, List[str]]] = {
     "Public Safety": {
         "tamil_roots": [
             "தீ", "தீ விபத்து", "விபத்து", "ஆபத்து", "அவசரம்", "மரம் விழு", "மரம் விழுந்தது",
-            "வெறிநாய்", "நாய் தொல்லை", "நாய் கடி", "தெரு நாய்", "பாம்பு", "பாம்பு கடி",
-            "108 ஆம்புலன்ஸ்", "ஆரம்ப சுகாதார", "மருத்துவமனை", "அவசர சிகிச்சை",
+            "வெறிநாய்", "நாய் தொல்லை", "நாய் கடி", "தெரு நாய்", "பாம்பு", "பாம்பு கடி", "குரங்கு",
+            "108 ஆம்புலன்ஸ்", "ஆரம்ப சுகாதார", "மருத்துவமனை", "அவசர சிகிச்சை", "கொசு மருந்து",
             "உயிருக்கு ஆபத்து", "ரேஷன்", "ரேஷன் கடை", "அரிசி", "பருப்பு", "நியாய விலைக்கடை",
-            "சர்க்கரை", "காவல்துறை", "போலீஸ்"
+            "சர்க்கரை", "காவல்துறை", "போலீஸ்", "ஆக்கிரமிப்பு", "போக்குவரத்து சிக்னல்", "சிக்னல் பழுது",
+            "சொத்து வரி", "பிறப்பு சான்றிதழ்", "இறப்பு சான்றிதழ்"
         ],
         "tanglish_roots": [
             "thee", "fire", "accident", "aabathu", "aapathu", "avasaram", "danger", "dog",
             "naai", "dog bite", "paambu", "snake", "ambulance", "hospital", "phc", "aaspattiri",
-            "ration", "ration shop", "arisi", "paruppu", "fair price", "police", "theft"
+            "ration", "ration shop", "arisi", "paruppu", "fair price", "police", "theft",
+            "stray dog", "traffic signal", "encroachment", "property tax", "certificate"
         ],
         "english_roots": [
             "fire", "accident", "emergency", "danger", "hazard", "collapsed",
             "fallen tree", "dog menace", "stray dogs", "unsafe", "threat", "life danger",
             "snake", "hospital", "ambulance", "primary health centre", "phc", "ration", "ration shop",
-            "rice", "sugar", "pds", "police", "emergency safety"
+            "rice", "sugar", "pds", "police", "emergency safety", "animal control", "stray animal",
+            "traffic signal", "signal broken", "encroachment", "property tax", "birth certificate", "death certificate"
         ]
     }
 }
@@ -230,3 +233,35 @@ def classify_complaint(text: str) -> Tuple[str, str, float]:
 
     confidence = min(0.99, 0.70 + (max_score * 0.04))
     return best_category, DEPARTMENT_MAPPING[best_category], confidence
+
+
+def is_ambiguous_department(text: str) -> Tuple[bool, List[str]]:
+    """
+    Checks if a complaint could simultaneously belong to multiple departments.
+    Returns (is_ambiguous, candidate_departments)
+    """
+    if not text or not text.strip():
+        return False, []
+    
+    raw = text.strip()
+    lowered = raw.lower()
+    normalized_nfc = unicodedata.normalize("NFC", lowered)
+    scores: Dict[str, float] = {cat: 0.0 for cat in CATEGORY_ROOTS}
+
+    for category, lang_dict in CATEGORY_ROOTS.items():
+        for root in lang_dict["tamil_roots"]:
+            if unicodedata.normalize("NFC", root.lower()) in normalized_nfc:
+                scores[category] += 3.0
+        for root in lang_dict["tanglish_roots"]:
+            if root.lower() in lowered:
+                scores[category] += 3.0
+        for root in lang_dict["english_roots"]:
+            if root.lower() in lowered:
+                scores[category] += 3.0
+
+    top_scores = [(cat, s) for cat, s in scores.items() if s >= 4.0]
+    top_scores.sort(key=lambda x: x[1], reverse=True)
+    if len(top_scores) >= 2 and (top_scores[0][1] - top_scores[1][1]) <= 1.0:
+        depts = [DEPARTMENT_MAPPING[cat] for cat, _ in top_scores[:2]]
+        return True, depts
+    return False, []

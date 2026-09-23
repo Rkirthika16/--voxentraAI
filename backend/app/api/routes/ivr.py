@@ -119,34 +119,82 @@ def handle_ivr_dialogue_turn(
         is_decision, is_confirmed = complaint_collector.is_confirmation_response(user_speech)
         if is_decision:
             if is_confirmed:
-                # Register complaint
-                created_complaint = complaint_collector.register_complaint_record(session, db)
+                # Register complaint with call context
+                created_complaint = complaint_collector.register_complaint_record(
+                    session, db,
+                    call_sid=req.call_sid,
+                    caller_phone=req.caller_phone,
+                    sms_status="PENDING"
+                )
                 dept_name = created_complaint.department.name if created_complaint.department else "Municipal Administration"
 
-                if detected_lang == "Tamil":
-                    reply_ta = (
-                        f"நன்றி! உங்கள் புகார் எண் {created_complaint.complaint_number} என வெற்றிகரமாக பதிவு செய்யப்பட்டது. "
-                        f"இது {dept_name} துறைக்கு அனுப்பப்பட்டுள்ளது. உங்கள் கைபேசிக்கு குறுஞ்செய்தி அனுப்பப்பட்டுள்ளது."
+                # Build bilingual Twilio SMS using template builder
+                problem = session["fields"].get("problem_description", "Civic Grievance")
+                location_str = (
+                    f"{session['fields'].get('district_area', '')}, "
+                    f"{session['fields'].get('street_road_name', '')}"
+                ).strip(", ")
+                sms_body = twilio_adapter.build_complaint_sms(
+                    complaint_number=created_complaint.complaint_number,
+                    description=problem,
+                    department=dept_name,
+                    location=location_str,
+                    lang=detected_lang,
+                    created_at=created_complaint.created_at
+                )
+                sms_result = twilio_adapter.send_sms(
+                    req.caller_phone or "+919843098765", sms_body
+                )
+                sms_sent = sms_result.get("success", False)
+                sms_failure_reason = sms_result.get("error") if not sms_sent else None
+
+                # Persist SMS status in complaint ai_metadata
+                if created_complaint.ai_metadata:
+                    meta = dict(created_complaint.ai_metadata)
+                    meta["sms_status"] = "SENT" if sms_sent else "FAILED"
+                    meta["sms_sid"] = sms_result.get("sid", "")
+                    meta["sms_sent_at"] = (
+                        __import__('datetime').datetime.now(
+                            __import__('datetime').timezone.utc
+                        ).isoformat() if sms_sent else None
                     )
+                    created_complaint.ai_metadata = meta
+                    db.commit()
+
+                if detected_lang == "Tamil":
+                    if sms_sent:
+                        reply_ta = (
+                            f"நன்றி! உங்கள் புகார் எண் {created_complaint.complaint_number} என வெற்றிகரமாக பதிவு செய்யப்பட்டது. "
+                            f"இது {dept_name} துறைக்கு அனுப்பப்பட்டுள்ளது. உங்கள் கைபேசிக்கு குறுஞ்செய்தி அனுப்பப்பட்டுள்ளது."
+                        )
+                    else:
+                        reply_ta = (
+                            f"உங்கள் புகார் எண் {created_complaint.complaint_number} வெற்றிகரமாக பதிவு செய்யப்பட்டுள்ளது. "
+                            f"ஆனால் SMS அனுப்புவதில் தற்காலிக சிக்கல் ஏற்பட்டுள்ளது. உங்கள் புகார் எண் {created_complaint.complaint_number}."
+                        )
                     reply_en = f"Grievance #{created_complaint.complaint_number} registered and forwarded to {dept_name}."
                     spoken = reply_ta
                 elif detected_lang == "Tanglish":
-                    reply_ta = f"Thank you! Unga complaint #{created_complaint.complaint_number} register aagi {dept_name} ku forward panniyaachu. SMS unga mobile ku anupiyachu."
+                    if sms_sent:
+                        reply_ta = f"Thank you! Unga complaint #{created_complaint.complaint_number} register aagi {dept_name} ku forward panniyaachu. SMS unga mobile ku anupiyachu."
+                    else:
+                        reply_ta = f"Unga complaint #{created_complaint.complaint_number} register aaiduchu. Aanaa SMS anupuvathu late aagudhu. Complaint number: {created_complaint.complaint_number}."
                     reply_en = f"Grievance #{created_complaint.complaint_number} registered and forwarded to {dept_name}."
                     spoken = reply_ta
                 else:
                     reply_ta = f"புகார் எண் {created_complaint.complaint_number} பதிவு செய்யப்பட்டது."
-                    reply_en = (
-                        f"Thank you! Your grievance has been registered under ID {created_complaint.complaint_number} "
-                        f"and forwarded to {dept_name}. A confirmation SMS has been sent to your phone."
-                    )
+                    if sms_sent:
+                        reply_en = (
+                            f"Thank you! Your grievance has been registered under ID {created_complaint.complaint_number} "
+                            f"and forwarded to {dept_name}. A confirmation SMS has been sent to your phone."
+                        )
+                    else:
+                        reply_en = (
+                            f"Your grievance has been registered under ID {created_complaint.complaint_number} "
+                            f"and forwarded to {dept_name}. However, there was a temporary issue sending the SMS. "
+                            f"Your complaint ID is {created_complaint.complaint_number}."
+                        )
                     spoken = reply_en
-
-                sms_text = (
-                    f"[Govt of TN / Voxentra] Grievance #{created_complaint.complaint_number} registered. "
-                    f"Dept: {dept_name}. Status: Assigned to Field Officer."
-                )
-                dispatch_sms_notification(req.caller_phone or "+919843098765", sms_text)
 
                 return IVRCallDialogueResponse(
                     call_sid=req.call_sid,
@@ -168,7 +216,8 @@ def handle_ivr_dialogue_turn(
                     collection_state=session["fields"],
                     complaint_id=created_complaint.id,
                     complaint_number=created_complaint.complaint_number,
-                    sms_sent=True
+                    sms_sent=sms_sent,
+                    sms_failure_reason=sms_failure_reason
                 )
             else:
                 # Caller wants edits

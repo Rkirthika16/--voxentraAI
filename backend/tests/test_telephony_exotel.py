@@ -27,7 +27,7 @@ def test_ivr_process_speech_rural_water():
     data = response.json()
     assert data["category"] == "Water"
     assert "Water Supply" in data["suggested_department"]
-    assert data["complaint_number"].startswith("VOX-")
+    assert data["complaint_number"].startswith(("VX-", "VOX-"))
     assert "sms_text" in data
     assert "வணக்கம்" in data["confirmation_spoken_tamil"]
 
@@ -42,7 +42,7 @@ def test_ivr_process_speech_agricultural_electricity():
     data = response.json()
     assert data["category"] == "Electricity"
     assert "Electricity" in data["suggested_department"]
-    assert data["complaint_number"].startswith("VOX-")
+    assert data["complaint_number"].startswith(("VX-", "VOX-"))
 
 
 def test_ivr_dialogue_turn_flow():
@@ -80,7 +80,7 @@ def test_ivr_dialogue_turn_flow():
     turn3_data = turn3_resp.json()
     if turn3_data["is_completed"]:
         assert turn3_data["intent"] == "CONFIRMED"
-        assert turn3_data["complaint_number"].startswith("VOX-")
+        assert turn3_data["complaint_number"].startswith(("VX-", "VOX-"))
         assert turn3_data["sms_sent"] is True
 
 
@@ -92,7 +92,7 @@ def test_simulate_inbound_sms():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "PROCESSED_AND_SMS_REPLIED"
-    assert data["complaint_number"].startswith("VOX-")
+    assert data["complaint_number"].startswith(("VX-", "VOX-"))
     assert "தமிழ்நாடு அரசு" in data["reply_sms_tamil"]
 
 
@@ -126,5 +126,5 @@ def test_exotel_sms_incoming_webhook():
     })
     assert response.status_code == 200
     data = response.json()
-    assert data["complaint_number"].startswith("VOX-")
+    assert data["complaint_number"].startswith(("VX-", "VOX-"))
     assert data["extracted_category"] == "Roads"

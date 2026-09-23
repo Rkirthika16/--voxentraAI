@@ -4,16 +4,18 @@ from typing import Tuple
 # Pure Tanglish keywords (Tamil words written phonetically in Latin/Roman script)
 # Strictly excludes pure English words like 'pipe', 'drainage', 'near', 'side', 'current'
 TANGLISH_KEYWORDS = {
-    "thanni", "thani", "neer", "kudineer", "odanju", "varala", "valiyuthu", "valiyithu",
-    "salai", "pallam", "gundu", "kuliyum", "periya", "chinna", "romba", "mosam",
-    "kuppai", "naaththam", "vaadai", "alli", "podala", "theru", "theruvil",
-    "sakkadai", "adaippu", "thengi", "nikkuthu",
-    "vilakku", "eriyala", "velicham", "iruttu", "illa", "illai", "arunthu",
-    "aabathu", "aapathu", "avasaram", "thee", "vizhunthuduchu", "naai", "thollai",
-    "pakkam", "pakathula", "kitta", "udane", "seiyunga",
-    "irukku", "pannunga", "mudiyala", "aachu", "pochu", "aaguthu",
-    "endha", "enga", "inga", "unga", "enaku", "veedu", "sonna", "maatha",
-    "seri", "aama", "aamam", "kandippa", "podunga", "vendaam"
+    "thanni", "thani", "neer", "kudineer", "odanju", "varala", "valiyuthu", "valiyithu", "kudika", "kudikka",
+    "salai", "pallam", "gundu", "kuliyum", "periya", "chinna", "romba", "mosam", "theru", "theruvil", "therula",
+    "kuppai", "naaththam", "vaadai", "alli", "podala", "allala", "clean", "suththam",
+    "sakkadai", "adaippu", "thengi", "nikkuthu", "odudhu", "naatram", "kallu",
+    "vilakku", "eriyala", "velicham", "iruttu", "illa", "illai", "arunthu", "pala", "eriyave",
+    "aabathu", "aapathu", "avasaram", "thee", "vizhunthuduchu", "naai", "thollai", "kadi", "paambu",
+    "pakkam", "pakathula", "kitta", "udane", "seiyunga", "pannunga", "pannikonga",
+    "irukku", "mudiyala", "aachu", "pochu", "aaguthu", "vandhuchu", "varudhu", "nadakuthu",
+    "endha", "enga", "inga", "unga", "enaku", "veedu", "sonna", "maatha", "maathanum",
+    "seri", "aama", "aamam", "kandippa", "podunga", "vendaam", "paravala", "sollunga", "solren",
+    "naala", "naal", "mani", "kaalai", "maalai", "iravu", "inniku", "netru", "naalaiku",
+    "bus", "stand", "opposite", "kitta", "pakathula", "sandhai", "kovil", "pallikoodam", "maram"
 }
 
 ENGLISH_INDICATORS = {

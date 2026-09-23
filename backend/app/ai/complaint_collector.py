@@ -199,17 +199,31 @@ class ComplaintCollector:
             del SESSION_STORE[session_id]
 
     def _extract_phone_and_name(self, text: str) -> Optional[str]:
-        """Extracts phone number and potential name from citizen input."""
+        """Extracts phone number and citizen name from input."""
         phone_match = re.search(r'\b[6-9]\d{9}\b', text)
-        if phone_match:
-            phone = phone_match.group(0)
-            # Try to get words around it that look like names
+        phone = phone_match.group(0) if phone_match else None
+
+        name = None
+        # Look for explicit name markers first (Tamil & English)
+        name_match = re.search(r'(?:பெயர்|name|peyar|i am|naan|nan)\s*(?:is|:|-)?\s*([A-Za-z\u0B80-\u0BFF]+(?:\s+[A-Za-z\u0B80-\u0BFF]+)?)', text, re.IGNORECASE)
+        if name_match:
+            candidate = name_match.group(1).strip()
+            # Exclude false positives
+            if candidate.lower() not in ["enna", "irukku", "sollunga", "problem", "theru", "road", "number", "phone"]:
+                name = candidate
+
+        if not name and phone:
             cleaned = re.sub(r'\b[6-9]\d{9}\b', '', text)
             cleaned = re.sub(r'(\bname\b|\bnumber\b|\bphone\b|\bmobile\b|\bmy\b|\bis\b|\bpeyar\b|\ben\b|\bபெயர்\b|\bஎண்\b|:|-|,)', ' ', cleaned, flags=re.IGNORECASE)
             name_words = [w for w in cleaned.split() if len(w) > 1 and not w.isdigit()]
-            name = " ".join(name_words[:3]).strip() if name_words else ""
-            if name:
-                return f"{name} ({phone})"
+            if name_words:
+                name = " ".join(name_words[:2]).strip()
+
+        if name and phone:
+            return f"{name} ({phone})"
+        elif name:
+            return name
+        elif phone:
             return phone
         return None
 
@@ -221,9 +235,11 @@ class ComplaintCollector:
             r'\b(yesterday\s*(?:morning|afternoon|evening|night)?)\b',
             r'\b(since\s*\d+\s*days?)\b',
             r'\b(last\s*\d+\s*(?:days?|hours?|weeks?))\b',
+            r'\b(\d+\s*days?(?:-ah)?)\b',
             r'\b(இன்று\s*(?:காலை|மாலை|இரவு)?)\b',
             r'\b(நேற்று\s*(?:காலை|மாலை|இரவு)?)\b',
-            r'\b(\d+\s*நாட்களாக)\b',
+            r'\b(\d+\s*நாட்களாக|\d+\s*நாளாக|\d+\s*நாளா)\b',
+            r'\b((?:மூன்று|மூணு|இரண்டு|ரெண்டு|நான்கு|நாலு|ஐந்து|அஞ்சு|\d+)\s*(?:நாட்களாக|நாளாக|நாளா|வாரமாக|வாரமா|மாசமாக|மாசமா))\b',
             r'\b(netru|indru|inniku|kaalai|maalai|iravu|today|yesterday|morning|evening|night)\b'
         ]
         for pat in patterns:
@@ -271,6 +287,11 @@ class ComplaintCollector:
             if ta_street:
                 street = ta_street.group(1).strip()
 
+        if street:
+            low_st = street.strip().lower()
+            if any(low_st == v or low_st.startswith(v) for v in ["எங்க தெரு", "எங்கள் தெரு", "என் தெரு", "enga theru", "our street", "my street", "our road", "my road", "the street", "தெரு", "road", "street", "சாலை"]):
+                street = None
+
         # Landmark detection
         landmark_match = re.search(r'\b(?:near|opposite|behind|beside|next to|close to|opp|kitta|pakkam|pakathula)\s+([A-Za-z0-9\s\.\,\-]+?)(?:\.|\,|$|\band\b)', text, re.IGNORECASE)
         if landmark_match:
@@ -286,17 +307,23 @@ class ComplaintCollector:
 
         return street, landmark
 
-    def extract_slots(self, text: str, current_field: Optional[str] = None) -> Dict[str, Any]:
+    def extract_slots(
+        self,
+        text: str,
+        current_field: Optional[str] = None,
+        existing_fields: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Multilingual slot extraction from raw citizen speech/text.
         Extracts up to 10 entities simultaneously or contextual to the current field.
+        Safely respects existing fields to prevent overwriting already-gathered data.
         """
         extracted: Dict[str, Any] = {}
+        existing = existing_fields or {}
         raw = text.strip()
         normalized = normalize_text(raw)
         lowered = normalized.lower()
 
-        # If currently prompting for a specific single field, check direct assignment
         # If currently prompting for a specific single field, check direct assignment
         if current_field:
             if current_field == "citizen_details":
@@ -313,7 +340,7 @@ class ComplaintCollector:
                 status = self._extract_current_status(raw) or raw
                 extracted["current_status"] = status
             elif current_field == "additional_details":
-                if any(w in lowered for w in ["none", "no", "nothing", "illa", "illai", "இல்லை", "no additional", "nil", "nothing else", "ille"]):
+                if any(w in lowered for w in ["none", "no hazard", "no additional", "nil", "nothing else", "வேறு இல்லை", "கூடுதல் இல்லை", "இல்லை"]):
                     extracted["additional_details"] = "None (No additional hazards)"
                 else:
                     extracted["additional_details"] = raw
@@ -330,49 +357,49 @@ class ComplaintCollector:
 
         # Also run global entity extraction to capture any extra details mentioned in the turn
         phone_contact = self._extract_phone_and_name(raw)
-        if phone_contact and not extracted.get("citizen_details"):
+        if phone_contact and not existing.get("citizen_details") and not extracted.get("citizen_details"):
             extracted["citizen_details"] = phone_contact
 
         dt = self._extract_date_time(raw)
-        if dt and not extracted.get("date_and_time"):
+        if dt and not existing.get("date_and_time") and not extracted.get("date_and_time"):
             extracted["date_and_time"] = dt
 
         freq = self._extract_frequency(raw)
-        if freq and not extracted.get("frequency"):
+        if freq and not existing.get("frequency") and not extracted.get("frequency"):
             extracted["frequency"] = freq
 
         stat = self._extract_current_status(raw)
-        if stat and not extracted.get("current_status"):
+        if stat and not existing.get("current_status") and not extracted.get("current_status"):
             extracted["current_status"] = stat
 
         street, landmark = self._extract_street_and_landmark(raw)
-        if street and not extracted.get("street_road_name"):
+        if street and not existing.get("street_road_name") and not extracted.get("street_road_name") and current_field != "landmark":
             extracted["street_road_name"] = street
-        if landmark and not extracted.get("landmark"):
+        if landmark and not existing.get("landmark") and not extracted.get("landmark") and current_field != "street_road_name":
             extracted["landmark"] = landmark
 
         # Specific spot / exact location extraction
         spot_match = re.search(r'\b(?:door\s*no\.?|pole\s*no\.?|pillar\s*no\.?|ward\s*\d+|plot\s*no\.?)\s*([A-Za-z0-9\-]+)', raw, re.IGNORECASE)
-        if spot_match and not extracted.get("exact_location"):
+        if spot_match and not existing.get("exact_location") and not extracted.get("exact_location"):
             extracted["exact_location"] = spot_match.group(0).strip()
-        elif landmark and street and not extracted.get("exact_location"):
+        elif landmark and street and not existing.get("exact_location") and not extracted.get("exact_location"):
             extracted["exact_location"] = f"{landmark}, {street}"
 
-        # Additional details extraction
-        if not extracted.get("additional_details"):
-            if any(w in lowered for w in ["no other", "no hazard", "no additional", "none", "nothing else", "no risk", "illai", "இல்லை"]):
+        # Additional details extraction - strict matching
+        if not existing.get("additional_details") and not extracted.get("additional_details"):
+            if any(w in lowered for w in ["no other", "no hazard", "no additional", "nothing else", "no risk", "வேறு தகவல் இல்லை", "கூடுதல் தகவல் இல்லை", "ஆபத்து இல்லை"]):
                 extracted["additional_details"] = "None (No additional hazards)"
 
         # Location extraction from location_service (DO NOT assume street or exact location)
-        loc_name, lat, lon, conf = extract_location(raw)
-        if loc_name and loc_name != "Tamil Nadu":
-            if not extracted.get("district_area"):
+        if not existing.get("district_area") and not extracted.get("district_area") and current_field not in ["landmark", "street_road_name", "exact_location"]:
+            loc_name, lat, lon, conf = extract_location(raw)
+            if loc_name and loc_name != "Tamil Nadu" and not any(loc_name.lower().startswith(v) for v in ["தெருவு", "தெரு", "street", "road"]):
                 extracted["district_area"] = loc_name
 
         # Problem description check if classification detects civic grievance
-        category, dept, cat_conf = classify_complaint(normalized)
-        if category != "Other" or any(w in lowered for w in ["leak", "broken", "cut", "garbage", "drainage", "pothole", "light", "குடிநீர்", "மின்வெட்டு", "குப்பை", "சாலை", "சாக்கடை"]):
-            if not extracted.get("problem_description"):
+        if not existing.get("problem_description") and not extracted.get("problem_description") and (current_field is None or current_field == "problem_description"):
+            category, dept, cat_conf = classify_complaint(normalized)
+            if category != "Other" or any(w in lowered for w in ["leak", "broken", "cut", "garbage", "drainage", "pothole", "light", "குடிநீர்", "மின்வெட்டு", "குப்பை", "சாலை", "சாக்கடை"]):
                 extracted["problem_description"] = raw
 
         return extracted
@@ -414,14 +441,14 @@ class ComplaintCollector:
         if next_field == "street_road_name":
             if area:
                 if lang == "Tamil":
-                    q = f"📍 **{area}** பகுதி பதிவு செய்யப்பட்டது. ஆனால் பாதிக்கப்பட்ட **தெரு அல்லது சாலையின் பெயர்** என்ன? (எ.கா: காந்தி தெரு, மெயின் ரோடு, கிராஸ் கட் ரோடு)"
-                    sp = f"{area} பகுதி பதிவு செய்யப்பட்டது. பாதிக்கப்பட்ட தெரு அல்லது சாலையின் பெயர் என்ன?"
+                    q = f"📍 **{area}** பகுதியில் எந்த தெருவில் அல்லது எந்த landmark அருகில் இந்த பிரச்சினை உள்ளது?"
+                    sp = f"{area} பகுதியில் எந்த தெருவில் அல்லது எந்த அடையாளம் அருகில் இந்த பிரச்சினை உள்ளது?"
                 elif lang == "Tanglish":
-                    q = f"📍 **{area}** area note pannitten. But endha **Street or Road** affected aagi irukku? (e.g. Cross Cut Road, 5th Street, Main Road)"
-                    sp = f"{area} area note pannitten. Endha street or road affected aagi irukku?"
+                    q = f"📍 **{area}**-la endha street-la or endha landmark pakkathula indha problem irukku?"
+                    sp = f"{area}-la endha street or landmark pakkathula indha problem irukku?"
                 else:
-                    q = f"📍 I have noted **{area}**. Which **street or road name** is affected by this problem? (e.g. Cross Cut Road, 5th Street, Main Road)"
-                    sp = f"I have noted {area}. Which street or road is affected?"
+                    q = f"📍 In **{area}**, on which street or near which landmark is this issue located?"
+                    sp = f"In {area}, which street or nearby landmark is this problem located?"
                 return q, sp
             else:
                 return meta["question_" + ("ta" if lang == "Tamil" else ("tanglish" if lang == "Tanglish" else "en"))], meta["spoken_" + ("ta" if lang == "Tamil" else ("tanglish" if lang == "Tanglish" else "en"))]
@@ -429,27 +456,27 @@ class ComplaintCollector:
         if next_field == "landmark":
             ref = street or area or "அந்த இடம்"
             if lang == "Tamil":
-                q = f"🏛️ எங்கள் ஆய்வு குழுவினர் இடத்தை அடையாளம் காண **{ref}** அருகில் உள்ள **முக்கிய அடையாளம் (Landmark)** என்ன? (எ.கா: கோவில், வங்கி ATM, பள்ளி எதிரில்)"
-                sp = f"{ref} அருகில் இடத்தை அடையாளம் காண ஏதேனும் முக்கிய அடையாளம் உள்ளதா?"
+                q = f"🏛️ **{ref}** அருகில் உள்ள முக்கிய அடையாளம் (Landmark) அல்லது பேருந்து நிலையம் எங்குள்ளது?"
+                sp = f"{ref} அருகில் ஏதேனும் முக்கிய அடையாளம் அல்லது பேருந்து நிலையம் உள்ளதா?"
             elif lang == "Tanglish":
-                q = f"🏛️ Field team spot ah quick ah reach panna **{ref}** pakkathula ethavathu **Landmark** irukka? (e.g. Near Temple, Opp Bank ATM, School kitta)"
-                sp = f"{ref} pakkathula ethavathu nearby landmark irukka?"
+                q = f"🏛️ **{ref}** pakkathula ethavathu landmark or bus stand irukka?"
+                sp = f"{ref} pakkathula ethavathu landmark irukka?"
             else:
-                q = f"🏛️ What nearby **landmark** near **{ref}** can help our inspection team pinpoint the exact spot? (e.g. Near Temple, Opposite Bank ATM, Near School)"
-                sp = f"What nearby landmark near {ref} can help identify the location?"
+                q = f"🏛️ What nearby **landmark** near **{ref}** can help our team locate the spot?"
+                sp = f"What nearby landmark near {ref} can help locate the spot?"
             return q, sp
 
         if next_field == "exact_location":
             ref = street or area or "the location"
             if lang == "Tamil":
-                q = f"🎯 **{ref}** பகுதியில் உள்ள **சரியான அல்லது குறிப்பிட்ட இடம் / கதவு எண்** என்ன? (எ.கா: மின் கம்பம் #12 அருகில், கதவு எண் 45 எதிரில், சந்திப்பு அருகில்)"
-                sp = f"{ref} பகுதியில் குறிப்பிட்ட இடம் அல்லது கதவு எண் என்ன?"
+                q = f"🎯 **{ref}** பகுதியில் உள்ள குறிப்பிட்ட இடம் அல்லது கதவு எண் தெரிந்தால் கூறவும்."
+                sp = f"{ref} பகுதியில் குறிப்பிட்ட இடம் அல்லது கதவு எண் தெரிந்தால் கூறவும்."
             elif lang == "Tanglish":
-                q = f"🎯 **{ref}**-la **Exact spot or Door number** enna? (e.g. Near Electric Pole #12, Opposite Door No. 45, Near Junction)"
+                q = f"🎯 **{ref}**-la exact spot or door number sollunga."
                 sp = f"{ref}-la exact spot or door number sollunga."
             else:
-                q = f"🎯 What is the **exact or approximate spot detail / door number / junction** on **{ref}**? (e.g. Near Pole #12, Door No 45, Near Junction)"
-                sp = f"What is the exact spot detail or door number on {ref}?"
+                q = f"🎯 Please provide any exact spot detail or door number on **{ref}** if available."
+                sp = f"Please provide the exact spot detail or door number on {ref} if available."
             return q, sp
 
         # Default fallback to metadata questions
@@ -458,11 +485,51 @@ class ComplaintCollector:
 
     def get_next_missing_field(self, session: Dict[str, Any]) -> Optional[str]:
         fields = session["fields"]
-        for key in FIELD_KEYS:
+        
+        # Check critical mandatory slots first
+        critical_slots = ["problem_description", "district_area", "street_road_name", "landmark"]
+        for key in critical_slots:
             val = fields.get(key)
             if not val or not str(val).strip():
                 return key
+
+        # If citizen details are missing and not pre-populated, ask citizen details
+        if not fields.get("citizen_details") or not str(fields.get("citizen_details")).strip():
+            return "citizen_details"
+
+        # Once critical slots (problem, district/area, street, landmark, citizen) are gathered:
+        # Fill sensible defaults for auxiliary fields if citizen didn't mention them
+        if not fields.get("exact_location"):
+            fields["exact_location"] = f"{fields.get('landmark', '')}, {fields.get('street_road_name', '')}".strip(", ") or "Specified Area"
+        if not fields.get("date_and_time"):
+            fields["date_and_time"] = "Recently / Active"
+        if not fields.get("frequency"):
+            fields["frequency"] = "Recurring"
+        if not fields.get("current_status"):
+            fields["current_status"] = "Active / Still Happening"
+        if not fields.get("additional_details"):
+            fields["additional_details"] = "None (No additional hazards)"
+
         return None
+
+    def evaluate_location_accuracy(self, session: Dict[str, Any]) -> str:
+        """
+        Evaluates location completeness: 'Complete', 'Partially Complete', or 'Unclear'.
+        District + Area + Street + Landmark is considered Complete.
+        """
+        f = session.get("fields", {})
+        area = f.get("district_area")
+        street = f.get("street_road_name")
+        landmark = f.get("landmark")
+        exact = f.get("exact_location")
+
+        if area and (street or exact) and landmark:
+            return "Complete"
+        if area and (street or landmark or exact):
+            return "Complete" if (street and landmark) else "Partially Complete"
+        if area or street:
+            return "Partially Complete"
+        return "Unclear"
 
     def is_confirmation_response(self, text: str) -> Tuple[bool, bool]:
         """
@@ -493,81 +560,91 @@ class ComplaintCollector:
 
     def generate_summary(self, session: Dict[str, Any], lang: str) -> Tuple[str, str]:
         """
-        Generates structured 10-point summary in Tamil, Tanglish, or English,
-        explicitly highlighting all 5 location details (District, Area, Street, Landmark, Exact Spot).
+        Generates clean pre-registration confirmation summary in Tamil, Tanglish, or English.
         """
         f = session["fields"]
-
-        # Predict category and department from problem description
         problem = f.get("problem_description") or "Civic Grievance"
         category, dept, _ = classify_complaint(normalize_text(problem))
         priority, _ = assess_priority(normalize_text(problem), category)
 
+        # Dissect district vs area
+        dist_area_val = f.get("district_area") or "Tamil Nadu"
+        if " - " in dist_area_val:
+            district_part, area_part = [p.strip() for p in dist_area_val.split(" - ", 1)]
+        elif ", " in dist_area_val:
+            parts = [p.strip() for p in dist_area_val.split(", ")]
+            district_part, area_part = parts[-1], parts[0]
+        else:
+            district_part = dist_area_val
+            area_part = dist_area_val
+
+        street_part = f.get("street_road_name") or f.get("exact_location") or "குறிப்பிடப்படவில்லை"
+        street_part_en = f.get("street_road_name") or f.get("exact_location") or "Not Specified"
+        landmark_part = f.get("landmark") or "அருகில்"
+        landmark_part_en = f.get("landmark") or "Not Specified"
+        
+        # Extract name from citizen_details
+        cit_det = f.get("citizen_details") or ""
+        name_part = "குடிமகன்"
+        name_part_en = "Citizen"
+        if cit_det:
+            name_match = re.match(r'^([^(]+)', cit_det)
+            if name_match:
+                extracted_name = name_match.group(1).strip()
+                if extracted_name and not extracted_name.isdigit():
+                    name_part = extracted_name
+                    name_part_en = extracted_name
+
         if lang == "Tamil":
             reply = (
-                "### 📋 புகார் விவரங்களின் முழு சுருக்கம் (10 விவரங்கள்):\n\n"
-                f"1. 📝 **பிரச்சனை விவரம் (Problem):** {f.get('problem_description', 'குறிப்பிடப்படவில்லை')}\n"
-                f"2. 🏙️ **மாவட்டம் & பகுதி (District / Area):** {f.get('district_area', 'குறிப்பிடப்படவில்லை')}\n"
-                f"3. 🛣️ **தெரு / சாலை பெயர் (Street / Road):** {f.get('street_road_name', 'குறிப்பிடப்படவில்லை')}\n"
-                f"4. 🏛️ **முக்கிய அடையாளம் (Landmark):** {f.get('landmark', 'குறிப்பிடப்படவில்லை')}\n"
-                f"5. 📍 **குறிப்பிட்ட இடம் / கதவு எண் (Exact Spot):** {f.get('exact_location', 'குறிப்பிடப்படவில்லை')}\n"
-                f"6. 🕒 **நடந்த தேதி & நேரம் (Date & Time):** {f.get('date_and_time', 'குறிப்பிடப்படவில்லை')}\n"
-                f"7. 🔁 **நிகழ்வு வீதம் (Frequency):** {f.get('frequency', 'குறிப்பிடப்படவில்லை')}\n"
-                f"8. ⚡ **தற்போதைய நிலை (Current Status):** {f.get('current_status', 'குறிப்பிடப்படவில்லை')}\n"
-                f"9. 📌 **கூடுதல் விவரங்கள் (Additional Details):** {f.get('additional_details', 'இல்லை')}\n"
-                f"10. 👤 **பொதுமக்கள் தொடர்பு (Citizen Contact):** {f.get('citizen_details', 'குறிப்பிடப்படவில்லை')}\n\n"
-                f"🏢 **ஒதுக்கப்படும் துறை (Department):** `{dept}`\n"
-                f"⚡ **கணிக்கப்பட்ட முன்னுரிமை (Priority):** **`{priority.value}`**\n\n"
-                "**இப்புகார் விவரங்கள் அனைத்தும் சரியானவையா?**\n"
-                "உடனடியாக பதிவு செய்து துறைக்கு அனுப்ப **'ஆமாம் / பதிவு செய்க' (Confirm)** என்று கூறவும் அல்லது உறுதிப்படுத்தும் பொத்தானை அழுத்தவும்."
+                "உங்கள் புகார் விவரங்களை உறுதிப்படுத்துகிறேன்.\n\n"
+                f"பிரச்சினை: {problem}\n"
+                f"துறை: {dept}\n"
+                f"மாவட்டம்: {district_part}\n"
+                f"பகுதி: {area_part}\n"
+                f"தெரு: {street_part}\n"
+                f"அருகிலுள்ள இடம்: {landmark_part}\n"
+                f"பெயர்: {name_part}\n\n"
+                "இந்த புகாரை பதிவு செய்யலாமா?"
             )
             spoken = (
-                f"உங்கள் புகார் விவரங்கள் அனைத்தும் சேகரிக்கப்பட்டுள்ளன. துறை {dept}, முன்னுரிமை {priority.value}. "
-                "இப்புகார் விவரங்கள் அனைத்தும் சரியானவையா? உடனடியாக பதிவு செய்யலாமா? ஆமாம் அல்லது சரி என்று கூறவும்."
+                f"உங்கள் புகார் விவரங்களை உறுதிப்படுத்துகிறேன். "
+                f"பிரச்சினை: {problem}. துறை: {dept}. இடம்: {area_part}, {street_part}. "
+                "இந்த புகாரை பதிவு செய்யலாமா?"
             )
         elif lang == "Tanglish":
             reply = (
-                "### 📋 Grievance Summary (10 Required Details Collected):\n\n"
-                f"1. 📝 **Problem Description:** {f.get('problem_description', 'Not Specified')}\n"
-                f"2. 🏙️ **District & Area:** {f.get('district_area', 'Not Specified')}\n"
-                f"3. 🛣️ **Street / Road Name:** {f.get('street_road_name', 'Not Specified')}\n"
-                f"4. 🏛️ **Nearby Landmark:** {f.get('landmark', 'Not Specified')}\n"
-                f"5. 📍 **Exact Spot / Details:** {f.get('exact_location', 'Not Specified')}\n"
-                f"6. 🕒 **Date & Time:** {f.get('date_and_time', 'Not Specified')}\n"
-                f"7. 🔁 **Frequency:** {f.get('frequency', 'Not Specified')}\n"
-                f"8. ⚡ **Current Status:** {f.get('current_status', 'Not Specified')}\n"
-                f"9. 📌 **Additional Details / Hazards:** {f.get('additional_details', 'None')}\n"
-                f"10. 👤 **Citizen Contact Details:** {f.get('citizen_details', 'Not Specified')}\n\n"
-                f"🏢 **Assigned Department:** `{dept}`\n"
-                f"⚡ **Priority Level:** **`{priority.value}`**\n\n"
-                "**Ellam details correct ah irukka? Shall I register and submit this complaint now?**\n"
-                "Reply **'Yes / Submit / Aama'** to confirm."
+                "Unga complaint details ah confirm panren.\n\n"
+                f"Problem: {problem}\n"
+                f"Department: {dept}\n"
+                f"District: {district_part}\n"
+                f"Area: {area_part}\n"
+                f"Street: {street_part_en}\n"
+                f"Nearby Landmark: {landmark_part_en}\n"
+                f"Name: {name_part_en}\n\n"
+                "Indha complaint ah register pannalaama?"
             )
             spoken = (
-                f"I have collected all 10 complaint details. Assigned to {dept} with {priority.value} priority. "
-                "Are all details correct? Shall I confirm and submit this complaint now?"
+                f"Unga complaint details confirm panren. "
+                f"Problem: {problem}. Department: {dept}. Location: {area_part}, {street_part_en}. "
+                "Indha complaint ah register pannalaama?"
             )
         else:
             reply = (
-                "### 📋 Complaint Overview (All 10 Details Gathered):\n\n"
-                f"1. 📝 **Problem Description:** {f.get('problem_description', 'Not Specified')}\n"
-                f"2. 🏙️ **District & Area:** {f.get('district_area', 'Not Specified')}\n"
-                f"3. 🛣️ **Street / Road Name:** {f.get('street_road_name', 'Not Specified')}\n"
-                f"4. 🏛️ **Nearby Landmark:** {f.get('landmark', 'Not Specified')}\n"
-                f"5. 📍 **Exact Spot / Specific Location:** {f.get('exact_location', 'Not Specified')}\n"
-                f"6. 🕒 **Date & Time:** {f.get('date_and_time', 'Not Specified')}\n"
-                f"7. 🔁 **Frequency:** {f.get('frequency', 'Not Specified')}\n"
-                f"8. ⚡ **Current Status:** {f.get('current_status', 'Not Specified')}\n"
-                f"9. 📌 **Additional Details / Hazards:** {f.get('additional_details', 'None')}\n"
-                f"10. 👤 **Citizen Contact Details:** {f.get('citizen_details', 'Not Specified')}\n\n"
-                f"🏢 **Designated Department:** `{dept}`\n"
-                f"⚡ **Assessed Priority:** **`{priority.value}`**\n\n"
-                "**Please confirm if all details above are accurate.**\n"
-                "Would you like me to register this complaint and forward it to the department now? (Reply **'Yes / Confirm'**)"
+                "Let me confirm your complaint.\n\n"
+                f"Issue: {problem}\n"
+                f"Department: {dept}\n"
+                f"District: {district_part}\n"
+                f"Area: {area_part}\n"
+                f"Street: {street_part_en}\n"
+                f"Landmark: {landmark_part_en}\n"
+                f"Name: {name_part_en}\n\n"
+                "Shall I register this complaint?"
             )
             spoken = (
-                f"I have gathered all 10 complaint details. It will be forwarded to the {dept} department with {priority.value} priority. "
-                "Please confirm if all details are correct and shall I register this complaint now?"
+                f"Let me confirm your complaint details. "
+                f"Issue: {problem}. Department: {dept}. Location: {area_part}, {street_part_en}. "
+                "Shall I register this complaint now?"
             )
 
         return reply, spoken
@@ -576,11 +653,16 @@ class ComplaintCollector:
         self,
         session: Dict[str, Any],
         db: Session,
-        current_user: Optional[User] = None
+        current_user: Optional[User] = None,
+        call_sid: Optional[str] = None,
+        caller_phone: Optional[str] = None,
+        sms_status: str = "PENDING",
+        sms_sid: Optional[str] = None
     ) -> Complaint:
         """
         Creates official Complaint entry in the database with 10 collected parameters,
-        routes to department, sets coordinates, and issues VOX-2026-XXXX tracking number.
+        routes to department, sets coordinates, and issues VX-YYYYMMDD-XXXXXX tracking number.
+        Stores call_sid, caller_phone and SMS delivery status in ai_metadata.
         """
         f = session["fields"]
         problem = f.get("problem_description") or "Civic grievance reported via AI voice assistant"
@@ -615,6 +697,9 @@ class ComplaintCollector:
 
         title = f"{category} issue at {f.get('district_area') or f.get('street_road_name') or 'Location'}"
 
+        # Use TELEPHONY_IVR source when call_sid is provided (phone call), else WEB_VOICE
+        complaint_source = ComplaintSource.TELEPHONY_IVR if call_sid else ComplaintSource.WEB_VOICE
+
         complaint_in = ComplaintCreate(
             title=title[:200],
             description=full_description,
@@ -624,12 +709,17 @@ class ComplaintCollector:
             longitude=lon,
             priority=priority,
             language=session.get("language", "English"),
-            source=ComplaintSource.WEB_VOICE,
+            source=complaint_source,
             citizen_confirmed=True,
             ai_metadata={
                 "collected_fields": f,
                 "intake_method": "multilingual_conversational_ai",
-                "session_id": session.get("session_id")
+                "session_id": session.get("session_id"),
+                "call_sid": call_sid,
+                "caller_phone": caller_phone,
+                "sms_status": sms_status,
+                "sms_sid": sms_sid,
+                "sms_sent_at": None
             }
         )
 

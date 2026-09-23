@@ -11,7 +11,7 @@ def test_create_complaint_authenticated(client, citizen_headers):
     assert response.status_code == 201
     data = response.json()
     assert "complaint_number" in data
-    assert data["complaint_number"].startswith("VOX-")
+    assert data["complaint_number"].startswith(("VX-", "VOX-"))
     assert data["category"] == "Water"
     assert data["status"] == "SUBMITTED"
     assert data["citizen_name"] == "Murugan Citizen"

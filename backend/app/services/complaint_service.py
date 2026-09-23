@@ -54,9 +54,29 @@ VALID_TRANSITIONS: Dict[ComplaintStatus, List[ComplaintStatus]] = {
 
 class ComplaintService:
     def _generate_complaint_number(self, db: Session) -> str:
-        year = datetime.now(timezone.utc).year
-        count = db.query(func.count(Complaint.id)).scalar() or 0
-        return f"VOX-{year}-{str(count + 1).zfill(4)}"
+        today = datetime.now(timezone.utc).date()
+        date_str = today.strftime("%Y%m%d")
+        prefix = f"VX-{date_str}-"
+
+        # Query all existing complaint numbers with today's prefix to find highest sequence
+        existing = db.query(Complaint.complaint_number).filter(
+            Complaint.complaint_number.like(f"{prefix}%")
+        ).all()
+
+        max_seq = 0
+        for (c_num,) in existing:
+            if c_num and c_num.startswith(prefix):
+                suffix = c_num[len(prefix):]
+                if suffix.isdigit():
+                    max_seq = max(max_seq, int(suffix))
+
+        candidate_seq = max_seq + 1
+        while True:
+            candidate = f"{prefix}{str(candidate_seq).zfill(6)}"
+            exists = db.query(Complaint.id).filter(Complaint.complaint_number == candidate).first()
+            if not exists:
+                return candidate
+            candidate_seq += 1
 
     def _calculate_due_date(self, priority: ComplaintPriority) -> datetime:
         now = datetime.now(timezone.utc)

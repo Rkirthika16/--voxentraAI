@@ -41,6 +41,54 @@ class TwilioAdapter:
     def get_logs(self, limit: int = 50) -> List[Dict[str, Any]]:
         return self.telephony_logs[:limit]
 
+    def build_complaint_sms(
+        self,
+        complaint_number: str,
+        description: str,
+        department: str,
+        location: str,
+        lang: str,
+        created_at: Optional[datetime] = None
+    ) -> str:
+        """
+        Builds a bilingual SMS body for complaint registration confirmation.
+        lang: 'Tamil' | 'English' | 'Tanglish'
+        Tanglish defaults to English SMS policy.
+        """
+        dt = created_at or datetime.now(timezone.utc)
+        date_str = dt.strftime("%d-%m-%Y %H:%M")
+
+        # Truncate description for SMS character limits
+        desc_short = description[:100].strip()
+        loc_short = location[:80].strip() if location else "\u2014"
+
+        if lang == "Tamil":
+            return (
+                "VoxentraAI \u0baa\u0bc1\u0b95\u0bbe\u0bb0\u0bcd \u0baa\u0ba4\u0bbf\u0bb5\u0bc1 "
+                "\u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0bc1\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1.\n\n"
+                f"\u0baa\u0bc1\u0b95\u0bbe\u0bb0\u0bcd \u0b8e\u0ba3\u0bcd: {complaint_number}\n"
+                f"\u0baa\u0bbf\u0bb0\u0b9a\u0bcd\u0b9a\u0bbf\u0ba9\u0bc8: {desc_short}\n"
+                f"\u0ba4\u0bc1\u0bb1\u0bc8: {department}\n"
+                f"\u0b87\u0b9f\u0bae\u0bcd: {loc_short}\n"
+                "\u0ba8\u0bbf\u0bb2\u0bc8: \u0baa\u0ba4\u0bbf\u0bb5\u0bc1 \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1\n"
+                f"\u0ba4\u0bc7\u0ba4\u0bbf: {date_str}\n\n"
+                "\u0b89\u0b99\u0bcd\u0b95\u0bb3\u0bcd \u0baa\u0bc1\u0b95\u0bbe\u0bb0\u0bcd \u0b8e\u0ba3\u0bcd\u0ba3\u0bc8\u0baa\u0bcd "
+                "\u0baa\u0baf\u0ba9\u0bcd\u0baa\u0b9f\u0bc1\u0ba4\u0bcd\u0ba4\u0bbf \u0baa\u0bc1\u0b95\u0bbe\u0bb0\u0bc8 "
+                "\u0b95\u0ba3\u0bcd\u0b95\u0bbe\u0ba3\u0bbf\u0b95\u0bcd\u0b95\u0bb2\u0bbe\u0bae\u0bcd."
+            )
+        else:
+            # English and Tanglish use English SMS policy
+            return (
+                f"VoxentraAI Complaint Registered.\n\n"
+                f"Complaint ID: {complaint_number}\n"
+                f"Issue: {desc_short}\n"
+                f"Department: {department}\n"
+                f"Location: {loc_short}\n"
+                f"Status: REGISTERED\n"
+                f"Date: {date_str}\n\n"
+                f"Track your complaint using the above ID."
+            )
+
     def handle_incoming_call(self, payload: Dict[str, Any]) -> str:
         """
         Processes inbound call webhook from Twilio phone number.
@@ -52,25 +100,33 @@ class TwilioAdapter:
 
         logger.info(f"[Twilio] Inbound call from {from_number} -> {to_number} (CallSid: {call_sid})")
 
-        prompt_ta = "வணக்கம். வாக்ஸென்ட்ரா தமிழ்நாடு அரசு ஊரக மற்றும் நகராட்சி பொது குறைதீர்ப்பு சேவைக்கு நல்வரவு. உங்கள் கிராம புகார் அல்லது பிரச்சனையை பீப் ஒலிக்கு பின் தெளிவாக கூறவும்."
+        prompt_ta = (
+            "\u0bb5\u0ba3\u0b95\u0bcd\u0b95\u0bae\u0bcd. \u0bb5\u0bbe\u0b95\u0bcd\u0b9a\u0bc6\u0ba9\u0bcd"
+            "\u0b9f\u0bcd\u0bb0\u0bbe \u0ba4\u0bae\u0bbf\u0bb4\u0bcd\u0ba8\u0bbe\u0b9f\u0bc1 \u0b85\u0bb0\u0b9a\u0bc1 "
+            "\u0b8a\u0bb0\u0b95 \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0ba8\u0b95\u0bb0\u0bbe\u0b9f\u0bcd\u0b9a\u0bbf "
+            "\u0baa\u0bcb\u0ba4\u0bc1 \u0b95\u0bc1\u0bb1\u0bc8\u0ba4\u0bc0\u0bb0\u0bcd\u0baa\u0bcd\u0baa\u0bc1 "
+            "\u0b9a\u0bc7\u0bb5\u0bc8\u0b95\u0bcd\u0b95\u0bc1 \u0ba8\u0bb2\u0bcd\u0bb5\u0bb0\u0bb5\u0bc1."
+        )
         prompt_en = "Welcome to Voxentra Citizen Grievance Helpline. Please state your village problem or grievance clearly after the beep."
 
         # Generate standard TwiML XML
-        twiml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Say voice="Polly.Aditi" language="ta-IN">{prompt_ta}</Say>
-    <Pause length="1"/>
-    <Say voice="Polly.Aditi" language="en-IN">{prompt_en}</Say>
-    <Record 
-        action="/api/v1/webhooks/twilio/voice/recording" 
-        method="POST" 
-        maxLength="60" 
-        finishOnKey="#" 
-        playBeep="true" 
-        transcribe="true"
-    />
-    <Say voice="Polly.Aditi" language="en-IN">We did not receive any recording. Goodbye.</Say>
-</Response>"""
+        twiml_response = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            "<Response>\n"
+            f'    <Say voice="Polly.Aditi" language="ta-IN">{prompt_ta}</Say>\n'
+            '    <Pause length="1"/>\n'
+            f'    <Say voice="Polly.Aditi" language="en-IN">{prompt_en}</Say>\n'
+            "    <Record \n"
+            '        action="/api/v1/webhooks/twilio/voice/recording" \n'
+            '        method="POST" \n'
+            '        maxLength="60" \n'
+            '        finishOnKey="#" \n'
+            '        playBeep="true" \n'
+            '        transcribe="true"\n'
+            "    />\n"
+            '    <Say voice="Polly.Aditi" language="en-IN">We did not receive any recording. Goodbye.</Say>\n'
+            "</Response>"
+        )
 
         self._log_event(
             event_type="CALL_INBOUND",
@@ -108,24 +164,33 @@ class TwilioAdapter:
             }
         )
 
-        reply_ta = "நன்றி! உங்கள் கிராம புகார் பெறப்பட்டது. சம்பந்தப்பட்ட துறைக்கு அனுப்பி புகார் எண் எஸ்.எம்.எஸ் மூலம் அனுப்பப்படும்."
+        reply_ta = (
+            "\u0ba8\u0ba9\u0bcd\u0bb1\u0bbf! \u0b89\u0b99\u0bcd\u0b95\u0bb3\u0bcd \u0b95\u0bbf\u0bb0\u0bbe\u0bae "
+            "\u0baa\u0bc1\u0b95\u0bbe\u0bb0\u0bcd \u0baa\u0bc6\u0bb1\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1. "
+            "\u0b9a\u0bae\u0bcd\u0baa\u0ba8\u0bcd\u0ba4\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f \u0ba4\u0bc1\u0bb1\u0bc8\u0b95\u0bcd\u0b95\u0bc1 "
+            "\u0b85\u0ba9\u0bc1\u0baa\u0bcd\u0baa\u0bbf \u0baa\u0bc1\u0b95\u0bbe\u0bb0\u0bcd \u0b8e\u0ba3\u0bcd "
+            "\u0b8e\u0bb8\u0bcd.\u0b8e\u0bae\u0bcd.\u0b8e\u0bb8\u0bcd \u0bae\u0bc2\u0bb2\u0bae\u0bcd \u0b85\u0ba9\u0bc1\u0baa\u0bcd\u0baa\u0baa\u0bcd\u0baa\u0b9f\u0bc1\u0bae\u0bcd."
+        )
         reply_en = "Thank you! Your grievance has been registered and forwarded to the designated department. Your tracking ID is being sent via SMS."
 
-        return f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Say voice="Polly.Aditi" language="ta-IN">{reply_ta}</Say>
-    <Pause length="1"/>
-    <Say voice="Polly.Aditi" language="en-IN">{reply_en}</Say>
-    <Hangup/>
-</Response>"""
+        return (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            "<Response>\n"
+            f'    <Say voice="Polly.Aditi" language="ta-IN">{reply_ta}</Say>\n'
+            '    <Pause length="1"/>\n'
+            f'    <Say voice="Polly.Aditi" language="en-IN">{reply_en}</Say>\n'
+            "    <Hangup/>\n"
+            "</Response>"
+        )
 
-    def send_sms(self, to_phone: str, message: str) -> bool:
+    def send_sms(self, to_phone: str, message: str) -> Dict[str, Any]:
         """
         Sends SMS confirmation via Twilio REST API.
+        Returns a dict: {"success": bool, "sid": str, "mode": str, "error": str|None}
         Falls back gracefully to simulated logging if API credentials are not set.
         """
         if not to_phone:
-            return False
+            return {"success": False, "sid": "", "mode": "SKIPPED", "error": "No recipient phone provided"}
 
         if self.is_configured:
             try:
@@ -143,18 +208,21 @@ class TwilioAdapter:
                         sid = resp.json().get("sid", "SM_SUCCESS")
                         logger.info(f"[Twilio] Live SMS dispatched to {to_phone} (SID: {sid})")
                         self._log_event("SMS_OUTBOUND", "OUTBOUND", to_phone, {"message": message, "twilio_sid": sid}, "SUCCESS")
-                        return True
+                        return {"success": True, "sid": sid, "mode": "LIVE", "error": None}
                     else:
-                        logger.warning(f"[Twilio] API error sending SMS to {to_phone}: {resp.status_code} - {resp.text}")
-                        self._log_event("SMS_OUTBOUND", "OUTBOUND", to_phone, {"error": resp.text}, "FAILED")
-                        return False
+                        err = f"HTTP {resp.status_code}: {resp.text[:200]}"
+                        logger.warning(f"[Twilio] API error sending SMS to {to_phone}: {err}")
+                        self._log_event("SMS_OUTBOUND", "OUTBOUND", to_phone, {"error": err}, "FAILED")
+                        return {"success": False, "sid": "", "mode": "LIVE", "error": err}
             except Exception as e:
-                logger.error(f"[Twilio] Exception dispatching SMS to {to_phone}: {e}")
-                self._log_event("SMS_OUTBOUND", "OUTBOUND", to_phone, {"error": str(e)}, "FAILED")
-                return False
+                err = str(e)
+                logger.error(f"[Twilio] Exception dispatching SMS to {to_phone}: {err}")
+                self._log_event("SMS_OUTBOUND", "OUTBOUND", to_phone, {"error": err}, "FAILED")
+                return {"success": False, "sid": "", "mode": "LIVE", "error": err}
 
         # Simulation Mode
-        logger.info(f"[Twilio Simulation] SMS delivered to {to_phone}: '{message}'")
+        sim_sid = f"SM_SIM_{uuid.uuid4().hex[:12]}"
+        logger.info(f"[Twilio Simulation] SMS delivered to {to_phone}: '{message[:80]}...'")
         self._log_event(
             event_type="SMS_OUTBOUND",
             direction="OUTBOUND",
@@ -166,7 +234,7 @@ class TwilioAdapter:
             },
             status="SUCCESS"
         )
-        return True
+        return {"success": True, "sid": sim_sid, "mode": "SIMULATED", "error": None}
 
 
 twilio_adapter = TwilioAdapter()

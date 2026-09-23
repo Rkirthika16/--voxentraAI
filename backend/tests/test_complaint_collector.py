@@ -84,7 +84,7 @@ def test_bulk_all_fields_and_confirmation(client: TestClient, db_session):
     assert confirm_res.status_code == 200
     confirm_data = confirm_res.json()
     assert confirm_data["intent"] == "COMPLAINT_REGISTERED"
-    assert "VOX-" in confirm_data["reply_text"]
+    assert "VX-" in confirm_data["reply_text"] or "VOX-" in confirm_data["reply_text"]
 
     # Verify complaint exists in DB
     tracking = confirm_data["collection_state"]["created_complaint_number"]

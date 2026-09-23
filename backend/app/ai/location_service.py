@@ -1805,10 +1805,17 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
         match = re.search(pattern, norm_text)
         if match:
             candidate = match.group(1).strip()
-            # Ignore common non-location filler words
-            excluded = ["romba", "periya", "chinna", "the", "that", "this", "anga", "inga", "unga", "enaku", "namakku", "romba dark", "damage", "thanni", "current", "problem", "issue"]
-            if candidate and len(candidate) > 2 and candidate.lower() not in excluded:
+            # Ignore common non-location filler words, landmarks, and locatives
+            excluded = [
+                "romba", "periya", "chinna", "the", "that", "this", "anga", "inga", "unga", "enaku", "namakku",
+                "romba dark", "damage", "thanni", "current", "problem", "issue", "theru", "road", "street",
+                "அருக", "அருகி", "அருகில்", "பக்கத்", "பக்கத்தில்", "பக்கம்", "எதிர்", "எதிரில்", "நிலையம்",
+                "பேருந்து", "பேருந்து நிலையம்", "தெரு", "சாலை", "ரோடு", "வழி", "வீதி", "பஸ்", "bus stand",
+                "near", "opposite", "behind", "next", "door no", "plot no", "ward"
+            ]
+            if candidate and len(candidate) > 2 and candidate.lower() not in excluded and not any(candidate.lower() == ex for ex in excluded):
                 formatted_loc = candidate.title() if candidate.isascii() else candidate
                 return f"{formatted_loc}, Tamil Nadu", None, None, 0.70
 
     return None, None, None, 0.0
+

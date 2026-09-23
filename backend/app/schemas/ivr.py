@@ -78,6 +78,7 @@ class IVRCallDialogueResponse(BaseModel):
     complaint_id: Optional[int] = None
     complaint_number: Optional[str] = None
     sms_sent: bool = False
+    sms_failure_reason: Optional[str] = None
 
 
 # Inbound Village SMS Schemas
@@ -133,3 +134,65 @@ class TelephonyLogItem(BaseModel):
 class TelephonyLogsResponse(BaseModel):
     total: int
     logs: List[TelephonyLogItem]
+
+
+# ─── Voice Register Dedicated API Schemas ────────────────────────────────────
+
+class VoiceRegisterStartRequest(BaseModel):
+    caller_phone: Optional[str] = Field(default="+919843098765", description="Citizen mobile number (from Exotel caller ID or manual input)")
+    language_hint: Optional[str] = Field(default="Auto", description="Preferred language: 'Tamil', 'English', 'Tanglish', or 'Auto'")
+    exotel_call_sid: Optional[str] = Field(default=None, description="Exotel CallSid if triggered from live inbound call")
+
+
+class VoiceRegisterStartResponse(BaseModel):
+    session_id: str
+    call_sid: str
+    greeting_text: str
+    greeting_text_tamil: str
+    greeting_text_english: str
+    detected_language: str
+    first_question: str
+
+
+class VoiceRegisterTurnRequest(BaseModel):
+    session_id: Optional[str] = Field(default=None, description="Dialogue session ID")
+    call_sid: Optional[str] = Field(default=None, description="Exotel / telephony call SID")
+    dialogue_turn: int = Field(default=1)
+    user_speech: str = Field(..., description="What the citizen said in this turn")
+    caller_phone: Optional[str] = "+919843098765"
+    language_preference: Optional[str] = "Auto"
+
+
+class VoiceRegisterTurnResponse(BaseModel):
+    session_id: str
+    call_sid: str
+    dialogue_turn: int
+    ai_reply: str
+    ai_reply_tamil: str
+    ai_reply_english: str
+    detected_language: str
+    language_confidence: Optional[float] = None
+    intent: str
+    fields_collected: int
+    fields_total: int
+    next_field: Optional[str] = None
+    is_confirmation_pending: bool = False
+    is_completed: bool = False
+    collection_state: Optional[Dict[str, Any]] = None
+    complaint_id: Optional[int] = None
+    complaint_number: Optional[str] = None
+    sms_sent: bool = False
+    sms_failure_reason: Optional[str] = None
+
+
+class VoiceRegisterSessionResponse(BaseModel):
+    session_id: str
+    call_sid: str
+    state: str
+    language: str
+    dialogue_turn: int
+    fields: Dict[str, Any]
+    fields_collected: int
+    fields_total: int
+    complaint_number: Optional[str] = None
+    complaint_id: Optional[int] = None

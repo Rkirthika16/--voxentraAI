@@ -77,6 +77,12 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_PHONE_NUMBER: str = ""
 
+    # AI Providers (Optional - for enhanced NLP)
+    GEMINI_API_KEY: str = ""
+
+    # Voice Register - Base URL for webhook callbacks
+    VOICE_REGISTER_BASE_URL: str = "http://localhost:8000"
+
 
 settings = Settings()
 
