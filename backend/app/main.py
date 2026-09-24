@@ -57,6 +57,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/v1/health", tags=["Health"])
 def health_check(db: Session = Depends(get_db)):
     """
     Returns system health, database connectivity, and speech engine status.
