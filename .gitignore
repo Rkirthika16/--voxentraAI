@@ -51,6 +51,7 @@ node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/build/
+*.tsbuildinfo
 .npm
 *.log
 npm-debug.log*
