@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ivrApi } from '../api/ivr';
-import { IVRProcessSpeechResponse } from '../types';
+import { voiceApi } from '../api/voice';
 import { speech } from '../utils/speech';
+import { telephonyAudio } from '../utils/telephonyAudio';
 import { IVRStreetMap } from '../components/IVRStreetMap';
 import { Link } from 'react-router-dom';
 import {
@@ -17,16 +18,22 @@ import {
   AlertTriangle,
   Send,
   MessageSquare,
-  ArrowRight,
   Sparkles,
   Radio,
-  Flame,
   Globe,
   RotateCcw,
   Check,
   Headphones,
-  Compass,
-  Navigation
+  Shield,
+  Activity,
+  Smartphone,
+  Hash,
+  Delete,
+  Clock,
+  MessageCircle,
+  FileText,
+  HelpCircle,
+  CheckCircle
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -36,57 +43,168 @@ interface ChatMessage {
   language: string;
   time: string;
   intent?: string;
+  audioBase64?: string | null;
 }
 
 export const TollFreeHelplinePage: React.FC = () => {
-  // Call States: 'IDLE' -> 'CALLING' -> 'CONNECTED' -> 'RECORDING' -> 'PROCESSING' -> 'DONE'
-  const [callState, setCallState] = useState<'IDLE' | 'CALLING' | 'CONNECTED' | 'RECORDING' | 'PROCESSING' | 'DONE'>('IDLE');
-  
-  // Real-time Automatic Language Recognition State (No manual option needed)
+  // Call States: 'IDLE' | 'DIALING' | 'RINGING' | 'CONNECTED' | 'ENDED'
+  const [callState, setCallState] = useState<'IDLE' | 'DIALING' | 'RINGING' | 'CONNECTED' | 'ENDED'>('IDLE');
+  const [callDuration, setCallDuration] = useState<number>(0);
+
+  // Phone & Keypad state
+  const [callerPhone, setCallerPhone] = useState<string>('+91 98430 98765');
+  const [dialedNumber, setDialedNumber] = useState<string>('1913');
+  const [showInCallKeypad, setShowInCallKeypad] = useState<boolean>(false);
+  const [speakerEnabled, setSpeakerEnabled] = useState<boolean>(true);
+  const [micMuted, setMicMuted] = useState<boolean>(false);
+
+  // Voice & Conversation State
   const [detectedLanguage, setDetectedLanguage] = useState<string>('Auto-Detecting...');
   const [languageConfidence, setLanguageConfidence] = useState<number>(0.98);
-
-  const [callerPhone, setCallerPhone] = useState('+91 98430 98765');
-  const tollFreeNumber = '1913';
-
-  // Voice & Turn Interaction State
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordSeconds, setRecordSeconds] = useState(0);
-  const [spokenText, setSpokenText] = useState('');
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
+  const [spokenText, setSpokenText] = useState<string>('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [result, setResult] = useState<any | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
-  const [dialogueTurn, setDialogueTurn] = useState(1);
-  const [currentCallSid, setCurrentCallSid] = useState('');
+  const [currentCallSid, setCurrentCallSid] = useState<string>('');
   const [collectionFields, setCollectionFields] = useState<Record<string, any>>({});
-  const [isConfirmationPending, setIsConfirmationPending] = useState(false);
-  const [summaryText, setSummaryText] = useState('');
+  const [isConfirmationPending, setIsConfirmationPending] = useState<boolean>(false);
+  const [createdComplaintNumber, setCreatedComplaintNumber] = useState<string | null>(null);
+  const [assignedDepartment, setAssignedDepartment] = useState<string | null>(null);
+  const [smsSentStatus, setSmsSentStatus] = useState<boolean>(false);
+  const [distressLevel, setDistressLevel] = useState<string>('NORMAL');
+  const [urgencyScore, setUrgencyScore] = useState<number>(45);
 
-  // OpenStreetMap GIS Live Classification State
-  const [currentLatitude, setCurrentLatitude] = useState<string | number | null>(null);
-  const [currentLongitude, setCurrentLongitude] = useState<string | number | null>(null);
-  const [osmLocationName, setOsmLocationName] = useState<string | null>(null);
+  // GIS Location Pin
+  const [currentLatitude, setCurrentLatitude] = useState<string | number | null>('11.016844');
+  const [currentLongitude, setCurrentLongitude] = useState<string | number | null>('76.955833');
+  const [osmLocationName, setOsmLocationName] = useState<string | null>('Coimbatore, Tamil Nadu');
 
+  // Audio / Mic Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<any>(null);
-  const recognitionRef = useRef<any>(null);
+  const callTimerRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, callState]);
+  }, [messages, callState, isProcessing, isAiSpeaking]);
 
+  // Call Duration Timer
+  useEffect(() => {
+    if (callState === 'CONNECTED') {
+      callTimerRef.current = setInterval(() => {
+        setCallDuration((prev) => prev + 1);
+      }, 1000);
+    } else {
+      if (callTimerRef.current) {
+        clearInterval(callTimerRef.current);
+        callTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (callTimerRef.current) clearInterval(callTimerRef.current);
+    };
+  }, [callState]);
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
+      telephonyAudio.stopRinging();
       speech.stop();
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
     };
   }, []);
 
-  // Speak AI Audio Response with reliable volume & fallback
-  const playVoice = (text: string, lang: string) => {
+  const formatTimer = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  // -------------------------------------------------------------
+  // Telephony Flow: Initiate Inbound Call
+  // -------------------------------------------------------------
+  const handleStartCall = async () => {
+    speech.stop();
+    setCallState('RINGING');
+    setCallDuration(0);
+    setMessages([]);
+    setCreatedComplaintNumber(null);
+    setCollectionFields({});
+    setIsConfirmationPending(false);
+    setSmsSentStatus(false);
+
+    telephonyAudio.startRinging();
+
+    try {
+      // 1. Initiate toll-free call session via API
+      const initRes = await ivrApi.initiateCall(callerPhone, dialedNumber || '1913');
+      const sid = initRes.call_sid;
+      setCurrentCallSid(sid);
+
+      // Simulate 1.8s ringback delay for authentic telephone experience
+      setTimeout(async () => {
+        telephonyAudio.stopRinging();
+        telephonyAudio.playCallConnected();
+        setCallState('CONNECTED');
+
+        // Welcome greeting from Tamil Nadu CM Helpline
+        const welcomeTamil = initRes.greeting_tamil + ' ' + initRes.prompt_tamil;
+        const welcomeEn = initRes.greeting_english + ' ' + initRes.prompt_english;
+
+        const initialMsg: ChatMessage = {
+          id: `ai_${Date.now()}`,
+          sender: 'ai',
+          text: `${initRes.greeting_tamil}\n${initRes.prompt_tamil}\n\n${initRes.greeting_english}`,
+          language: 'Tamil & English',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages([initialMsg]);
+
+        if (speakerEnabled) {
+          playVoice(welcomeTamil, 'Tamil', () => {
+            // Auto-start listening after welcome message so Citizen Speaks First!
+            startRecording(sid);
+          });
+        } else {
+          startRecording(sid);
+        }
+      }, 2000);
+    } catch (err: any) {
+      telephonyAudio.stopRinging();
+      setCallState('IDLE');
+      alert(`Call failed to connect: ${err.message || 'Please check backend server'}`);
+    }
+  };
+
+  // -------------------------------------------------------------
+  // Hang Up Call
+  // -------------------------------------------------------------
+  const handleHangup = () => {
+    telephonyAudio.stopRinging();
+    telephonyAudio.playHangup();
+    speech.stop();
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {}
+    }
+    setIsRecording(false);
+    setIsAiSpeaking(false);
+    setCallState('ENDED');
+  };
+
+  // -------------------------------------------------------------
+  // Audio Speech Synthesis
+  // -------------------------------------------------------------
+  const playVoice = (text: string, lang: string, onDone?: () => void) => {
+    if (!speakerEnabled) {
+      if (onDone) onDone();
+      return;
+    }
     speech.stop();
     setIsAiSpeaking(true);
     speech.speak(text, {
@@ -94,792 +212,1079 @@ export const TollFreeHelplinePage: React.FC = () => {
       volume: 1.0,
       rate: 0.94,
       onStart: () => setIsAiSpeaking(true),
-      onEnd: () => setIsAiSpeaking(false),
-      onError: () => setIsAiSpeaking(false)
+      onEnd: () => {
+        setIsAiSpeaking(false);
+        if (onDone) onDone();
+      },
+      onError: () => {
+        setIsAiSpeaking(false);
+        if (onDone) onDone();
+      }
     });
   };
 
-  // 1. INITIATE ZERO-SELECTION TOLL-FREE CALL (Citizen speaks first)
-  const handleStartCall = async () => {
-    speech.unlock();
-    setError(null);
-    setCallState('CALLING');
-    setResult(null);
-    setMessages([]);
-    setSpokenText('');
-    setIsAiSpeaking(false);
-    setDialogueTurn(1);
-    setCollectionFields({});
-    setIsConfirmationPending(false);
-    setSummaryText('');
-    setDetectedLanguage('Auto-Detecting...');
-    setCurrentLatitude(null);
-    setCurrentLongitude(null);
-    setOsmLocationName(null);
-
-    // Play phone ringtone
-    speech.playRingTone(1.8);
+  // -------------------------------------------------------------
+  // Microphone Recording & Turn Processing
+  // -------------------------------------------------------------
+  const startRecording = async (sidOverride?: string) => {
+    if (isRecording || micMuted) return;
+    const sid = sidOverride || currentCallSid;
 
     try {
-      const initData = await ivrApi.initiateCall(callerPhone, tollFreeNumber);
-      setCurrentCallSid(initData.call_sid);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
 
-      setTimeout(() => {
-        speech.stopRingTone();
-        speech.playConnectChime();
-        setCallState('CONNECTED');
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = recorder;
 
-        // Universal bilingual IVR welcoming prompt
-        const greeting = "வணக்கம். வாக்ஸென்ட்ரா தமிழ்நாடு அரசு குறைதீர்ப்பு சேவைக்கு நல்வரவு. Welcome to Voxentra Tamil Nadu Civic Helpline. Please state your grievance in Tamil, English, or Tanglish after the tone.";
-        
-        const aiMsg: ChatMessage = {
-          id: `ai_${Date.now()}`,
-          sender: 'ai',
-          text: greeting,
-          language: 'Tamil',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages([aiMsg]);
-
-        // Speak greeting aloud
-        playVoice(greeting, 'Tamil');
-
-        // Automatically start recording so citizen can speak immediately
-        setTimeout(() => {
-          handleStartRecording();
-        }, 3200);
-      }, 1500);
-
-    } catch (err: any) {
-      speech.stopRingTone();
-      setError('Could not connect to Toll-Free service. Please check network connection.');
-      setCallState('IDLE');
-    }
-  };
-
-  // 2. END CALL
-  const handleEndCall = () => {
-    speech.stop();
-    speech.stopRingTone();
-    if (mediaRecorderRef.current && isRecording) {
-      try { mediaRecorderRef.current.stop(); } catch (e) {}
-    }
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (e) {}
-    }
-    if (timerRef.current) clearInterval(timerRef.current);
-    setIsRecording(false);
-    setIsAiSpeaking(false);
-    setCallState('IDLE');
-  };
-
-  // 3. START SPEECH RECOGNITION (Captures Tamil, Tanglish & English naturally)
-  const handleStartRecording = async () => {
-    setError(null);
-    speech.stop();
-    setIsAiSpeaking(false);
-    speech.playBeep();
-
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const mediaRecorder = new MediaRecorder(stream);
-          mediaRecorderRef.current = mediaRecorder;
-          audioChunksRef.current = [];
-
-          mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) audioChunksRef.current.push(e.data);
-          };
-
-          mediaRecorder.start(250);
-        } catch (mediaErr) {
-          console.warn('Microphone stream notice:', mediaErr);
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
         }
-      }
+      };
 
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        stream.getTracks().forEach((track) => track.stop());
+        if (audioBlob.size > 2000) {
+          await processVoiceAudioTurn(audioBlob, sid);
+        }
+      };
+
+      recorder.start();
       setIsRecording(true);
-      setCallState('RECORDING');
-      setRecordSeconds(0);
-      setSpokenText('');
-
-      // Continuous Speech Recognition with multilingual Indian accent & English capture
-      // 'en-IN' accurately transcribes English and Tanglish words without forcing Tamil script
-      if (speech.isSTTSupported()) {
-        const rec = speech.createRecognition(
-          'en-IN' as any,
-          (transcript) => {
-            setSpokenText(transcript);
-          },
-          (err) => console.log('STT status:', err),
-          () => {}
-        );
-        if (rec) {
-          recognitionRef.current = rec;
-          try { rec.start(); } catch (e) {}
-        }
-      }
-
-      timerRef.current = setInterval(() => {
-        setRecordSeconds((s) => s + 1);
-      }, 1000);
-    } catch (err) {
-      console.warn('Record start notice:', err);
+    } catch (e) {
+      console.warn('Microphone access note: Using text input mode or web speech fallback');
+      setIsRecording(false);
     }
   };
 
-  // 4. SUBMIT SPOKEN GRIEVANCE TURN-BY-TURN (AI auto-detects language and classifies OSM location)
-  const handleSubmitSpokenProblem = async (customText?: string) => {
-    speech.unlock();
-    const textToProcess = (customText || spokenText).trim();
-    if (!textToProcess) {
-      setError('Please speak your grievance clearly into the microphone.');
-      return;
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
     }
-
-    setError(null);
-    speech.stop();
-    if (timerRef.current) clearInterval(timerRef.current);
     setIsRecording(false);
+  };
 
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (e) {}
-    }
-    if (mediaRecorderRef.current) {
-      try { mediaRecorderRef.current.stop(); } catch (e) {}
-    }
+  // Process voice audio through backend speech recognition and IVR understanding
+  const processVoiceAudioTurn = async (audioBlob: Blob, sid: string) => {
+    setIsProcessing(true);
+    try {
+      const audioFile = new File([audioBlob], `ivr_${Date.now()}.webm`, { type: 'audio/webm' });
+      const voiceRes = await voiceApi.sendAudioTurn(sid, audioFile, callerPhone);
 
-    // Add citizen's spoken message to conversation stream
-    const citizenMsg: ChatMessage = {
-      id: `cit_${Date.now()}`,
+      const userText = voiceRes.transcription || 'Voice message sent';
+      const userMsg: ChatMessage = {
+        id: `user_${Date.now()}`,
+        sender: 'citizen',
+        text: userText,
+        language: voiceRes.detected_language || 'Auto',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+
+      const aiText = voiceRes.ai_text || voiceRes.ai_spoken || 'Understood.';
+      const aiMsg: ChatMessage = {
+        id: `ai_${Date.now()}`,
+        sender: 'ai',
+        text: aiText,
+        language: voiceRes.detected_language || 'Tamil',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        audioBase64: voiceRes.audio_base64
+      };
+
+      setMessages((prev) => [...prev, userMsg, aiMsg]);
+      setDetectedLanguage(voiceRes.detected_language || 'Tamil');
+
+      if (voiceRes.context) {
+        setCollectionFields(voiceRes.context);
+        if (voiceRes.context.location) {
+          setOsmLocationName(voiceRes.context.location);
+        }
+      }
+
+      if (voiceRes.state === 'CONFIRMING') {
+        setIsConfirmationPending(true);
+      }
+
+      if (voiceRes.complaint_number) {
+        setCreatedComplaintNumber(voiceRes.complaint_number);
+        setSmsSentStatus(true);
+      }
+
+      // Play audio response
+      const spokenText = voiceRes.ai_spoken || voiceRes.ai_text;
+      if (speakerEnabled) {
+        playVoice(spokenText, voiceRes.detected_language || 'Tamil', () => {
+          if (voiceRes.state !== 'COMPLETED') {
+            startRecording(sid);
+          }
+        });
+      }
+    } catch (err: any) {
+      console.error('Audio processing error:', err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // -------------------------------------------------------------
+  // Send Text Turn (Fallback for Noisy Environment)
+  // -------------------------------------------------------------
+  const handleSendTextMessage = async () => {
+    if (!spokenText.trim() || isProcessing) return;
+
+    const textToSend = spokenText.trim();
+    setSpokenText('');
+    setIsProcessing(true);
+
+    const userMsg: ChatMessage = {
+      id: `user_${Date.now()}`,
       sender: 'citizen',
-      text: textToProcess,
+      text: textToSend,
       language: detectedLanguage,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-    setMessages((prev) => [...prev, citizenMsg]);
-    setCallState('PROCESSING');
+    setMessages((prev) => [...prev, userMsg]);
 
     try {
-      const activeSid = currentCallSid || `CA_${Date.now()}`;
-
-      // Zero-Selection Dialogue Turn (Auto-Language Detection + OpenStreetMap GIS Classification)
-      const res = await ivrApi.dialogueTurn({
-        call_sid: activeSid,
+      const dialogueRes = await ivrApi.dialogueTurn({
+        call_sid: currentCallSid,
+        dialogue_turn: messages.length + 1,
         caller_phone: callerPhone,
-        dialogue_turn: dialogueTurn,
-        user_speech: textToProcess,
-        language_preference: 'Auto',
+        user_speech: textToSend,
+        language_preference: 'Auto'
       });
 
-      setDialogueTurn(res.dialogue_turn);
-      
-      // Update Auto-detected Language & Confidence
-      if (res.detected_language) {
-        setDetectedLanguage(res.detected_language);
-      }
-      if (res.language_confidence) {
-        setLanguageConfidence(res.language_confidence);
-      }
-
-      // Update OpenStreetMap GIS Geocoordinates & Location Name
-      if (res.latitude && res.longitude) {
-        setCurrentLatitude(res.latitude);
-        setCurrentLongitude(res.longitude);
-      }
-      if (res.osm_location_name) {
-        setOsmLocationName(res.osm_location_name);
-      }
-
-      if (res.collection_state) {
-        setCollectionFields(res.collection_state);
-      }
-      setIsConfirmationPending(Boolean(res.is_confirmation_pending));
-      if (res.summary) {
-        setSummaryText(res.summary);
-      }
-
-      if (res.is_completed) {
-        speech.playSuccessChime();
-        setResult({
-          complaint_number: res.complaint_number || 'VOX-2026-0001',
-          complaint_id: res.complaint_id || 1,
-          category: res.extracted_category || 'General Civic',
-          suggested_department: res.suggested_department || 'Municipal Administration',
-          extracted_location: res.extracted_location || res.osm_location_name || 'Tamil Nadu',
-          latitude: res.latitude || currentLatitude,
-          longitude: res.longitude || currentLongitude,
-          status: 'SUBMITTED',
-          sms_text: `[Govt of TN / Voxentra] Grievance #${res.complaint_number} registered. Dept: ${res.suggested_department}. Status: Assigned to Field Officer.`
-        });
-        setCallState('DONE');
-      } else {
-        setCallState('CONNECTED');
-      }
-
-      const replyText = res.ai_spoken_reply;
-      const spokenLang = res.detected_language || 'Tamil';
-
-      const aiReply: ChatMessage = {
+      const aiText = dialogueRes.ai_spoken_reply || 'Understood.';
+      const aiMsg: ChatMessage = {
         id: `ai_${Date.now()}`,
         sender: 'ai',
-        text: replyText,
-        language: spokenLang,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        intent: res.intent
+        text: aiText,
+        language: dialogueRes.detected_language || 'Tamil',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      setMessages((prev) => [...prev, aiReply]);
-      setSpokenText('');
+      setMessages((prev) => [...prev, aiMsg]);
+      setDetectedLanguage(dialogueRes.detected_language || 'Tamil');
+      setLanguageConfidence(dialogueRes.language_confidence || 0.98);
 
-      // AI speaks out loud to the citizen in their detected language
-      playVoice(replyText, spokenLang);
+      if (dialogueRes.collection_state) {
+        setCollectionFields(dialogueRes.collection_state);
+      }
 
-    } catch (err: any) {
-      setError('Failed to process spoken turn. Please try again.');
-      setCallState('CONNECTED');
+      if (dialogueRes.is_confirmation_pending) {
+        setIsConfirmationPending(true);
+      }
+
+      if (dialogueRes.complaint_number) {
+        setCreatedComplaintNumber(dialogueRes.complaint_number);
+        setAssignedDepartment(dialogueRes.suggested_department || 'Municipal Administration');
+        setSmsSentStatus(true);
+      }
+
+      if (dialogueRes.latitude && dialogueRes.longitude) {
+        setCurrentLatitude(dialogueRes.latitude);
+        setCurrentLongitude(dialogueRes.longitude);
+        setOsmLocationName(dialogueRes.osm_location_name || 'Tamil Nadu');
+      }
+
+      if (speakerEnabled) {
+        playVoice(aiText, dialogueRes.detected_language || 'Tamil', () => {
+          if (!dialogueRes.is_completed) {
+            startRecording(currentCallSid);
+          }
+        });
+      }
+    } catch (e: any) {
+      console.error('Dialogue error:', e);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // -------------------------------------------------------------
+  // DTMF Keypad Tones & Digit Actions
+  // -------------------------------------------------------------
+  const handleKeypadPress = (digit: string) => {
+    telephonyAudio.playDtmf(digit);
+
+    if (callState === 'IDLE') {
+      setDialedNumber((prev) => prev + digit);
+    } else if (callState === 'CONNECTED') {
+      // In-call DTMF processing
+      if (digit === '1') {
+        // Digit 1: Quick Confirm
+        setSpokenText('ஆமாம் சரி (Yes, Confirm)');
+      } else if (digit === '2') {
+        // Digit 2: Edit / Correct
+        setSpokenText('மாற்ற வேண்டும் (Edit Details)');
+      } else if (digit === '*') {
+        // Digit *: Repeat last prompt
+        if (messages.length > 0) {
+          const lastAi = [...messages].reverse().find((m) => m.sender === 'ai');
+          if (lastAi) playVoice(lastAi.text, lastAi.language);
+        }
+      } else if (digit === '#') {
+        // Digit #: Hang up
+        handleHangup();
+      }
     }
   };
 
   return (
-    <div className="page-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '980px', margin: '0 auto' }}>
-      
-      {/* 1. Header & Zero-Selection Auto-Recognition Indicator */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="page-container" style={{ maxWidth: '1400px', padding: '1.25rem' }}>
+      {/* Top Banner: Official Telephony Helpline Bar */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9))',
+          border: '1px solid rgba(56, 189, 248, 0.25)',
+          borderRadius: '16px',
+          padding: '1.25rem 1.75rem',
+          marginBottom: '1.5rem',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem'
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div
             style={{
               width: '48px',
               height: '48px',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, #10b981, #059669)',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #0284c7, #0369a1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#ffffff',
-              boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)',
+              boxShadow: '0 0 20px rgba(56, 189, 248, 0.4)'
             }}
           >
-            <PhoneCall size={24} />
+            <PhoneCall size={26} color="#fff" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.75rem', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Toll-Free Civic Helpline (1913)
-            </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              Tamil Nadu Citizen Grievance Portal • Zero-Selection Conversational Voice IVR & OpenStreetMap GIS
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: '#f8fafc' }}>
+                Tamil Nadu CM Public Grievance Helpline (1913)
+              </h1>
+              <span
+                style={{
+                  background: 'rgba(16, 185, 129, 0.2)',
+                  color: '#34d399',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+              >
+                <Radio size={12} className="animate-pulse" /> SIP TRUNK ACTIVE
+              </span>
+            </div>
+            <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>
+              Real-time telephone IVR simulation supporting Tamil, Tanglish & English • Exotel / Twilio Virtual PBX
             </p>
           </div>
         </div>
 
-        {/* Live Auto-Recognized Language Badge (No Manual Selection Required) */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.6rem',
-            background: 'rgba(15, 23, 42, 0.8)',
-            padding: '0.5rem 0.9rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
-          }}
-        >
-          <Globe size={16} color="#38bdf8" />
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-              RECOGNIZED LANGUAGE:
-            </span>
-            <span style={{ fontSize: '0.85rem', color: '#34d399', fontWeight: 700 }}>
-              {detectedLanguage === 'Auto-Detecting...' ? '🌐 Auto-Detect (தமிழ் / Tanglish / English)' : `✓ ${detectedLanguage} (${Math.round(languageConfidence * 100)}%)`}
-            </span>
+        {/* Quick Telephony Status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.45rem 0.9rem', borderRadius: '10px', fontSize: '0.8rem' }}>
+            <span style={{ color: '#94a3b8' }}>Caller Phone: </span>
+            <span style={{ color: '#38bdf8', fontWeight: 700 }}>{callerPhone}</span>
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.45rem 0.9rem', borderRadius: '10px', fontSize: '0.8rem' }}>
+            <span style={{ color: '#94a3b8' }}>Helpline: </span>
+            <span style={{ color: '#f59e0b', fontWeight: 700 }}>1913 / 1800-425-1913</span>
           </div>
         </div>
       </div>
 
-      {error && (
+      {/* Main 2-Column Telephony Simulator Layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(360px, 480px) 1fr', gap: '1.5rem', alignItems: 'start' }}>
+        {/* ========================================================= */}
+        {/* COLUMN 1: REALISTIC SMARTPHONE IVR DEVICE FRAME */}
+        {/* ========================================================= */}
         <div
           style={{
-            padding: '1rem 1.25rem',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--color-danger-bg)',
-            border: '1px solid var(--color-danger)',
-            color: '#fca5a5',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontSize: '0.9rem',
+            background: 'linear-gradient(180deg, #090d16 0%, #0f172a 100%)',
+            borderRadius: '36px',
+            padding: '1.25rem',
+            border: '4px solid #334155',
+            boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.15)',
+            position: 'relative'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <AlertTriangle size={18} />
-            <span>{error}</span>
-          </div>
-          <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}>
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* 2. Primary Call Connection Card */}
-      <div
-        className="glass-card"
-        style={{
-          padding: '2.5rem 2rem',
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '1.5rem',
-          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95))',
-          border: '1px solid rgba(59, 130, 246, 0.25)',
-        }}
-      >
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 'var(--radius-full)', padding: '0.35rem 1rem', fontSize: '0.85rem', color: '#34d399', fontWeight: 700 }}>
-          <Radio size={15} className={callState !== 'IDLE' ? 'animate-pulse' : ''} />
-          <span>TOLL-FREE HELPLINE • 1913 • CITIZEN TALKS FIRST</span>
-        </div>
-
-        <div>
-          <div style={{ fontSize: 'clamp(2.5rem, 6vw, 4rem)', fontWeight: 800, fontFamily: 'var(--font-heading)', color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1 }}>
-            1913
-          </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.75rem', maxWidth: '650px' }}>
-            No language keypad options needed. Connect and speak your grievance in Tamil, Tanglish, or English. The AI listens, auto-identifies your dialect, accurately pinpoints your street on OpenStreetMap, and dispatches to the department.
-          </p>
-        </div>
-
-        {/* Action Button */}
-        <div>
-          {callState === 'IDLE' ? (
-            <button
-              onClick={handleStartCall}
-              className="btn btn-primary btn-lg"
+          {/* Smartphone Speaker & Camera Notch */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+            <div
               style={{
-                background: 'linear-gradient(135deg, #10b981, #059669)',
-                boxShadow: '0 0 25px rgba(16, 185, 129, 0.4)',
-                fontWeight: 700,
-                fontSize: '1.15rem',
-                padding: '0.9rem 2.5rem',
-                borderRadius: 'var(--radius-md)',
+                width: '120px',
+                height: '18px',
+                background: '#1e293b',
+                borderRadius: '0 0 12px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
               }}
             >
-              <PhoneCall size={22} />
-              <span>Call 1913 Helpline (Speak Grievance)</span>
-            </button>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button
-                onClick={handleEndCall}
-                className="btn btn-danger btn-lg"
-                style={{
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  padding: '0.8rem 2rem',
-                  borderRadius: 'var(--radius-md)',
-                }}
-              >
-                <PhoneOff size={18} />
-                <span>End Call</span>
-              </button>
-              <span style={{ fontSize: '0.85rem', color: '#34d399', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.6rem 1.2rem', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
-                ● Call Live • Turn {dialogueTurn} (AI Listening & Responding)
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 3. Live AI Voice Dialogue, Street Map GIS & Grievance Recording */}
-      {callState !== 'IDLE' && (
-        <div className="glass-card animate-fade-in" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <Headphones size={20} color="#38bdf8" />
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Government AI Voice Assistant (Tamil Nadu)</h3>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#34d399', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700 }}>
-                🌐 Detected: {detectedLanguage}
-              </span>
-              {isAiSpeaking && (
-                <span style={{ background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)', color: '#38bdf8', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700 }} className="animate-pulse">
-                  🔊 AI Speaking Aloud...
-                </span>
-              )}
+              <div style={{ width: '40px', height: '4px', background: '#475569', borderRadius: '2px' }} />
+              <div style={{ width: '8px', height: '8px', background: '#0284c7', borderRadius: '50%' }} />
             </div>
           </div>
 
-          {/* 10-Point Intake HUD Indicator */}
-          {Object.keys(collectionFields).length > 0 && (
-            <div style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: 'var(--radius-md)', padding: '0.85rem 1.2rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Sparkles size={14} /> 10-Point Grievance Intake Progress:
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 700 }}>
-                  {Object.values(collectionFields).filter(v => v && String(v).trim()).length}/10 Details Collected
-                </span>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                {[
-                  { k: 'problem_description', label: 'Problem' },
-                  { k: 'district_area', label: 'District/Area' },
-                  { k: 'street_road_name', label: 'Street/Road' },
-                  { k: 'landmark', label: 'Landmark' },
-                  { k: 'exact_location', label: 'Exact Spot' },
-                  { k: 'date_and_time', label: 'Time' },
-                  { k: 'frequency', label: 'Frequency' },
-                  { k: 'current_status', label: 'Status' },
-                  { k: 'additional_details', label: 'Hazards' },
-                  { k: 'citizen_details', label: 'Citizen Phone' }
-                ].map(item => {
-                  const val = collectionFields[item.k];
-                  const isFilled = val && String(val).trim();
-                  return (
-                    <span
-                      key={item.k}
-                      style={{
-                        fontSize: '0.7rem',
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: 'var(--radius-sm)',
-                        background: isFilled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(100, 116, 139, 0.2)',
-                        border: isFilled ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(100, 116, 139, 0.3)',
-                        color: isFilled ? '#34d399' : '#94a3b8',
-                        fontWeight: 600
-                      }}
-                    >
-                      {isFilled ? '✓' : '○'} {item.label}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* OpenStreetMap GIS Location Classifier Widget */}
-          <IVRStreetMap
-            latitude={currentLatitude || collectionFields['latitude']}
-            longitude={currentLongitude || collectionFields['longitude']}
-            locationName={osmLocationName || collectionFields['district_area']}
-            districtArea={collectionFields['district_area']}
-            streetName={collectionFields['street_road_name']}
-            landmark={collectionFields['landmark']}
-            exactLocation={collectionFields['exact_location']}
-            category={collectionFields['problem_description']}
-            height="260px"
-          />
-
-          {/* Dialogue Message History */}
+          {/* Smartphone Status Bar */}
           <div
             style={{
-              background: 'var(--bg-primary)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)',
-              padding: '1.25rem',
-              minHeight: '220px',
-              maxHeight: '340px',
-              overflowY: 'auto',
               display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0 0.5rem 0.75rem',
+              color: '#94a3b8',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              borderBottom: '1px solid rgba(255,255,255,0.06)'
             }}
           >
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: msg.sender === 'ai' ? 'flex-start' : 'flex-end',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>
-                    {msg.sender === 'ai' ? '🤖 Government AI Assistant' : '👤 Citizen (You)'} • {msg.time}
-                  </span>
-                  {msg.intent === 'CORRECTION_APPLIED' && (
-                    <span style={{ fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#34d399', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                      🔄 Speech Correction Applied
-                    </span>
-                  )}
-                  {msg.intent === 'SLOT_CONFIRMATION_PENDING' && (
-                    <span style={{ fontSize: '0.7rem', background: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fbbf24', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                      🔤 Misheard / Spelling Variation Detected
-                    </span>
-                  )}
-                  {msg.intent === 'UNCLEAR_INPUT' && (
-                    <span style={{ fontSize: '0.7rem', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                      ⚠️ Unclear Speech
-                    </span>
-                  )}
-                </div>
-                <div
-                  style={{
-                    padding: '0.9rem 1.25rem',
-                    borderRadius: 'var(--radius-md)',
-                    maxWidth: '85%',
-                    fontSize: '0.95rem',
-                    lineHeight: '1.6',
-                    background: msg.sender === 'ai' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                    border: msg.sender === 'ai' ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                    color: '#ffffff',
-                  }}
-                >
-                  <p style={{ whiteSpace: 'pre-line' }}>{msg.text}</p>
-                  {msg.sender === 'ai' && (
-                    <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        onClick={() => playVoice(msg.text, msg.language)}
-                        className="btn btn-secondary btn-sm"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', padding: '0.25rem 0.65rem' }}
-                      >
-                        <Volume2 size={13} /> Replay Voice
-                      </button>
-                      {isAiSpeaking && (
-                        <button
-                          onClick={() => { speech.stop(); setIsAiSpeaking(false); }}
-                          className="btn btn-secondary btn-sm"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', padding: '0.25rem 0.65rem' }}
-                        >
-                          <VolumeX size={13} /> Stop
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+            <span>TN-GOV 5G</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>{callState === 'CONNECTED' ? formatTimer(callDuration) : '19:13'}</span>
+              <span>🔋 98%</span>
+            </div>
           </div>
 
-          {/* Confirmation Action Card if pending confirmation */}
-          {isConfirmationPending && callState !== 'DONE' && (
-            <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.25))', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '1.25rem', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#34d399', fontWeight: 700 }}>
-                <CheckCircle2 size={18} />
-                <span>All 10 Details Gathered & Location Pinpointed • Confirm with AI:</span>
+          {/* ------------------------------------------------------- */}
+          {/* PHONE SCREEN CONTENT: IDLE / DIALER */}
+          {/* ------------------------------------------------------- */}
+          {callState === 'IDLE' && (
+            <div style={{ padding: '1rem 0.5rem' }}>
+              {/* Caller Display */}
+              <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                <div
+                  style={{
+                    width: '68px',
+                    height: '68px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #0284c7, #0f766e)',
+                    margin: '0 auto 0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 0 25px rgba(56, 189, 248, 0.35)'
+                  }}
+                >
+                  <Building2 size={34} color="#fff" />
+                </div>
+                <h3 style={{ margin: '0 0 0.25rem', color: '#f8fafc', fontSize: '1.25rem', fontWeight: 800 }}>
+                  Tamil Nadu Helpline
+                </h3>
+                <div
+                  style={{
+                    fontSize: '1.75rem',
+                    fontWeight: 800,
+                    letterSpacing: '2px',
+                    color: '#38bdf8',
+                    fontFamily: 'monospace'
+                  }}
+                >
+                  {dialedNumber || '1913'}
+                </div>
+                <p style={{ margin: '0.35rem 0 0', color: '#64748b', fontSize: '0.75rem' }}>
+                  Citizen Calls Free of Cost • 24x7 AI Assistance
+                </p>
               </div>
-              <p style={{ fontSize: '0.85rem', color: '#e2e8f0', margin: 0 }}>
-                Shall we register this grievance and forward it to the department now?
-              </p>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+
+              {/* Realistic Keypad Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '0.75rem',
+                  maxWidth: '300px',
+                  margin: '1rem auto'
+                }}
+              >
+                {[
+                  { d: '1', sub: 'CONFIRM' },
+                  { d: '2', sub: 'EDIT' },
+                  { d: '3', sub: 'DEF' },
+                  { d: '4', sub: 'GHI' },
+                  { d: '5', sub: 'JKL' },
+                  { d: '6', sub: 'MNO' },
+                  { d: '7', sub: 'PQRS' },
+                  { d: '8', sub: 'TUV' },
+                  { d: '9', sub: 'WXYZ' },
+                  { d: '*', sub: 'REPEAT' },
+                  { d: '0', sub: '+' },
+                  { d: '#', sub: 'END' }
+                ].map((item) => (
+                  <button
+                    key={item.d}
+                    onClick={() => handleKeypadPress(item.d)}
+                    style={{
+                      background: 'rgba(30, 41, 59, 0.8)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '50%',
+                      width: '64px',
+                      height: '64px',
+                      margin: '0 auto',
+                      color: '#f8fafc',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.92)')}
+                    onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                  >
+                    <span style={{ fontSize: '1.35rem', fontWeight: 700, lineHeight: 1 }}>{item.d}</span>
+                    <span style={{ fontSize: '0.55rem', color: '#94a3b8', letterSpacing: '0.5px' }}>{item.sub}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Call Action Button */}
+              <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
                 <button
-                  type="button"
-                  onClick={() => handleSubmitSpokenProblem('Yes, confirm and register this complaint now')}
-                  className="btn btn-primary btn-sm"
-                  style={{ background: '#10b981', borderColor: '#059669', fontWeight: 700 }}
+                  onClick={handleStartCall}
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    border: 'none',
+                    borderRadius: '50px',
+                    padding: '0.9rem 2.25rem',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    boxShadow: '0 10px 30px rgba(16, 185, 129, 0.45)',
+                    transition: 'transform 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
                 >
-                  <Check size={16} /> ✅ ஆமாம் / Yes, Confirm & Submit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSubmitSpokenProblem('I want to change some details')}
-                  className="btn btn-secondary btn-sm"
-                >
-                  ✏️ விவரத்தை மாற்று / Edit
+                  <PhoneCall size={20} /> CALL 1913 HELPLINE
                 </button>
               </div>
             </div>
           )}
 
-          {/* Realistic 1-Click Citizen Speech Tester Presets in Tamil, Tanglish & English */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(15, 23, 42, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Sparkles size={14} color="#38bdf8" /> Citizen Voice Quick-Test Prompts (Click to Simulate Citizen Speaking):
-            </span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => { setSpokenText('கோயம்புத்தூர் காந்திபுரம் 5-வது கிராஸ் கட் ரோட்ல குடிநீர் பைப் உடைஞ்சு தண்ணி ரோட்ல ஓடுது, முருகன் கோவில் பக்கத்துல கதவு எண் 45'); handleSubmitSpokenProblem('கோயம்புத்தூர் காந்திபுரம் 5-வது கிராஸ் கட் ரோட்ல குடிநீர் பைப் உடைஞ்சு தண்ணி ரோட்ல ஓடுது, முருகன் கோவில் பக்கத்துல கதவு எண் 45'); }}
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.4)', color: '#38bdf8' }}
-              >
-                🗣️ தமிழ்: காந்திபுரம் 5-வது கிராஸ் கட் ரோடு பைப் உடைப்பு
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSpokenText('Chennai Anna Nagar 2nd Avenue la street light eriyala romba dark ah irukku near Nilgiris supermarket opposite Door 12'); handleSubmitSpokenProblem('Chennai Anna Nagar 2nd Avenue la street light eriyala romba dark ah irukku near Nilgiris supermarket opposite Door 12'); }}
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.4)', color: '#fbbf24' }}
-              >
-                🗣️ Tanglish: Anna Nagar 2nd Ave street light issue
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSpokenText('Sewage drainage water is overflowing on Trichy Road, Singanallur opposite Bus Depot since yesterday morning'); handleSubmitSpokenProblem('Sewage drainage water is overflowing on Trichy Road, Singanallur opposite Bus Depot since yesterday morning'); }}
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(249, 115, 22, 0.15)', borderColor: 'rgba(249, 115, 22, 0.4)', color: '#fdba74' }}
-              >
-                🗣️ English: Singanallur Trichy Road drainage overflow
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSpokenText('Wait, change district to Madurai'); handleSubmitSpokenProblem('Wait, change district to Madurai'); }}
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#34d399' }}
-              >
-                🔄 Speech Correction: 'Wait, change district to Madurai'
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSpokenText('No, it is P E E L A M E D U'); handleSubmitSpokenProblem('No, it is P E E L A M E D U'); }}
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.4)', color: '#c4b5fd' }}
-              >
-                🔤 Spelled-Out: 'No, it is P E E L A M E D U'
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSpokenText('இல்லை, மாவட்டம் மதுரை என மாற்றவும்'); handleSubmitSpokenProblem('இல்லை, மாவட்டம் மதுரை என மாற்றவும்'); }}
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(236, 72, 153, 0.15)', borderColor: 'rgba(236, 72, 153, 0.4)', color: '#f472b6' }}
-              >
-                🗣️ தமிழ் திருத்தம்: மாவட்டம் மதுரை என மாற்றவும்
-              </button>
-            </div>
-          </div>
-
-          {/* Voice & Text Input Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              {isRecording ? (
-                <button
-                  type="button"
-                  onClick={() => handleSubmitSpokenProblem()}
-                  className="btn btn-warning"
-                  style={{ flex: 1, padding: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.95rem' }}
-                >
-                  <MicOff size={18} /> Stop & Submit Voice Grievance ({recordSeconds}s)
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleStartRecording}
-                  className="btn btn-primary"
-                  style={{ flex: 1, padding: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.95rem' }}
-                >
-                  <Mic size={18} /> Tap to Speak Your Grievance (Microphone)
-                </button>
-              )}
-            </div>
-
-            {/* Editable Spoken Text Input */}
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <input
-                type="text"
-                value={spokenText}
-                onChange={(e) => setSpokenText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitSpokenProblem(); }}
-                placeholder="Citizen speaks or types here (e.g. காந்திபுரம் கிராஸ் கட் ரோடு / Anna Nagar street light problem)..."
-                className="input-field"
-                style={{ flex: 1, padding: '0.75rem 1rem', fontSize: '0.9rem' }}
-              />
-              <button
-                type="button"
-                onClick={() => handleSubmitSpokenProblem()}
-                className="btn btn-primary"
-                style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}
-              >
-                <Send size={16} /> Submit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 4. Automated Ticket Confirmation & Department Transfer Card */}
-      {result && (
-        <div
-          className="glass-card animate-fade-in"
-          style={{
-            padding: '2rem',
-            border: '2px solid rgba(16, 185, 129, 0.5)',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.95))',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* ------------------------------------------------------- */}
+          {/* PHONE SCREEN CONTENT: RINGING */}
+          {/* ------------------------------------------------------- */}
+          {callState === 'RINGING' && (
+            <div style={{ padding: '3rem 1rem', textAlign: 'center' }}>
               <div
                 style={{
-                  width: '42px',
-                  height: '42px',
+                  width: '90px',
+                  height: '90px',
                   borderRadius: '50%',
-                  background: 'rgba(16, 185, 129, 0.25)',
-                  border: '2px solid #10b981',
+                  background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+                  margin: '0 auto 1.5rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#34d399',
+                  boxShadow: '0 0 45px rgba(56, 189, 248, 0.6)'
+                }}
+                className="animate-pulse"
+              >
+                <PhoneCall size={42} color="#fff" />
+              </div>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#f8fafc', fontSize: '1.4rem', fontWeight: 800 }}>
+                Calling 1913 Helpline...
+              </h3>
+              <p style={{ margin: '0 0 2rem', color: '#38bdf8', fontSize: '0.9rem' }}>
+                Connecting to Tamil Nadu CM Public Grievance Centre
+              </p>
+
+              <button
+                onClick={handleHangup}
+                style={{
+                  background: '#ef4444',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '68px',
+                  height: '68px',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 25px rgba(239, 68, 68, 0.45)'
                 }}
               >
-                <CheckCircle2 size={24} />
+                <PhoneOff size={28} />
+              </button>
+            </div>
+          )}
+
+          {/* ------------------------------------------------------- */}
+          {/* PHONE SCREEN CONTENT: CONNECTED / ACTIVE CALL */}
+          {/* ------------------------------------------------------- */}
+          {callState === 'CONNECTED' && (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '560px' }}>
+              {/* In-Call Header */}
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '0.6rem 0',
+                  borderBottom: '1px solid rgba(255,255,255,0.06)'
+                }}
+              >
+                <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 700, letterSpacing: '1px' }}>
+                  ● CALL IN PROGRESS
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc', margin: '0.2rem 0' }}>
+                  TN Grievance Cell (1913)
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#38bdf8', fontWeight: 700, fontFamily: 'monospace' }}>
+                  {formatTimer(callDuration)}
+                </div>
               </div>
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#34d399' }}>
-                  Grievance Registered Successfully via Toll-Free Helpline!
+
+              {/* Live Audio Visualizer Bar */}
+              <div
+                style={{
+                  padding: '0.65rem 1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  borderRadius: '12px',
+                  margin: '0.65rem 0'
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: isRecording ? '#ef4444' : isAiSpeaking ? '#38bdf8' : '#94a3b8', fontWeight: 700, marginRight: '0.5rem' }}>
+                  {isRecording ? '🎙️ LISTENING TO CITIZEN' : isAiSpeaking ? '🔊 AGENT SPEAKING' : '⚡ READY'}
+                </div>
+                {[12, 24, 38, 18, 44, 28, 50, 20, 34, 16, 26, 40].map((h, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: '3px',
+                      height: (isRecording || isAiSpeaking) ? `${h}px` : '4px',
+                      background: isRecording ? '#ef4444' : isAiSpeaking ? '#38bdf8' : '#475569',
+                      borderRadius: '2px',
+                      transition: 'height 0.15s ease'
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Real-Time Live Transcript Stream */}
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: '0.5rem 0.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem'
+                }}
+              >
+                {messages.map((m) => (
+                  <div
+                    key={m.id}
+                    style={{
+                      alignSelf: m.sender === 'citizen' ? 'flex-end' : 'flex-start',
+                      maxWidth: '85%',
+                      background:
+                        m.sender === 'citizen'
+                          ? 'linear-gradient(135deg, #0284c7, #0369a1)'
+                          : 'linear-gradient(135deg, #1e293b, #0f172a)',
+                      color: '#f8fafc',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: m.sender === 'citizen' ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                      fontSize: '0.82rem',
+                      lineHeight: 1.4
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 700, color: m.sender === 'citizen' ? '#bae6fd' : '#38bdf8' }}>
+                        {m.sender === 'citizen' ? '👤 Citizen Caller' : '🏛️ Helpline AI'}
+                      </span>
+                      <span style={{ fontSize: '0.6rem', color: '#94a3b8' }}>{m.time}</span>
+                    </div>
+                    <div style={{ whiteSpace: 'pre-line' }}>{m.text}</div>
+                  </div>
+                ))}
+
+                {isProcessing && (
+                  <div style={{ alignSelf: 'flex-start', background: '#1e293b', padding: '0.5rem 0.75rem', borderRadius: '12px', fontSize: '0.75rem', color: '#38bdf8' }}>
+                    <span className="animate-pulse">⏳ AI recognizing speech & updating slots...</span>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Text Input Fallback (for noisy backgrounds) */}
+              <div style={{ display: 'flex', gap: '0.4rem', margin: '0.4rem 0' }}>
+                <input
+                  type="text"
+                  value={spokenText}
+                  onChange={(e) => setSpokenText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendTextMessage()}
+                  placeholder="Type complaint if noisy..."
+                  style={{
+                    flex: 1,
+                    background: '#1e293b',
+                    border: '1px solid #334155',
+                    borderRadius: '20px',
+                    padding: '0.5rem 0.85rem',
+                    color: '#f8fafc',
+                    fontSize: '0.8rem',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  onClick={handleSendTextMessage}
+                  disabled={!spokenText.trim() || isProcessing}
+                  style={{
+                    background: '#0284c7',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '36px',
+                    height: '36px',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: spokenText.trim() ? 'pointer' : 'default',
+                    opacity: spokenText.trim() ? 1 : 0.4
+                  }}
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+
+              {/* In-Call Phone Control Panel */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(5, 1fr)',
+                  gap: '0.4rem',
+                  paddingTop: '0.5rem',
+                  borderTop: '1px solid rgba(255,255,255,0.08)'
+                }}
+              >
+                {/* 1. Mute Toggle */}
+                <button
+                  onClick={() => setMicMuted(!micMuted)}
+                  style={{
+                    background: micMuted ? '#ef4444' : '#1e293b',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '0.5rem',
+                    color: '#fff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    cursor: 'pointer',
+                    fontSize: '0.65rem'
+                  }}
+                >
+                  {micMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                  <span>{micMuted ? 'Muted' : 'Mute'}</span>
+                </button>
+
+                {/* 2. Speakerphone Toggle */}
+                <button
+                  onClick={() => setSpeakerEnabled(!speakerEnabled)}
+                  style={{
+                    background: speakerEnabled ? '#0284c7' : '#1e293b',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '0.5rem',
+                    color: '#fff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    cursor: 'pointer',
+                    fontSize: '0.65rem'
+                  }}
+                >
+                  {speakerEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                  <span>Speaker</span>
+                </button>
+
+                {/* 3. Speak Push-to-Talk */}
+                <button
+                  onClick={isRecording ? stopRecording : () => startRecording(currentCallSid)}
+                  style={{
+                    background: isRecording ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #10b981, #059669)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '0.5rem',
+                    color: '#fff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    cursor: 'pointer',
+                    fontSize: '0.65rem',
+                    boxShadow: isRecording ? '0 0 15px rgba(239, 68, 68, 0.6)' : 'none'
+                  }}
+                >
+                  <Mic size={18} />
+                  <span>{isRecording ? 'Stop' : 'Speak'}</span>
+                </button>
+
+                {/* 4. DTMF Keypad Drawer */}
+                <button
+                  onClick={() => setShowInCallKeypad(!showInCallKeypad)}
+                  style={{
+                    background: showInCallKeypad ? '#f59e0b' : '#1e293b',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '0.5rem',
+                    color: '#fff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    cursor: 'pointer',
+                    fontSize: '0.65rem'
+                  }}
+                >
+                  <Hash size={18} />
+                  <span>Keypad</span>
+                </button>
+
+                {/* 5. End Call */}
+                <button
+                  onClick={handleHangup}
+                  style={{
+                    background: '#ef4444',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '0.5rem',
+                    color: '#fff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    cursor: 'pointer',
+                    fontSize: '0.65rem'
+                  }}
+                >
+                  <PhoneOff size={18} />
+                  <span>End</span>
+                </button>
+              </div>
+
+              {/* In-Call Keypad Drawer Dropdown */}
+              {showInCallKeypad && (
+                <div
+                  style={{
+                    background: '#0f172a',
+                    border: '1px solid #334155',
+                    borderRadius: '16px',
+                    padding: '0.75rem',
+                    marginTop: '0.5rem',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: '0.4rem'
+                  }}
+                >
+                  {[
+                    { k: '1', label: '1 (Confirm)' },
+                    { k: '2', label: '2 (Edit)' },
+                    { k: '*', label: '* (Repeat)' },
+                    { k: '#', label: '# (End)' }
+                  ].map((btn) => (
+                    <button
+                      key={btn.k}
+                      onClick={() => handleKeypadPress(btn.k)}
+                      style={{
+                        background: '#1e293b',
+                        border: '1px solid #475569',
+                        borderRadius: '8px',
+                        padding: '0.4rem',
+                        color: '#f8fafc',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ------------------------------------------------------- */}
+          {/* PHONE SCREEN CONTENT: ENDED / SUMMARY */}
+          {/* ------------------------------------------------------- */}
+          {callState === 'ENDED' && (
+            <div style={{ padding: '1.5rem 0.5rem', textAlign: 'center' }}>
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: createdComplaintNumber ? 'linear-gradient(135deg, #10b981, #059669)' : '#ef4444',
+                  margin: '0 auto 1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {createdComplaintNumber ? <Check size={32} color="#fff" /> : <PhoneOff size={32} color="#fff" />}
+              </div>
+
+              <h3 style={{ margin: '0 0 0.25rem', color: '#f8fafc', fontSize: '1.25rem', fontWeight: 800 }}>
+                {createdComplaintNumber ? 'Grievance Registered!' : 'Call Completed'}
+              </h3>
+              <p style={{ margin: '0 0 1rem', color: '#94a3b8', fontSize: '0.8rem' }}>
+                Duration: {formatTimer(callDuration)} • Helpline 1913
+              </p>
+
+              {createdComplaintNumber && (
+                <div
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '12px',
+                    padding: '0.85rem',
+                    margin: '0.75rem 0',
+                    textAlign: 'left'
+                  }}
+                >
+                  <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 700 }}>COMPLAINT TRACKING ID</div>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc', fontFamily: 'monospace' }}>
+                    {createdComplaintNumber}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                    Department: <span style={{ color: '#38bdf8' }}>{assignedDepartment || 'Municipal Administration'}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Virtual SMS Receipt */}
+              {smsSentStatus && (
+                <div
+                  style={{
+                    background: '#1e293b',
+                    border: '1px solid #334155',
+                    borderRadius: '12px',
+                    padding: '0.75rem',
+                    textAlign: 'left',
+                    margin: '0.75rem 0'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#38bdf8', fontSize: '0.7rem', fontWeight: 700 }}>
+                    <MessageCircle size={14} /> SMS Notification Delivered
+                  </div>
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#cbd5e1' }}>
+                    "TN Gov Grievance #{createdComplaintNumber} registered. Track status at voxentra.gov.in/track"
+                  </p>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setCallState('IDLE')}
+                  style={{
+                    background: '#0284c7',
+                    border: 'none',
+                    borderRadius: '20px',
+                    padding: '0.65rem 1.25rem',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <RotateCcw size={16} /> New Call
+                </button>
+                {createdComplaintNumber && (
+                  <Link
+                    to={`/tracking?id=${createdComplaintNumber}`}
+                    style={{
+                      background: '#10b981',
+                      border: 'none',
+                      borderRadius: '20px',
+                      padding: '0.65rem 1.25rem',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
+                    }}
+                  >
+                    Track Status
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ========================================================= */}
+        {/* COLUMN 2: REAL-TIME TELEPHONY INTELLIGENCE HUD */}
+        {/* ========================================================= */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Card 1: Live Telephony & Speech Intelligence */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95))',
+              border: '1px solid rgba(56, 189, 248, 0.2)',
+              borderRadius: '20px',
+              padding: '1.25rem',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.25)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Activity size={20} color="#38bdf8" />
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
+                  Live Telephony & AI Speech Intelligence
                 </h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  Tracking ID: <strong style={{ color: '#ffffff' }}>#{result.complaint_number}</strong> • OpenStreetMap Location Verified
-                </span>
               </div>
+              <span
+                style={{
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  color: '#38bdf8',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700
+                }}
+              >
+                G.711 / PCM HD Voice
+              </span>
             </div>
 
-            <span style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399', padding: '0.35rem 0.85rem', borderRadius: 'var(--radius-full)', fontSize: '0.8rem', fontWeight: 700 }}>
-              STATUS: ASSIGNED TO FIELD OFFICER
-            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+              <div style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Detected Language</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#38bdf8', marginTop: '0.2rem' }}>
+                  {detectedLanguage}
+                </div>
+                <div style={{ fontSize: '0.65rem', color: '#10b981' }}>Accuracy: {(languageConfidence * 100).toFixed(0)}%</div>
+              </div>
+
+              <div style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>SIP Call Session ID</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f8fafc', marginTop: '0.2rem', fontFamily: 'monospace' }}>
+                  {currentCallSid || 'CA_virtual_sip_trunk'}
+                </div>
+                <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>PSTN Trunk: Exotel / Twilio</div>
+              </div>
+
+              <div style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Urgency & Distress</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: urgencyScore > 70 ? '#ef4444' : '#f59e0b', marginTop: '0.2rem' }}>
+                  {urgencyScore}/100 • {distressLevel}
+                </div>
+                <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Multimodal Acoustic Fusion</div>
+              </div>
+            </div>
           </div>
 
-          {/* Details Summary Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-            <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>DEPARTMENT ROUTED</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: '#38bdf8' }}>
-                <Building2 size={16} />
-                <span>{result.suggested_department}</span>
+          {/* Card 2: Extracted 10-Point Slot Checklist */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95))',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '20px',
+              padding: '1.25rem',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.25)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Shield size={20} color="#10b981" />
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
+                  10-Point Grievance Information HUD
+                </h3>
               </div>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Zero Hallucination Validation</span>
             </div>
 
-            <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>OPENSTREETMAP LOCATION</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: '#fbbf24' }}>
-                <MapPin size={16} />
-                <span>{result.extracted_location}</span>
-              </div>
-            </div>
-
-            <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>AUTOMATIC SMS DISPATCH</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: '#34d399' }}>
-                <MessageSquare size={16} />
-                <span>Sent to {callerPhone}</span>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.65rem' }}>
+              {[
+                { label: 'Category / Problem', val: collectionFields.problem || collectionFields.category || collectionFields.problem_description },
+                { label: 'District & Area', val: collectionFields.location || collectionFields.district_area },
+                { label: 'Street / Road', val: collectionFields.street || collectionFields.street_road_name },
+                { label: 'Landmark', val: collectionFields.landmark },
+                { label: 'Duration', val: collectionFields.duration || collectionFields.date_and_time },
+                { label: 'Affected Scope', val: collectionFields.affected_scope || collectionFields.frequency },
+                { label: 'Assigned Department', val: collectionFields.department || assignedDepartment }
+              ].map((slot, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    background: slot.val ? 'rgba(16, 185, 129, 0.08)' : '#0f172a',
+                    border: slot.val ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.05)',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '10px'
+                  }}
+                >
+                  <div style={{ fontSize: '0.65rem', color: slot.val ? '#34d399' : '#64748b', fontWeight: 700 }}>
+                    {slot.val ? '✓ ' : '○ '} {slot.label}
+                  </div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: slot.val ? '#f8fafc' : '#475569', marginTop: '0.2rem' }}>
+                    {slot.val || 'Awaiting caller response...'}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Action Links */}
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-            <Link to={`/complaints/${result.complaint_id}`} className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>View Official Complaint Record</span>
-              <ArrowRight size={16} />
-            </Link>
-            <button
-              onClick={() => {
-                setCallState('IDLE');
-                setResult(null);
-                setMessages([]);
-                setCollectionFields({});
-              }}
-              className="btn btn-secondary"
-            >
-              Start New Toll-Free Helpline Call
-            </button>
+          {/* Card 3: Interactive OpenStreetMap GIS Map */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95))',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '20px',
+              padding: '1.25rem',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.25)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <MapPin size={20} color="#f59e0b" />
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
+                  OpenStreetMap GIS Location Pin
+                </h3>
+              </div>
+              <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 700 }}>
+                {osmLocationName || 'Tamil Nadu'}
+              </span>
+            </div>
+
+            <div style={{ height: '220px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #334155' }}>
+              <IVRStreetMap
+                latitude={currentLatitude || '11.016844'}
+                longitude={currentLongitude || '76.955833'}
+                locationName={osmLocationName || 'Tamil Nadu'}
+              />
+            </div>
           </div>
         </div>
-      )}
-
+      </div>
     </div>
   );
 };

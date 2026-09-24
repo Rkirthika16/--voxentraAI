@@ -40,6 +40,7 @@ export const App: React.FC = () => {
               <Routes>
                 {/* Friction-Free Public Routes (No Login Required) */}
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/ivr" element={<TollFreeHelplinePage />} />
                 <Route path="/toll-free" element={<TollFreeHelplinePage />} />
                 <Route path="/helpline" element={<TollFreeHelplinePage />} />
                 <Route path="/voice-assistant" element={<VoiceAssistantPage />} />
