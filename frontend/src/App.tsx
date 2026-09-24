@@ -13,6 +13,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { CitizenDashboard } from './pages/CitizenDashboard';
 import { SubmitComplaint } from './pages/SubmitComplaint';
+import { VoiceAssistantPage } from './pages/VoiceAssistantPage';
 import { VoiceComplaint } from './pages/VoiceComplaint';
 import { TextComplaint } from './pages/TextComplaint';
 import { AIAssistantPage } from './pages/AIAssistantPage';
@@ -41,6 +42,7 @@ export const App: React.FC = () => {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/toll-free" element={<TollFreeHelplinePage />} />
                 <Route path="/helpline" element={<TollFreeHelplinePage />} />
+                <Route path="/voice-assistant" element={<VoiceAssistantPage />} />
                 <Route path="/map" element={<LiveMapPage />} />
                 <Route path="/assistant" element={<AIAssistantPage />} />
                 <Route path="/submit" element={<SubmitComplaint />} />

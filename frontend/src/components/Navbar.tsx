@@ -53,6 +53,23 @@ export const Navbar: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         {/* Live Inbound Call & AI Dispatcher link */}
         <Link
+          to="/voice-assistant"
+          className="btn btn-sm"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(109, 40, 217, 0.35))',
+            border: '1px solid rgba(139, 92, 246, 0.5)',
+            color: '#c084fc',
+            fontWeight: 700,
+          }}
+        >
+          <Sparkles size={14} className="animate-pulse" />
+          <span>🎙️ Live Voice AI</span>
+        </Link>
+
+        <Link
           to="/"
           className="btn btn-sm"
           style={{

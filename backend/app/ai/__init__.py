@@ -6,6 +6,8 @@ from app.ai.priority_service import assess_priority
 from app.ai.speech_service import speech_service, SpeechService
 from app.ai.provider import ai_provider, AIProvider
 
+from app.ai.conversation_service import conversation_service, ConversationService, ConversationContext
+
 __all__ = [
     "detect_language",
     "normalize_text",
@@ -17,5 +19,8 @@ __all__ = [
     "speech_service",
     "SpeechService",
     "ai_provider",
-    "AIProvider"
+    "AIProvider",
+    "conversation_service",
+    "ConversationService",
+    "ConversationContext"
 ]

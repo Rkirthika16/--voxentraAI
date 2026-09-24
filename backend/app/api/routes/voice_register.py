@@ -535,3 +535,164 @@ async def exotel_voice_dialogue_webhook(request: Request, db: Session = Depends(
         "fields_collected": result.fields_collected,
         "fields_total": result.fields_total
     }
+
+
+# -----------------------------------------------------------------------------
+# VoxentraAI Natural Live Conversational Voice Endpoints
+# -----------------------------------------------------------------------------
+
+from pydantic import BaseModel, Field
+
+
+class ConversationTurnRequest(BaseModel):
+    session_id: Optional[str] = None
+    user_speech: str = Field(..., description="Citizen voice transcription or typed input")
+    caller_phone: Optional[str] = "+919843098765"
+
+
+class ConversationTurnResponse(BaseModel):
+    session_id: str
+    state: str  # WAITING_FOR_USER | CONFIRMING | COMPLETED | ERROR
+    ai_text: str
+    ai_spoken: str
+    detected_language: str
+    context: Dict[str, Any]
+    confirmation_required: bool
+    conversation_complete: bool
+    complaint_number: Optional[str] = None
+    complaint_id: Optional[int] = None
+
+
+@router.post("/conversation/turn", response_model=ConversationTurnResponse)
+def conversation_dialogue_turn(req: ConversationTurnRequest, db: Session = Depends(get_db)):
+    """
+    Submits one turn of live conversational dialogue to ConversationService.
+    Processes speech, dynamically detects language, updates context,
+    and returns AI response with state transitions.
+    """
+    from app.ai.conversation_service import conversation_service
+    sid = req.session_id or f"conv_{uuid.uuid4().hex[:12]}"
+    result = conversation_service.process_turn(
+        session_id=sid,
+        user_speech=req.user_speech,
+        db=db,
+        caller_phone=req.caller_phone
+    )
+    return ConversationTurnResponse(**result)
+
+
+@router.post("/conversation/audio-turn", response_model=ConversationTurnResponse)
+async def conversation_audio_turn(
+    file: UploadFile = File(...),
+    session_id: Optional[str] = Form(default=None),
+    caller_phone: Optional[str] = Form(default="+919843098765"),
+    db: Session = Depends(get_db)
+):
+    """
+    Submits an audio speech turn to the live conversational voice engine.
+    Uses speech_service for STT, and conversation_service for the multi-turn logic.
+    """
+    from app.ai.conversation_service import conversation_service
+    from app.ai.speech_service import speech_service
+    sid = session_id or f"conv_{uuid.uuid4().hex[:12]}"
+
+    _, ext = validate_audio_file(file)
+    unique_filename = f"conv_audio_{sid}_{uuid.uuid4().hex[:8]}{ext}"
+    saved_path = os.path.join(settings.UPLOAD_DIR, unique_filename)
+
+    async with aiofiles.open(saved_path, "wb") as out_file:
+        content = await file.read(settings.MAX_UPLOAD_SIZE_BYTES + 1024)
+        if len(content) > settings.MAX_UPLOAD_SIZE_BYTES:
+            raise BadRequestException("Audio file exceeds maximum allowed size of 25MB")
+        await out_file.write(content)
+
+    trans_res = speech_service.transcribe(saved_path)
+    user_speech = trans_res.get("transcription", "").strip()
+
+    if not user_speech:
+        # Check if Whisper is unavailable
+        avail = speech_service.check_availability()
+        if not avail["available"]:
+            user_speech = "Voice recognition is not configured. Please type your complaint."
+        else:
+            user_speech = "umm..."
+
+    result = conversation_service.process_turn(
+        session_id=sid,
+        user_speech=user_speech,
+        db=db,
+        caller_phone=caller_phone
+    )
+    return ConversationTurnResponse(**result)
+
+
+@router.get("/conversation/session/{session_id}")
+def get_conversation_session_state(session_id: str):
+    """Returns the structured ConversationContext for session_id."""
+    from app.ai.conversation_service import conversation_service
+    ctx = conversation_service.get_or_create_context(session_id)
+    return {
+        "session_id": ctx.session_id,
+        "context": ctx.to_dict()
+    }
+
+
+# -----------------------------------------------------------------------------
+# WebSocket Live Audio / Text Streaming Endpoint (Real-Time Architecture)
+# -----------------------------------------------------------------------------
+
+from fastapi import WebSocket, WebSocketDisconnect
+import json
+
+
+@router.websocket("/voice/session/{session_id}/stream")
+async def voice_session_websocket_stream(websocket: WebSocket, session_id: str, db: Session = Depends(get_db)):
+    """
+    WebSocket endpoint for real-time bidirectional conversational streaming.
+    Receives JSON messages: {"type": "SPEECH_TURN", "text": "..."} or {"type": "AUDIO_CHUNK", "data": "..."}
+    Streams back: {"type": "STATE_CHANGE", "state": "...", "ai_text": "...", "ai_spoken": "..."}
+    """
+    await websocket.accept()
+    from app.ai.conversation_service import conversation_service
+    ctx = conversation_service.get_or_create_context(session_id)
+
+    try:
+        await websocket.send_json({
+            "type": "SESSION_INIT",
+            "session_id": session_id,
+            "state": "WAITING_FOR_USER",
+            "message": "Connected to VoxentraAI Live Voice Engine. You can speak now."
+        })
+
+        while True:
+            data = await websocket.receive_text()
+            msg = json.loads(data)
+            msg_type = msg.get("type", "SPEECH_TURN")
+
+            if msg_type == "SPEECH_TURN":
+                user_speech = msg.get("text", "")
+                await websocket.send_json({"type": "STATE_CHANGE", "state": "PROCESSING"})
+
+                res = conversation_service.process_turn(
+                    session_id=session_id,
+                    user_speech=user_speech,
+                    db=db,
+                    caller_phone=msg.get("caller_phone", "+919843098765")
+                )
+
+                await websocket.send_json({
+                    "type": "TURN_RESULT",
+                    **res
+                })
+            elif msg_type == "PING":
+                await websocket.send_json({"type": "PONG"})
+
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected for session {session_id}")
+    except Exception as e:
+        logger.error(f"WebSocket error in session {session_id}: {e}")
+        try:
+            await websocket.send_json({"type": "ERROR", "error": str(e)})
+        except Exception:
+            pass
+
