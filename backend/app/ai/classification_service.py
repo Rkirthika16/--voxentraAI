@@ -55,19 +55,25 @@ CATEGORY_ROOTS: Dict[str, Dict[str, List[str]]] = {
             "சாலை", "சாலைகள்", "ரோடு", "ரோட்டு", "பள்ளம்", "பள்ள", "குழி", "குழிகள்", "தார் சாலை", "மண் சாலை",
             "கிராம சாலை", "பாலம்", "சிறு பாலம்", "நடைபாதை", "சாலை விபத்து", "குண்டும்",
             "குழியும்", "சேதமடைந்த சாலை", "வேகத்தடை", "ரோடு டேமேஜ்", "ரோடு உடைஞ்சு",
-            "ஸ்பீடு பிரேக்கர்", "தார் ரோடு", "பேருந்து", "பஸ் வசதி", "சாலை வசதி", "ரோடு சரியில்ல"
+            "ஸ்பீடு பிரேக்கர்", "தார் ரோடு", "பேருந்து", "பஸ் வசதி", "சாலை வசதி", "ரோடு சரியில்ல",
+            "போக்குவரத்து நெரிசல்", "டிராபிக்", "டிராபிக் ஜாம்", "நெரிசல்", "வாகன நெரிசல்", "சிக்னல்",
+            "போக்குவரத்து பாதிப்பு", "ரோடு அடைப்பு", "சாலை மறியல்"
         ],
         "tanglish_roots": [
             "road", "roads", "pallam", "salai", "gundu", "kuli", "kuzhi", "thar road", "tar road",
             "speed breaker", "pothole", "potholes", "mann road", "grama salai", "panchayat road",
             "paalam", "bridge", "vandi poda mudiyala", "asphalt", "road damage", "road problem",
-            "road repair", "road issue", "bad road", "broken road"
+            "road repair", "road issue", "bad road", "broken road",
+            "traffic", "traffic jam", "congestion", "traffic congestion", "traffic block", "road block",
+            "nerisal", "traffic nerisal", "vandi poka mudiyala", "heavy traffic", "vehicle block", "traffic issue"
         ],
         "english_roots": [
             "road", "roads", "pothole", "potholes", "asphalt", "crater", "craters", "broken road",
             "damaged road", "speed breaker", "sidewalk", "pavement", "tar road", "highway",
             "accident spot", "culvert", "mud road", "village road", "panchayat road", "road problem",
-            "road issue", "road condition", "road work"
+            "road issue", "road condition", "road work",
+            "traffic", "traffic congestion", "congestion", "traffic jam", "traffic block", "road block",
+            "traffic delay", "bottleneck", "vehicle congestion", "heavy congestion", "choked road", "gridlock"
         ]
     },
     "Sanitation/Garbage": {
