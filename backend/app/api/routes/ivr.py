@@ -333,7 +333,72 @@ def handle_ivr_dialogue_turn(
                     collection_state=session["fields"]
                 )
 
-    # 1b. Check for spelling / recognition candidate variation on the currently prompted field
+    # 1b. Check for explicit speech or slot correction (e.g. "Change district to Madurai", "No it's Peelamedu", etc.)
+    explicit_corr = complaint_collector.detect_explicit_correction(session, user_speech, detected_lang)
+    if explicit_corr:
+        corr_field, new_val, ack_reply, ack_spoken = explicit_corr
+
+        # Geocode location if relevant
+        loc_components = [
+            session["fields"].get("exact_location") or "",
+            session["fields"].get("street_road_name") or "",
+            session["fields"].get("district_area") or "",
+            session["fields"].get("landmark") or ""
+        ]
+        loc_str = ", ".join([c for c in loc_components if c]).strip()
+        osm_name, lat, lon, _ = extract_location(loc_str or user_speech)
+
+        next_missing = complaint_collector.get_next_missing_field(session)
+        if not next_missing:
+            session["state"] = "CONFIRMATION_PENDING"
+            session["current_field_prompted"] = None
+            summary_text, spoken_summary = complaint_collector.generate_summary(session, detected_lang)
+            prob = session["fields"].get("problem_description") or "Civic Grievance"
+            cat, dept, _ = classify_complaint(normalize_text(prob))
+            return IVRCallDialogueResponse(
+                call_sid=req.call_sid,
+                dialogue_turn=req.dialogue_turn + 1,
+                ai_spoken_reply=f"{ack_spoken} {spoken_summary}",
+                ai_spoken_reply_tamil=f"{ack_reply} {summary_text}" if detected_lang == "Tamil" else f"{ack_spoken} {spoken_summary}",
+                ai_spoken_reply_english=f"{ack_spoken} {spoken_summary}" if detected_lang == "English" else f"{ack_reply} {summary_text}",
+                detected_language=detected_lang,
+                language_confidence=lang_conf,
+                latitude=lat,
+                longitude=lon,
+                osm_location_name=osm_name or session['fields'].get('district_area'),
+                intent="CORRECTION_APPLIED",
+                extracted_category=cat,
+                extracted_location=f"{session['fields'].get('district_area', '')}, {session['fields'].get('street_road_name', '')}",
+                suggested_department=dept,
+                is_confirmation_pending=True,
+                is_completed=False,
+                collection_state=session["fields"],
+                summary=summary_text
+            )
+        else:
+            session["state"] = "COLLECTING"
+            session["current_field_prompted"] = next_missing
+            q_text, sp_text = complaint_collector.get_contextual_question(session, next_missing, detected_lang)
+            q_ta, _ = complaint_collector.get_contextual_question(session, next_missing, "Tamil")
+            q_en, _ = complaint_collector.get_contextual_question(session, next_missing, "English")
+            return IVRCallDialogueResponse(
+                call_sid=req.call_sid,
+                dialogue_turn=req.dialogue_turn + 1,
+                ai_spoken_reply=f"{ack_spoken} {sp_text}",
+                ai_spoken_reply_tamil=f"{ack_reply} {q_ta}" if detected_lang == "Tamil" else f"{ack_spoken} {q_ta}",
+                ai_spoken_reply_english=f"{ack_spoken} {q_en}" if detected_lang == "English" else f"{ack_reply} {q_en}",
+                detected_language=detected_lang,
+                language_confidence=lang_conf,
+                latitude=lat,
+                longitude=lon,
+                osm_location_name=osm_name or session['fields'].get('district_area'),
+                intent="CORRECTION_APPLIED",
+                is_confirmation_pending=False,
+                is_completed=False,
+                collection_state=session["fields"]
+            )
+
+    # 1c. Check for spelling / recognition candidate variation on the currently prompted field
     current_field = session.get("current_field_prompted")
     if current_field:
         variation_candidate = complaint_collector.find_spelling_or_recognition_variation(current_field, user_speech)

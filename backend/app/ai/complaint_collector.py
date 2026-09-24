@@ -592,15 +592,214 @@ class ComplaintCollector:
         """
         raw = text.strip()
         # Remove common prefixes like 'no it is', 'spelling is', 'correct is', 'illai'
-        prefix_pattern = r'^(?:no\s*,?\s*(?:it\s*is|its)?|correct\s*(?:is|spelling\s*is)?|illai\s*,?|illa\s*,?|thappu\s*,?|மாற்றி\s*,?|இல்லை\s*,?)\s*'
+        prefix_pattern = r'^(?:no\s*,?\s*(?:it\s*is|its|it\'s|actually|wait)?|correct\s*(?:is|spelling\s*is)?|correction\s*:?|illai\s*,?|illa\s*,?|thappu\s*,?|மாற்றி\s*,?|இல்லை\s*,?|தவறு\s*,?)\s*'
         cleaned = re.sub(prefix_pattern, '', raw, flags=re.IGNORECASE).strip()
 
-        # Check if text is spelled out letter-by-letter with spaces or hyphens (e.g., 'P E E L A M E D U' or 'P-E-E-L-A-M-E-D-U')
+        # Check if text is spelled out letter-by-letter with spaces, dots or hyphens (e.g., 'P E E L A M E D U' or 'P-E-E-L-A-M-E-D-U')
         if re.match(r'^[A-Za-z\u0B80-\u0BFF](?:[\s\-\.][A-Za-z\u0B80-\u0BFF]){2,}$', cleaned):
             joined = re.sub(r'[\s\-\.]+', '', cleaned)
             return joined.title() if joined.isascii() else joined
 
         return cleaned or raw
+
+    def detect_explicit_correction(
+        self,
+        session: Dict[str, Any],
+        text: str,
+        lang: str = "English"
+    ) -> Optional[Tuple[str, str, str, str]]:
+        """
+        Detects if citizen is explicitly correcting, modifying, or spelling out a detail during the call.
+        Supports Tamil, English, and Tanglish phrases like:
+        - 'Change district to Madurai' / 'Location ah Gandhipuram nu maathunga' / 'மாவட்டம் மதுரை என மாற்றவும்'
+        - 'Change street to Cross Cut Road' / 'Street name is Gandhi Road' / 'தெரு காந்தி ரோடு'
+        - 'Change problem to power cut' / 'Actually the issue is water leakage' / 'பிரச்சனை மின்வெட்டு'
+        - 'Change phone to 9876543210' / 'My number is 9876543210' / 'எண் 9876543210'
+        - 'No, not Chennai, it is Coimbatore' / 'No, it is Peelamedu' / 'No it is P E E L A M E D U'
+        Returns: (field_key, new_value, ack_reply, ack_spoken) or None
+        """
+        raw = text.strip()
+        if not raw:
+            return None
+
+        lowered = raw.lower()
+
+        # 1. District / Area / Location explicit correction
+        loc_match = re.search(
+            r'(?:(?:change|update|modify|maathu|maathunga|மாற்று|மாற்றவும்)\s+(?:the\s*)?(?:district|area|location|place|city|town|மாவட்டம்|பகுதி|இடம்|ஊர்)|(?:district|location|area|place|மாவட்டம்|பகுதி|இடம்)\s*(?:is|name\s*is|to|:|ah|nu|as|என்)?)\s*([A-Za-z0-9\u0B80-\u0BFF\s\-\,]+)',
+            raw,
+            re.IGNORECASE
+        )
+        if loc_match and any(w in lowered for w in ["change", "update", "modify", "district", "location", "area", "மாவட்டம்", "பகுதி", "இடம்", "maathu", "maathunga"]):
+            cand = loc_match.group(1).strip()
+            # Clean leading/trailing instructions
+            cand = re.sub(r'^(?:to|is|name\s*is|as|என்)\s+', '', cand, flags=re.IGNORECASE).strip()
+            cand = re.sub(r'\s+(?:nu|nu maathunga|endru|maathunga|maathavum|please|sollunga)$', '', cand, flags=re.IGNORECASE).strip()
+            if len(cand) >= 2 and cand.lower() not in ["to", "is", "nu", "the", "change"]:
+                cand_clean = self.clean_spelled_out_input(cand)
+                session["fields"]["district_area"] = cand_clean
+                session["pending_slot_confirmation"] = None
+                lbl_ta = FIELD_METADATA["district_area"]["label_ta"]
+                lbl_tg = FIELD_METADATA["district_area"]["label_tanglish"]
+                lbl_en = FIELD_METADATA["district_area"]["label_en"]
+                if lang == "Tamil":
+                    ack_r = f"சரி, உங்கள் **{lbl_ta}** '{cand_clean}' என மாற்றப்பட்டது. 👍\n\n"
+                    ack_s = f"சரி, உங்கள் {lbl_ta} {cand_clean} என மாற்றப்பட்டது."
+                elif lang == "Tanglish":
+                    ack_r = f"Sure, unga **{lbl_tg}** '{cand_clean}' nu update panniyaachu. 👍\n\n"
+                    ack_s = f"Sure, unga {lbl_tg} {cand_clean} nu update panniyaachu."
+                else:
+                    ack_r = f"Understood! I have updated your **{lbl_en}** to '{cand_clean}'. 👍\n\n"
+                    ack_s = f"Understood! I have updated your {lbl_en} to {cand_clean}."
+                return "district_area", cand_clean, ack_r, ack_s
+
+        # 2. Street / Road explicit correction
+        street_match = re.search(
+            r'(?:(?:change|update|modify|maathu|maathunga|மாற்று|மாற்றவும்)\s+(?:the\s*)?(?:street|road|salai|theru|தெரு|சாலை|வீதி)|(?:the\s*)?(?:street|road|salai|theru|தெரு|சாலை|வீதி)\s*(?:name)?\s*(?:is|to|:|ah|nu|as|என்))\s*([A-Za-z0-9\u0B80-\u0BFF\s\-\,\.]+)',
+            raw,
+            re.IGNORECASE
+        )
+        if street_match and any(w in lowered for w in ["change", "update", "modify", "street", "road", "theru", "salai", "தெரு", "சாலை", "maathu"]):
+            cand = street_match.group(1).strip()
+            cand = re.sub(r'^(?:to|is|name\s*is|as|என்)\s+', '', cand, flags=re.IGNORECASE).strip()
+            cand = re.sub(r'\s+(?:nu|nu maathunga|endru|maathunga|please|sollunga)$', '', cand, flags=re.IGNORECASE).strip()
+            if len(cand) >= 2 and cand.lower() not in ["to", "is", "nu", "the", "change", "name"]:
+                cand_clean = self.clean_spelled_out_input(cand)
+                session["fields"]["street_road_name"] = cand_clean
+                session["pending_slot_confirmation"] = None
+                lbl_ta = FIELD_METADATA["street_road_name"]["label_ta"]
+                lbl_tg = FIELD_METADATA["street_road_name"]["label_tanglish"]
+                lbl_en = FIELD_METADATA["street_road_name"]["label_en"]
+                if lang == "Tamil":
+                    ack_r = f"சரி, உங்கள் **{lbl_ta}** '{cand_clean}' என மாற்றப்பட்டது. 👍\n\n"
+                    ack_s = f"சரி, உங்கள் {lbl_ta} {cand_clean} என மாற்றப்பட்டது."
+                elif lang == "Tanglish":
+                    ack_r = f"Sure, unga **{lbl_tg}** '{cand_clean}' nu update panniyaachu. 👍\n\n"
+                    ack_s = f"Sure, unga {lbl_tg} {cand_clean} nu update panniyaachu."
+                else:
+                    ack_r = f"Understood! I have updated your **{lbl_en}** to '{cand_clean}'. 👍\n\n"
+                    ack_s = f"Understood! I have updated your {lbl_en} to {cand_clean}."
+                return "street_road_name", cand_clean, ack_r, ack_s
+
+        # 3. Landmark explicit correction
+        landmark_match = re.search(
+            r'(?:(?:change|update|modify|maathu|maathunga|மாற்று|மாற்றவும்)\s+(?:the\s*)?(?:landmark|அடையாளம்|landmark-ah)|(?:the\s*)?(?:landmark|அடையாளம்)\s*(?:is|to|:|ah|nu|as|என்))\s*([A-Za-z0-9\u0B80-\u0BFF\s\-\,\.]+)',
+            raw,
+            re.IGNORECASE
+        )
+        if landmark_match and any(w in lowered for w in ["landmark", "அடையாளம்", "landmark-ah"]):
+            cand = landmark_match.group(1).strip()
+            cand = re.sub(r'^(?:to|is|name\s*is|as|என்)\s+', '', cand, flags=re.IGNORECASE).strip()
+            cand = re.sub(r'\s+(?:nu|nu maathunga|endru|maathunga|please|sollunga)$', '', cand, flags=re.IGNORECASE).strip()
+            if len(cand) >= 2:
+                session["fields"]["landmark"] = cand
+                session["pending_slot_confirmation"] = None
+                lbl_ta = FIELD_METADATA["landmark"]["label_ta"]
+                lbl_tg = FIELD_METADATA["landmark"]["label_tanglish"]
+                lbl_en = FIELD_METADATA["landmark"]["label_en"]
+                if lang == "Tamil":
+                    ack_r = f"சரி, **{lbl_ta}** '{cand}' என மாற்றப்பட்டது. 👍\n\n"
+                    ack_s = f"சரி, அடையாளம் {cand} என மாற்றப்பட்டது."
+                elif lang == "Tanglish":
+                    ack_r = f"Sure, **{lbl_tg}** '{cand}' nu update panniyaachu. 👍\n\n"
+                    ack_s = f"Sure, landmark {cand} nu update panniyaachu."
+                else:
+                    ack_r = f"Understood! I have updated your **{lbl_en}** to '{cand}'. 👍\n\n"
+                    ack_s = f"Understood! I have updated your landmark to {cand}."
+                return "landmark", cand, ack_r, ack_s
+
+        # 4. Problem / Grievance description explicit correction
+        prob_match = re.search(
+            r'(?:(?:change|update|modify|maathu|maathunga|மாற்று|மாற்றவும்)\s+(?:the\s*)?(?:problem|issue|complaint|grievance|பிரச்சனை|குறை)|(?:actually\s+(?:the\s*)?)?(?:problem|issue|complaint|grievance|பிரச்சனை|குறை)\s*(?:is|to|:|ah|nu|as|என்))\s*([A-Za-z0-9\u0B80-\u0BFF\s\-\,\.]+)',
+            raw,
+            re.IGNORECASE
+        )
+        if prob_match and any(w in lowered for w in ["change problem", "issue is", "problem is", "பிரச்சனை", "குறை"]):
+            cand = prob_match.group(1).strip()
+            cand = re.sub(r'^(?:to|is|name\s*is|as|என்)\s+', '', cand, flags=re.IGNORECASE).strip()
+            cand = re.sub(r'\s+(?:nu|nu maathunga|endru|maathunga|please|sollunga)$', '', cand, flags=re.IGNORECASE).strip()
+            if len(cand) >= 3 and cand.lower() not in ["to", "is", "nu", "the", "change", "description"]:
+                session["fields"]["problem_description"] = cand
+                session["pending_slot_confirmation"] = None
+                lbl_ta = FIELD_METADATA["problem_description"]["label_ta"]
+                lbl_tg = FIELD_METADATA["problem_description"]["label_tanglish"]
+                lbl_en = FIELD_METADATA["problem_description"]["label_en"]
+                if lang == "Tamil":
+                    ack_r = f"சரி, உங்கள் **{lbl_ta}** '{cand}' என மாற்றப்பட்டது. 👍\n\n"
+                    ack_s = f"சரி, உங்கள் பிரச்சனை விவரம் {cand} என மாற்றப்பட்டது."
+                elif lang == "Tanglish":
+                    ack_r = f"Sure, unga **{lbl_tg}** '{cand}' nu update panniyaachu. 👍\n\n"
+                    ack_s = f"Sure, problem {cand} nu update panniyaachu."
+                else:
+                    ack_r = f"Understood! I have updated your **{lbl_en}** to '{cand}'. 👍\n\n"
+                    ack_s = f"Understood! I have updated your problem description to {cand}."
+                return "problem_description", cand, ack_r, ack_s
+
+        # 5. Citizen phone number / contact details explicit correction
+        phone_match = re.search(r'\b[6-9]\d{9}\b', raw)
+        if phone_match and any(w in lowered for w in ["phone", "mobile", "number", "contact", "change", "update", "எண்", "கைபேசி", "நம்பர்", "maathu"]):
+            new_phone = phone_match.group(0)
+            existing_cit = session["fields"].get("citizen_details") or ""
+            name_part = None
+            if existing_cit and "(" in existing_cit:
+                name_part = existing_cit.split("(")[0].strip()
+            new_contact = f"{name_part} ({new_phone})".strip() if name_part else new_phone
+            session["fields"]["citizen_details"] = new_contact
+            session["pending_slot_confirmation"] = None
+            if lang == "Tamil":
+                ack_r = f"சரி, உங்கள் தொடர்பு எண் **{new_phone}** என மாற்றப்பட்டது. 👍\n\n"
+                ack_s = f"சரி, உங்கள் தொடர்பு எண் {new_phone} என மாற்றப்பட்டது."
+            elif lang == "Tanglish":
+                ack_r = f"Sure, unga phone number **{new_phone}** nu update panniyaachu. 👍\n\n"
+                ack_s = f"Sure, phone number {new_phone} nu update panniyaachu."
+            else:
+                ack_r = f"Understood! I have updated your contact number to **{new_phone}**. 👍\n\n"
+                ack_s = f"Understood! I have updated your contact number to {new_phone}."
+            return "citizen_details", new_contact, ack_r, ack_s
+
+        # 6. 'Not X, it is Y' pattern
+        not_pattern = re.search(r'^(?:not|illa|illai|இல்லை|தவறு)\s+([A-Za-z0-9\u0B80-\u0BFF\s]+?)\s*,\s*(?:it\s*is|its|it\'s|adhu|idhu|அது|இது)?\s*([A-Za-z0-9\u0B80-\u0BFF\s\-\.]+)', raw, re.IGNORECASE)
+        if not_pattern:
+            new_val = self.clean_spelled_out_input(not_pattern.group(2).strip())
+            curr_field = session.get("current_field_prompted") or "district_area"
+            session["fields"][curr_field] = new_val
+            session["pending_slot_confirmation"] = None
+            meta = FIELD_METADATA.get(curr_field, FIELD_METADATA["district_area"])
+            if lang == "Tamil":
+                ack_r = f"சரி, உங்கள் **{meta['label_ta']}** '{new_val}' என மாற்றப்பட்டது. 👍\n\n"
+                ack_s = f"சரி, {meta['label_ta']} {new_val} என மாற்றப்பட்டது."
+            elif lang == "Tanglish":
+                ack_r = f"Sure, unga **{meta['label_tanglish']}** '{new_val}' nu update panniyaachu. 👍\n\n"
+                ack_s = f"Sure, {meta['label_tanglish']} {new_val} nu update panniyaachu."
+            else:
+                ack_r = f"Understood! I have updated your **{meta['label_en']}** to '{new_val}'. 👍\n\n"
+                ack_s = f"Understood! I have updated your {meta['label_en']} to {new_val}."
+            return curr_field, new_val, ack_r, ack_s
+
+        # 7. Explicit spelling out of letters (e.g. "P E E L A M E D U", "P-E-E-L-A-M-E-D-U", "No it is P E E L A M E D U")
+        prefix_pattern = r'^(?:no\s*,?\s*(?:it\s*is|its|it\'s|actually|wait)?|correct\s*(?:is|spelling\s*is)?|correction\s*:?|illai\s*,?|illa\s*,?|thappu\s*,?|மாற்றி\s*,?|இல்லை\s*,?|தவறு\s*,?)\s*'
+        stripped_prefix = re.sub(prefix_pattern, '', raw, flags=re.IGNORECASE).strip()
+        is_letter_by_letter = bool(re.match(r'^[A-Za-z\u0B80-\u0BFF](?:[\s\-\.][A-Za-z\u0B80-\u0BFF]){2,}$', stripped_prefix))
+
+        if is_letter_by_letter:
+            joined = re.sub(r'[\s\-\.]+', '', stripped_prefix)
+            cleaned_spelled = joined.title() if joined.isascii() else joined
+            curr_field = session.get("current_field_prompted") or "district_area"
+            session["fields"][curr_field] = cleaned_spelled
+            session["pending_slot_confirmation"] = None
+            meta = FIELD_METADATA.get(curr_field, FIELD_METADATA["district_area"])
+            if lang == "Tamil":
+                ack_r = f"சரி, நீங்கள் கூறிய **{cleaned_spelled}** ({meta['label_ta']}) பதிவு செய்யப்பட்டது. 👍\n\n"
+                ack_s = f"சரி, {cleaned_spelled} பதிவு செய்யப்பட்டது."
+            elif lang == "Tanglish":
+                ack_r = f"Sure, **{cleaned_spelled}** ({meta['label_tanglish']}) update panniyaachu. 👍\n\n"
+                ack_s = f"Sure, {cleaned_spelled} update panniyaachu."
+            else:
+                ack_r = f"Understood! I have recorded **{cleaned_spelled}** as your {meta['label_en']}. 👍\n\n"
+                ack_s = f"Understood! I have recorded {cleaned_spelled} as your {meta['label_en']}."
+            return curr_field, cleaned_spelled, ack_r, ack_s
+
+        return None
 
     def find_spelling_or_recognition_variation(self, field: Optional[str], text: str) -> Optional[str]:
         """
@@ -618,7 +817,7 @@ class ComplaintCollector:
             if candidate_tuple:
                 candidate_name, _, _, conf = candidate_tuple
                 # Extract clean primary name (e.g., 'Gandhipuram' or 'Peelamedu')
-                primary_name = candidate_name.split(",")[0].strip()
+                primary_name = candidate_name.split(",")[0].split("&")[0].strip()
                 # Check if it differs from raw text (case-insensitive)
                 if primary_name.lower() != text.strip().lower() and candidate_name.lower() != text.strip().lower():
                     return primary_name

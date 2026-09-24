@@ -489,7 +489,58 @@ class AssistantService:
             complaint_collector.reset_session(active_session_id)
             session = complaint_collector.get_or_create_session(active_session_id, current_user, language_hint)
 
-        # 5b. Check for spelling / recognition variation on the currently prompted field before saving
+        # 5b. Check for explicit speech or slot correction (e.g. "Change district to Madurai", "No it's Peelamedu", "P E E L A M E D U")
+        explicit_corr = complaint_collector.detect_explicit_correction(session, raw_text, detected_lang)
+        if explicit_corr:
+            corr_field, new_val, ack_reply, ack_spoken = explicit_corr
+            next_missing = complaint_collector.get_next_missing_field(session)
+            if not next_missing:
+                session["state"] = "CONFIRMATION_PENDING"
+                session["current_field_prompted"] = None
+                summary_text, spoken_summary = complaint_collector.generate_summary(session, detected_lang)
+                prob = session["fields"].get("problem_description") or "Civic Grievance"
+                cat, dept, _ = classify_complaint(normalize_text(prob))
+                prio, _ = assess_priority(normalize_text(prob), cat)
+                draft = ComplaintDraft(
+                    title=f"{cat} issue at {session['fields'].get('district_area') or 'Location'}",
+                    description=prob,
+                    category=cat,
+                    suggested_department=dept,
+                    extracted_location=f"{session['fields'].get('exact_location', '')}, {session['fields'].get('street_road_name', '')}",
+                    priority=prio,
+                    summary=f"{cat} grievance ready for registration"
+                )
+                return AssistantResponse(
+                    reply_text=f"{ack_reply}\n\n{summary_text}",
+                    spoken_text=f"{ack_spoken} {spoken_summary}",
+                    detected_language=detected_lang,
+                    intent="CORRECTION_APPLIED",
+                    draft_complaint=draft,
+                    collection_state=self._build_collection_state_schema(session),
+                    suggested_actions=[
+                        ActionSuggestion(label="✅ Confirm & Register Grievance", action_type="QUICK_PROMPT", payload={"prompt": "Yes, please register this complaint"}),
+                        ActionSuggestion(label="✏️ Change a Detail", action_type="QUICK_PROMPT", payload={"prompt": "I want to edit some details"})
+                    ],
+                    session_id=active_session_id
+                )
+            else:
+                session["state"] = "COLLECTING"
+                session["current_field_prompted"] = next_missing
+                meta = FIELD_METADATA[next_missing]
+                q_text, sp_text = complaint_collector.get_contextual_question(session, next_missing, detected_lang)
+                step_num = FIELD_KEYS.index(next_missing) + 1
+                step_label = meta.get('label_' + ('ta' if detected_lang == 'Tamil' else ('tanglish' if detected_lang == 'Tanglish' else 'en')), meta['label_en'])
+                full_reply = f"{ack_reply}**Step {step_num} of 10: {step_label}**\n\n{q_text}"
+                return AssistantResponse(
+                    reply_text=full_reply,
+                    spoken_text=f"{ack_spoken} {sp_text}",
+                    detected_language=detected_lang,
+                    intent="CORRECTION_APPLIED",
+                    collection_state=self._build_collection_state_schema(session),
+                    session_id=active_session_id
+                )
+
+        # 5c. Check for spelling / recognition variation on the currently prompted field before saving
         current_field = session.get("current_field_prompted")
         if current_field:
             variation_candidate = complaint_collector.find_spelling_or_recognition_variation(current_field, raw_text)

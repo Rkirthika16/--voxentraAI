@@ -35,6 +35,7 @@ interface ChatMessage {
   text: string;
   language: string;
   time: string;
+  intent?: string;
 }
 
 export const TollFreeHelplinePage: React.FC = () => {
@@ -324,7 +325,8 @@ export const TollFreeHelplinePage: React.FC = () => {
         sender: 'ai',
         text: replyText,
         language: spokenLang,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        intent: res.intent
       };
       setMessages((prev) => [...prev, aiReply]);
       setSpokenText('');
@@ -591,9 +593,26 @@ export const TollFreeHelplinePage: React.FC = () => {
                   alignItems: msg.sender === 'ai' ? 'flex-start' : 'flex-end',
                 }}
               >
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '0.25rem', fontWeight: 600 }}>
-                  {msg.sender === 'ai' ? '🤖 Government AI Assistant' : '👤 Citizen (You)'} • {msg.time}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>
+                    {msg.sender === 'ai' ? '🤖 Government AI Assistant' : '👤 Citizen (You)'} • {msg.time}
+                  </span>
+                  {msg.intent === 'CORRECTION_APPLIED' && (
+                    <span style={{ fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#34d399', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                      🔄 Speech Correction Applied
+                    </span>
+                  )}
+                  {msg.intent === 'SLOT_CONFIRMATION_PENDING' && (
+                    <span style={{ fontSize: '0.7rem', background: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fbbf24', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                      🔤 Misheard / Spelling Variation Detected
+                    </span>
+                  )}
+                  {msg.intent === 'UNCLEAR_INPUT' && (
+                    <span style={{ fontSize: '0.7rem', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                      ⚠️ Unclear Speech
+                    </span>
+                  )}
+                </div>
                 <div
                   style={{
                     padding: '0.9rem 1.25rem',
@@ -695,11 +714,27 @@ export const TollFreeHelplinePage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => { setSpokenText('மதுரை மேலூர் மெயின் ரோட்ல பெரிய குப்பை குமிஞ்சிருக்கு துர்நாற்றம் வீசுது அரசு பள்ளி அருகில்'); handleSubmitSpokenProblem('மதுரை மேலூர் மெயின் ரோட்ல பெரிய குப்பை குமிஞ்சிருக்கு துர்நாற்றம் வீசுது அரசு பள்ளி அருகில்'); }}
+                onClick={() => { setSpokenText('Wait, change district to Madurai'); handleSubmitSpokenProblem('Wait, change district to Madurai'); }}
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#34d399' }}
+              >
+                🔄 Speech Correction: 'Wait, change district to Madurai'
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSpokenText('No, it is P E E L A M E D U'); handleSubmitSpokenProblem('No, it is P E E L A M E D U'); }}
                 className="btn btn-secondary btn-sm"
                 style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.4)', color: '#c4b5fd' }}
               >
-                🗣️ தமிழ்: மதுரை மேலூர் மெயின் ரோடு குப்பை தேக்கம்
+                🔤 Spelled-Out: 'No, it is P E E L A M E D U'
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSpokenText('இல்லை, மாவட்டம் மதுரை என மாற்றவும்'); handleSubmitSpokenProblem('இல்லை, மாவட்டம் மதுரை என மாற்றவும்'); }}
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', background: 'rgba(236, 72, 153, 0.15)', borderColor: 'rgba(236, 72, 153, 0.4)', color: '#f472b6' }}
+              >
+                🗣️ தமிழ் திருத்தம்: மாவட்டம் மதுரை என மாற்றவும்
               </button>
             </div>
           </div>

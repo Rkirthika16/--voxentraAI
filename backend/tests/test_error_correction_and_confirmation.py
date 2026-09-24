@@ -173,3 +173,108 @@ def test_ivr_dialogue_turn_error_correction(client: TestClient):
     assert res3.status_code == 200
     data3 = res3.json()
     assert data3["collection_state"]["district_area"] == "Gandhipuram"
+
+
+def test_ivr_dialogue_explicit_slot_correction(client: TestClient):
+    call_sid = f"CA_corr_{uuid.uuid4().hex[:12]}"
+
+    # Turn 1: Problem
+    res1 = client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={
+            "call_sid": call_sid,
+            "user_speech": "Streetlight is broken",
+            "dialogue_turn": 1,
+            "language_preference": "English"
+        }
+    )
+    assert res1.status_code == 200
+
+    # Turn 2: Location
+    res2 = client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={
+            "call_sid": call_sid,
+            "user_speech": "Chennai",
+            "dialogue_turn": 2,
+            "language_preference": "English"
+        }
+    )
+    assert res2.status_code == 200
+
+    # Turn 3: Caller realizes mistake and corrects: "Wait, change district to Madurai"
+    res3 = client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={
+            "call_sid": call_sid,
+            "user_speech": "Wait, change district to Madurai",
+            "dialogue_turn": 3,
+            "language_preference": "English"
+        }
+    )
+    assert res3.status_code == 200
+    data3 = res3.json()
+    assert data3["intent"] == "CORRECTION_APPLIED"
+    assert "Madurai" in data3["ai_spoken_reply"]
+    assert data3["collection_state"]["district_area"] == "Madurai"
+
+
+def test_ivr_dialogue_spelled_out_speech_correction(client: TestClient):
+    call_sid = f"CA_spell_{uuid.uuid4().hex[:12]}"
+
+    # Turn 1: Problem
+    client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={
+            "call_sid": call_sid,
+            "user_speech": "Garbage not cleared",
+            "dialogue_turn": 1,
+            "language_preference": "English"
+        }
+    )
+
+    # Turn 2: User spells out location letter by letter
+    res2 = client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={
+            "call_sid": call_sid,
+            "user_speech": "P E E L A M E D U",
+            "dialogue_turn": 2,
+            "language_preference": "English"
+        }
+    )
+    assert res2.status_code == 200
+    data2 = res2.json()
+    assert "Peelamedu" in str(data2["collection_state"]["district_area"])
+
+
+def test_tamil_ivr_speech_correction(client: TestClient):
+    call_sid = f"CA_ta_corr_{uuid.uuid4().hex[:12]}"
+
+    # Turn 1: Tamil problem
+    client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={
+            "call_sid": call_sid,
+            "user_speech": "குடிநீர் குழாய் உடைந்து தண்ணீர் வீணாகிறது",
+            "dialogue_turn": 1,
+            "language_preference": "Tamil"
+        }
+    )
+
+    # Turn 2: Tamil explicit location correction
+    res2 = client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={
+            "call_sid": call_sid,
+            "user_speech": "மாவட்டம் மதுரை என மாற்றவும்",
+            "dialogue_turn": 2,
+            "language_preference": "Tamil"
+        }
+    )
+    assert res2.status_code == 200
+    data2 = res2.json()
+    assert data2["intent"] == "CORRECTION_APPLIED"
+    assert "மதுரை" in data2["collection_state"]["district_area"]
+    assert "மாற்றப்பட்டது" in data2["ai_spoken_reply_tamil"]
+
