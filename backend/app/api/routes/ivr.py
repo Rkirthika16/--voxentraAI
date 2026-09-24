@@ -245,38 +245,31 @@ def handle_ivr_dialogue_turn(
                     db.commit()
 
                 if detected_lang == "Tamil":
-                    if sms_sent:
-                        reply_ta = (
-                            f"நன்றி! உங்கள் புகார் எண் {created_complaint.complaint_number} என வெற்றிகரமாக பதிவு செய்யப்பட்டது. "
-                            f"இது {dept_name} துறைக்கு அனுப்பப்பட்டுள்ளது. உங்கள் கைபேசிக்கு குறுஞ்செய்தி அனுப்பப்பட்டுள்ளது."
-                        )
-                    else:
-                        reply_ta = (
-                            f"உங்கள் புகார் எண் {created_complaint.complaint_number} வெற்றிகரமாக பதிவு செய்யப்பட்டுள்ளது. "
-                            f"ஆனால் SMS அனுப்புவதில் தற்காலிக சிக்கல் ஏற்பட்டுள்ளது. உங்கள் புகார் எண் {created_complaint.complaint_number}."
-                        )
-                    reply_en = f"Grievance #{created_complaint.complaint_number} registered and forwarded to {dept_name}."
+                    reply_ta = (
+                        f"உங்கள் புகார் வெற்றிகரமாக பதிவு செய்யப்பட்டுள்ளது. உங்கள் புகார் எண் {created_complaint.complaint_number}. "
+                        f"இந்த எண்ணை பயன்படுத்தி உங்கள் புகாரை கண்காணிக்கலாம்."
+                    )
+                    reply_en = (
+                        f"Your complaint has been successfully registered. Your complaint number is {created_complaint.complaint_number}. "
+                        f"You can use this number to track your complaint."
+                    )
                     spoken = reply_ta
                 elif detected_lang == "Tanglish":
-                    if sms_sent:
-                        reply_ta = f"Thank you! Unga complaint #{created_complaint.complaint_number} register aagi {dept_name} ku forward panniyaachu. SMS unga mobile ku anupiyachu."
-                    else:
-                        reply_ta = f"Unga complaint #{created_complaint.complaint_number} register aaiduchu. Aanaa SMS anupuvathu late aagudhu. Complaint number: {created_complaint.complaint_number}."
-                    reply_en = f"Grievance #{created_complaint.complaint_number} registered and forwarded to {dept_name}."
+                    reply_ta = (
+                        f"Unga complaint successfully register aaiduchu. Unga complaint number {created_complaint.complaint_number}. "
+                        f"Indha number use panni unga complaint-ah track pannalaam."
+                    )
+                    reply_en = (
+                        f"Your complaint has been successfully registered. Your complaint number is {created_complaint.complaint_number}. "
+                        f"You can use this number to track your complaint."
+                    )
                     spoken = reply_ta
                 else:
-                    reply_ta = f"புகார் எண் {created_complaint.complaint_number} பதிவு செய்யப்பட்டது."
-                    if sms_sent:
-                        reply_en = (
-                            f"Thank you! Your grievance has been registered under ID {created_complaint.complaint_number} "
-                            f"and forwarded to {dept_name}. A confirmation SMS has been sent to your phone."
-                        )
-                    else:
-                        reply_en = (
-                            f"Your grievance has been registered under ID {created_complaint.complaint_number} "
-                            f"and forwarded to {dept_name}. However, there was a temporary issue sending the SMS. "
-                            f"Your complaint ID is {created_complaint.complaint_number}."
-                        )
+                    reply_ta = f"உங்கள் புகார் வெற்றிகரமாக பதிவு செய்யப்பட்டுள்ளது. உங்கள் புகார் எண் {created_complaint.complaint_number}."
+                    reply_en = (
+                        f"Your complaint has been successfully registered. Your complaint number is {created_complaint.complaint_number}. "
+                        f"You can use this number to track your complaint."
+                    )
                     spoken = reply_en
 
                 return IVRCallDialogueResponse(

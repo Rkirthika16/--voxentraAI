@@ -418,7 +418,7 @@ class ComplaintCollector:
     def get_contextual_question(self, session: Dict[str, Any], next_field: str, lang: str) -> Tuple[str, str]:
         """
         Generates smart, dynamic follow-up questions tailored to previously collected details.
-        Ensures AI asks specifically for street, landmark, and exact location without assumptions.
+        Ensures AI asks specifically for area, street, landmark without rigid questioning.
         """
         f = session["fields"]
         meta = FIELD_METADATA.get(next_field, {})
@@ -426,45 +426,51 @@ class ComplaintCollector:
         area = f.get("district_area")
         street = f.get("street_road_name")
         prob = f.get("problem_description")
+        duration = f.get("date_and_time")
 
         if next_field == "district_area":
             if lang == "Tamil":
-                q = meta["question_ta"]
-                sp = meta["spoken_ta"]
+                q = "சரி. இந்த பிரச்சினை எந்த பகுதியில் அல்லது மாவட்டத்தில் உள்ளது?"
+                sp = "சரி. இந்த பிரச்சினை எந்த பகுதியில் உள்ளது?"
             elif lang == "Tanglish":
-                q = meta["question_tanglish"]
-                sp = meta["spoken_tanglish"]
+                q = "Seri. Indha problem endha area or district-la irukku?"
+                sp = "Seri. Indha problem endha area-la irukku?"
             else:
-                q = meta["question_en"]
-                sp = meta["spoken_en"]
+                q = "Okay. In which area or district is this problem located?"
+                sp = "Okay. In which area or district is this problem located?"
             return q, sp
 
         if next_field == "street_road_name":
             if area:
                 if lang == "Tamil":
-                    q = f"📍 **{area}** பகுதியில் எந்த தெருவில் அல்லது எந்த landmark அருகில் இந்த பிரச்சினை உள்ளது?"
-                    sp = f"{area} பகுதியில் எந்த தெருவில் அல்லது எந்த அடையாளம் அருகில் இந்த பிரச்சினை உள்ளது?"
+                    q = f"📍 **{area}** பகுதியில் எந்த தெருவில் இந்த பிரச்சினை உள்ளது?"
+                    sp = f"{area} பகுதியில் எந்த தெருவில் இந்த பிரச்சினை உள்ளது?"
                 elif lang == "Tanglish":
-                    q = f"📍 **{area}**-la endha street-la or endha landmark pakkathula indha problem irukku?"
-                    sp = f"{area}-la endha street or landmark pakkathula indha problem irukku?"
+                    q = f"📍 **{area}**-la endha street-la indha problem irukku?"
+                    sp = f"{area}-la endha street-la indha problem irukku?"
                 else:
-                    q = f"📍 In **{area}**, on which street or near which landmark is this issue located?"
-                    sp = f"In {area}, which street or nearby landmark is this problem located?"
+                    q = f"📍 In **{area}**, on which street or road is this issue located?"
+                    sp = f"In {area}, on which street or road is this problem located?"
                 return q, sp
             else:
-                return meta["question_" + ("ta" if lang == "Tamil" else ("tanglish" if lang == "Tanglish" else "en"))], meta["spoken_" + ("ta" if lang == "Tamil" else ("tanglish" if lang == "Tanglish" else "en"))]
+                if lang == "Tamil":
+                    return "பாதிக்கப்பட்ட தெரு அல்லது சாலையின் பெயர் என்ன?", "பாதிக்கப்பட்ட தெரு அல்லது சாலையின் பெயர் என்ன?"
+                elif lang == "Tanglish":
+                    return "Endha street or road affected aagi irukku?", "Endha street or road affected aagi irukku?"
+                else:
+                    return meta["question_en"], meta["spoken_en"]
 
         if next_field == "landmark":
             ref = street or area or "அந்த இடம்"
             if lang == "Tamil":
-                q = f"🏛️ **{ref}** அருகில் உள்ள முக்கிய அடையாளம் (Landmark) அல்லது பேருந்து நிலையம் எங்குள்ளது?"
-                sp = f"{ref} அருகில் ஏதேனும் முக்கிய அடையாளம் அல்லது பேருந்து நிலையம் உள்ளதா?"
+                q = f"🏛️ **{ref}** அருகில் ஏதாவது landmark அல்லது முக்கிய அடையாளம் இருக்கிறதா?"
+                sp = "அருகில் ஏதாவது landmark இருக்கிறதா?"
             elif lang == "Tanglish":
-                q = f"🏛️ **{ref}** pakkathula ethavathu landmark or bus stand irukka?"
-                sp = f"{ref} pakkathula ethavathu landmark irukka?"
+                q = f"🏛️ **{ref}** pakkathula ethavathu landmark or prominent spot irukka?"
+                sp = "Pakkathula ethavathu landmark irukka?"
             else:
-                q = f"🏛️ What nearby **landmark** near **{ref}** can help our team locate the spot?"
-                sp = f"What nearby landmark near {ref} can help locate the spot?"
+                q = f"🏛️ Is there any nearby landmark or notable place near **{ref}**?"
+                sp = "Is there any nearby landmark?"
             return q, sp
 
         if next_field == "exact_location":
@@ -967,56 +973,66 @@ class ComplaintCollector:
                     name_part = extracted_name
                     name_part_en = extracted_name
 
+        duration = f.get("date_and_time")
+        if duration and duration not in ["Recently / Active", "Not Specified"] and duration not in problem:
+            problem_summary = f"{duration} {problem}"
+        else:
+            problem_summary = problem
+
+        name_line_ta = f"\nபெயர்: {name_part}" if (name_part and name_part != "குடிமகன்") else (f"\nதொடர்பு: {cit_det}" if cit_det else "")
+        name_line_tg = f"\nName: {name_part_en}" if (name_part_en and name_part_en != "Citizen") else (f"\nContact: {cit_det}" if cit_det else "")
+        name_line_en = f"\nName: {name_part_en}" if (name_part_en and name_part_en != "Citizen") else (f"\nContact: {cit_det}" if cit_det else "")
+
         if lang == "Tamil":
             reply = (
                 "உங்கள் புகார் விவரங்களை உறுதிப்படுத்துகிறேன்.\n\n"
-                f"பிரச்சினை: {problem}\n"
+                f"பிரச்சினை: {problem_summary}\n"
                 f"துறை: {dept}\n"
                 f"மாவட்டம்: {district_part}\n"
                 f"பகுதி: {area_part}\n"
                 f"தெரு: {street_part}\n"
-                f"அருகிலுள்ள இடம்: {landmark_part}\n"
-                f"பெயர்: {name_part}\n\n"
-                "இந்த புகாரை பதிவு செய்யலாமா?"
+                f"அருகிலுள்ள இடம்: {landmark_part}"
+                f"{name_line_ta}\n\n"
+                "இந்த தகவல்கள் சரியாக இருக்கிறதா? புகாரை பதிவு செய்யலாமா?"
             )
             spoken = (
                 f"உங்கள் புகார் விவரங்களை உறுதிப்படுத்துகிறேன். "
-                f"பிரச்சினை: {problem}. துறை: {dept}. இடம்: {area_part}, {street_part}. "
-                "இந்த புகாரை பதிவு செய்யலாமா?"
+                f"பிரச்சினை: {problem_summary}. துறை: {dept}. மாவட்டம்: {district_part}. பகுதி: {area_part}. தெரு: {street_part}. அருகிலுள்ள இடம்: {landmark_part}. "
+                "இந்த தகவல்கள் சரியாக இருக்கிறதா? புகாரை பதிவு செய்யலாமா?"
             )
         elif lang == "Tanglish":
             reply = (
                 "Unga complaint details ah confirm panren.\n\n"
-                f"Problem: {problem}\n"
+                f"Problem: {problem_summary}\n"
                 f"Department: {dept}\n"
                 f"District: {district_part}\n"
                 f"Area: {area_part}\n"
                 f"Street: {street_part_en}\n"
-                f"Nearby Landmark: {landmark_part_en}\n"
-                f"Name: {name_part_en}\n\n"
-                "Indha complaint ah register pannalaama?"
+                f"Nearby Landmark: {landmark_part_en}"
+                f"{name_line_tg}\n\n"
+                "Indha details correct-ah irukka? Complaint-ah register pannalaama?"
             )
             spoken = (
                 f"Unga complaint details confirm panren. "
-                f"Problem: {problem}. Department: {dept}. Location: {area_part}, {street_part_en}. "
-                "Indha complaint ah register pannalaama?"
+                f"Problem: {problem_summary}. Department: {dept}. District: {district_part}, Area: {area_part}, Street: {street_part_en}. "
+                "Indha details correct-ah irukka? Complaint register pannalaama?"
             )
         else:
             reply = (
-                "Let me confirm your complaint.\n\n"
-                f"Issue: {problem}\n"
+                "Let me confirm your complaint details.\n\n"
+                f"Issue: {problem_summary}\n"
                 f"Department: {dept}\n"
                 f"District: {district_part}\n"
                 f"Area: {area_part}\n"
                 f"Street: {street_part_en}\n"
-                f"Landmark: {landmark_part_en}\n"
-                f"Name: {name_part_en}\n\n"
-                "Shall I register this complaint?"
+                f"Landmark: {landmark_part_en}"
+                f"{name_line_en}\n\n"
+                "Are these details correct? Shall I register the complaint?"
             )
             spoken = (
                 f"Let me confirm your complaint details. "
-                f"Issue: {problem}. Department: {dept}. Location: {area_part}, {street_part_en}. "
-                "Shall I register this complaint now?"
+                f"Issue: {problem_summary}. Department: {dept}. District: {district_part}, Area: {area_part}, Street: {street_part_en}. "
+                "Are these details correct? Shall I register the complaint now?"
             )
 
         return reply, spoken
