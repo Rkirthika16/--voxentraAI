@@ -84,3 +84,22 @@ def test_conversation_unclear_speech_handling(client: TestClient):
     data = res.json()
     assert data["state"] == "WAITING_FOR_USER"
     assert "clear" in data["ai_text"].lower() or "புரியவில்லை" in data["ai_text"] or "repeat" in data["ai_text"].lower()
+
+
+def test_conversation_service_annur_tanglish_water_flow(client: TestClient):
+    session_id = f"test_annur_{uuid.uuid4().hex[:8]}"
+
+    # Turn 1: Citizen speaks "annur la thanniye vara matingithu"
+    res1 = client.post(
+        "/api/v1/conversation/turn",
+        json={"session_id": session_id, "user_speech": "annur la thanniye vara matingithu"}
+    )
+    assert res1.status_code == 200
+    data1 = res1.json()
+    assert data1["detected_language"] == "Tanglish"
+    assert data1["context"]["category"] == "Water"
+    assert "Annur" in data1["context"]["location"]
+    # AI must respond in Tanglish mentioning Annur cleanly
+    assert "Annur" in data1["ai_text"]
+    assert "eppo lendhu" in data1["ai_text"] or "irukku" in data1["ai_text"]
+

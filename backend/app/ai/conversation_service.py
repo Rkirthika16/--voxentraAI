@@ -269,6 +269,14 @@ class ConversationService:
 
         return text, spoken
 
+    def get_display_location(self, loc: Optional[str]) -> str:
+        """Returns clean, primary place name for natural speech (e.g. 'Annur' from 'Annur & Pillayampalayam, Coimbatore District')."""
+        if not loc or loc == "Tamil Nadu":
+            return "Tamil Nadu"
+        # Take first part before comma or ampersand
+        clean = loc.split(",")[0].split("&")[0].strip()
+        return clean or loc
+
     def get_category_followup_question(self, ctx: ConversationContext) -> Tuple[str, str]:
         """
         Dynamically chooses the next most relevant question based on:
@@ -278,6 +286,7 @@ class ConversationService:
         """
         cat = ctx.category or "Other"
         lang = ctx.language
+        disp_loc = self.get_display_location(ctx.location)
 
         # 1. Location missing
         if not ctx.location:
@@ -301,17 +310,17 @@ class ConversationService:
         if not ctx.duration:
             if lang == "Tamil":
                 return (
-                    f"சரி, {ctx.location} பகுதியில் இந்தப் பிரச்சினை எத்தனை நாட்களாக அல்லது எப்போது இருந்து உள்ளது?",
+                    f"சரி, {disp_loc} பகுதியில் இந்தப் பிரச்சினை எத்தனை நாட்களாக அல்லது எப்போது இருந்து உள்ளது?",
                     f"இந்தப் பிரச்சினை எப்போது இருந்து உள்ளது?"
                 )
             elif lang == "Tanglish":
                 return (
-                    f"Okay, {ctx.location}-la indha issue eppo lendhu irukku?",
+                    f"Okay, {disp_loc}-la indha issue eppo lendhu irukku?",
                     f"Idhu eppo lendhu irukku?"
                 )
             else:
                 return (
-                    f"Okay, how long has this problem existed in {ctx.location}?",
+                    f"Okay, how long has this problem existed in {disp_loc}?",
                     "How long has this problem existed?"
                 )
 
