@@ -137,27 +137,35 @@ class ConversationService:
         street_match = re.search(r'\b(\d+(?:st|nd|rd|th)?\s+(?:street|road|salai|theru|cross|avenue|lane)|(?:[A-Z][a-z0-9]+\s+){1,3}(?:Street|Road|Salai|Theru|Cross|Avenue|Lane|Main\s+Road)|[A-Za-z0-9]{3,20}\s+(?:street|road|salai|theru|cross|avenue|lane))\b', text, re.IGNORECASE)
         if street_match:
             cand = street_match.group(1).strip()
+            cand = re.sub(r'^(?:in\s+the|in\s+this|on\s+the|the|this|that|inda|indha|இந்த|அந்த|எங்கள்|என்)\s+', '', cand, flags=re.IGNORECASE).strip()
             cand_low = cand.lower()
             generic_streets = [
                 "our street", "my street", "the street", "in the street", "in our street", "enga theru",
-                "street", "road", "this street", "that street", "in this street"
+                "street", "road", "this street", "that street", "in this street", "theru", "salai", "veethi"
             ]
-            if cand_low not in generic_streets and not any(cand_low.endswith(g) for g in ["in the street", "in our street"]):
+            if len(cand) >= 3 and cand_low not in generic_streets and not any(cand_low.endswith(g) for g in ["in the street", "in our street"]):
                 street = cand
         else:
             ta_street = re.search(r'([\u0B80-\u0BFF\s0-9]{3,25}(?:தெரு|சாலை|வீதி|நகர்\s*மெயின்\s*ரோடு))', text)
             if ta_street:
                 cand = ta_street.group(1).strip()
-                if cand not in ["எங்கள் தெரு", "என் தெரு", "தெரு", "சாலை", "இந்த தெரு"]:
+                cand = re.sub(r'^(?:இந்த|அந்த|எங்கள்|என்|நமது)\s+', '', cand).strip()
+                if len(cand) >= 3 and cand not in ["எங்கள் தெரு", "என் தெரு", "தெரு", "சாலை", "இந்த தெரு"]:
                     street = cand
 
         landmark_match = re.search(r'\b(?:near|opposite|behind|beside|next to|close to|opp|kitta|pakkam|pakathula)\s+([A-Za-z0-9\s\.\,\-]+?)(?:\.|\,|$|\band\b)', text, re.IGNORECASE)
         if landmark_match:
-            landmark = landmark_match.group(1).strip()
+            cand_lm = landmark_match.group(1).strip()
+            cand_lm = re.sub(r'^(?:the|this|that|a|an|in\s+the|near\s+the|இந்த|அந்த)\s+', '', cand_lm, flags=re.IGNORECASE).strip()
+            if len(cand_lm) >= 3 and cand_lm.lower() not in ["area", "street", "road", "place", "house", "veedu", "theru"]:
+                landmark = cand_lm
         else:
             ta_landmark = re.search(r'([\u0B80-\u0BFF\s]+)\s+(?:அருகில்|எதிரில்|பின்னால்|பக்கத்தில்)', text)
             if ta_landmark:
-                landmark = ta_landmark.group(1).strip()
+                cand_lm = ta_landmark.group(1).strip()
+                cand_lm = re.sub(r'^(?:இந்த|அந்த)\s+', '', cand_lm).strip()
+                if len(cand_lm) >= 3 and cand_lm not in ["பகுதி", "தெரு", "வீடு", "இடம்"]:
+                    landmark = cand_lm
 
         return street, landmark
 
@@ -813,9 +821,37 @@ class ConversationService:
             ctx.problem = ctx.original_transcription
 
         # Location extraction
+        from app.ai.location_service import extract_location, is_valid_tamil_nadu_location, find_fuzzy_location_candidate
         loc_name, lat, lon, lconf = extract_location(ctx.normalized_transcription)
         if loc_name and loc_name != "Tamil Nadu":
-            ctx.location = loc_name
+            if lconf >= 0.85:
+                ctx.location = loc_name
+            else:
+                is_valid, loc_obj, vconf = is_valid_tamil_nadu_location(loc_name)
+                if is_valid and loc_obj:
+                    ctx.location = loc_obj["name"]
+                else:
+                    fuzzy = find_fuzzy_location_candidate(loc_name)
+                    if fuzzy:
+                        cand_name = fuzzy[0].split(",")[0].split("&")[0].strip()
+                        ctx.pending_slot_confirmation = {
+                            "field": "location",
+                            "detected_word": cand_name,
+                            "raw_input": ctx.original_transcription
+                        }
+                        conf_txt, conf_spk = self.get_spelling_or_correction_prompt(cand_name, ctx.language)
+                        return {
+                            "session_id": ctx.session_id,
+                            "state": "SLOT_CONFIRMATION_PENDING",
+                            "ai_text": conf_txt,
+                            "ai_spoken": conf_spk,
+                            "detected_language": ctx.language,
+                            "context": ctx.to_dict(),
+                            "confirmation_required": False,
+                            "conversation_complete": False
+                        }
+                    else:
+                        ctx.location = loc_name
 
         # Street and landmark
         st, lm = self._extract_street_and_landmark(ctx.original_transcription)

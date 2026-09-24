@@ -121,11 +121,14 @@ class SpeechService:
                     language=language_hint if language_hint in ["ta", "en"] else None,
                     beam_size=5
                 )
-                transcription = " ".join([segment.text for segment in segments]).strip()
+                raw_transcription = " ".join([segment.text for segment in segments]).strip()
+                from app.ai.normalization_service import clean_transcription
+                transcription = clean_transcription(raw_transcription)
                 detected_lang = info.language if hasattr(info, 'language') else "ta"
                 return {
                     "success": True,
                     "transcription": transcription,
+                    "raw_transcription": raw_transcription,
                     "language": "Tamil" if detected_lang == "ta" else "English",
                     "duration_seconds": getattr(info, 'duration', None),
                     "engine": "faster-whisper",
@@ -138,9 +141,13 @@ class SpeechService:
                     audio_file_path,
                     language=language_hint if language_hint in ["ta", "en"] else None
                 )
+                raw_transcription = result.get("text", "").strip()
+                from app.ai.normalization_service import clean_transcription
+                transcription = clean_transcription(raw_transcription)
                 return {
                     "success": True,
-                    "transcription": result.get("text", "").strip(),
+                    "transcription": transcription,
+                    "raw_transcription": raw_transcription,
                     "language": "Tamil" if result.get("language") == "ta" else "English",
                     "engine": "openai-whisper",
                     "status": "completed",

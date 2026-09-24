@@ -637,7 +637,13 @@ TAMIL_NADU_DISTRICT_LOCATIONS: List[Dict] = [
         "district": "Coimbatore",
         "latitude": "11.016800",
         "longitude": "76.967000",
-        "keywords": ["gandhipuram", "காந்திபுரம்", "gandhipuram bus stand", "gandhipuram central", "cross cut road", "100 feet road", "seventh street gandhipuram"]
+        "keywords": [
+            "gandhipuram", "காந்திபுரம்", "gandhipuram bus stand", "gandhipuram central",
+            "cross cut", "cross cut road", "cross cutting", "crosscut",
+            "100 feet", "100 feet road", "hundred feet road", "100 ft road",
+            "seventh street gandhipuram", "7th street gandhipuram", "7th street", "seventh street",
+            "க்ராஸ் கட்", "க்ராஸ் கட் ரோடு", "100 அடி ரோடு", "காந்திபுரம் பேருந்து நிலையம்", "power house gandhipuram"
+        ]
     },
     {
         "name": "RS Puram & Race Course, Coimbatore District",
@@ -1731,10 +1737,40 @@ TAMIL_NADU_DISTRICT_LOCATIONS: List[Dict] = [
 ]
 
 
+def is_valid_tamil_nadu_location(candidate: str) -> Tuple[bool, Optional[Dict], float]:
+    """
+    Validates if a given location candidate exists in the official Tamil Nadu database catalog.
+    Returns: (is_valid, location_dict_if_found, confidence)
+    """
+    if not candidate or len(candidate.strip()) < 3:
+        return False, None, 0.0
+
+    raw = candidate.strip().lower()
+    norm = unicodedata.normalize("NFC", raw)
+    # Strip common postpositions and fillers
+    cleaned = re.sub(r'\b(district|taluk|area|nagar|theru|street|road|la|le|il|kitta|pakkam|in|at)\b', '', norm).strip()
+
+    # Exact or keyword check
+    for loc in TAMIL_NADU_DISTRICT_LOCATIONS:
+        # Check district name
+        if loc["district"].lower() == cleaned or loc["district"].lower() == norm:
+            return True, loc, 0.98
+        # Check location display name
+        if cleaned in loc["name"].lower() or norm in loc["name"].lower():
+            return True, loc, 0.95
+        # Check keywords
+        for kw in loc["keywords"]:
+            kw_norm = unicodedata.normalize("NFC", kw.lower())
+            if kw_norm == cleaned or kw_norm == norm or (len(kw_norm) >= 4 and (kw_norm in norm or norm in kw_norm)):
+                return True, loc, 0.96
+
+    return False, None, 0.0
+
+
 def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[str], float]:
     """
     Extracts specific Tamil Nadu location, taluk, town, and maps it strictly to its official District with GPS coordinates.
-    Natively strips Tamil/Tanglish locative suffixes (-la, -il, -kitta, -pakkam, -ல, -இல்).
+    Natively strips Tamil/Tanglish locative prefixes and suffixes (in the, இந்த, -la, -il, -kitta, -pakkam, -ல, -இல்).
     Returns: (formatted_location_with_district, latitude, longitude, confidence)
     """
     if not text:
@@ -1748,20 +1784,25 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
     best_loc = None
     highest_score = 0.0
 
+    # Also test stripped input without leading demonstratives/prepositions
+    stripped_input = re.sub(r'^(?:in\s+the|in\s+this|on\s+the|at\s+the|at|in|near\s+the|near)\s+', '', norm_text).strip()
+    stripped_input = re.sub(r'^(?:இந்த|அந்த|எங்கள்|என்|எங்க|நம்ம|இங்க)\s+', '', stripped_input).strip()
+    stripped_input = re.sub(r'^(?:inda|indha|andha|enga|unga|namma|inga)\s+', '', stripped_input).strip()
+
     for loc in TAMIL_NADU_DISTRICT_LOCATIONS:
         for kw in loc["keywords"]:
             kw_norm = unicodedata.normalize("NFC", kw.lower())
 
             # Exact keyword occurrence
-            if kw_norm in norm_text:
-                score = 0.99 if kw_norm == norm_text else 0.95
+            if kw_norm in norm_text or kw_norm in stripped_input:
+                score = 0.99 if (kw_norm == norm_text or kw_norm == stripped_input) else 0.95
                 if score > highest_score:
                     highest_score = score
                     best_loc = loc
 
             # Tanglish suffix matching: e.g. "gandhipuram-la", "gandhipuramla", "coimbatore-la"
             tanglish_pattern = r'\b' + re.escape(kw_norm) + r'(?:[-_]?(?:la|le|il|yil|kitta|pakkam|road|street|nagar|bus stand))\b'
-            if re.search(tanglish_pattern, norm_text):
+            if re.search(tanglish_pattern, norm_text) or re.search(tanglish_pattern, stripped_input):
                 score = 0.96
                 if score > highest_score:
                     highest_score = score
@@ -1769,7 +1810,7 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
 
             # Tamil suffix matching: e.g. "காந்திபுரத்தில்", "காந்திபுரம்ல", "திருவாரூர்ல", "சென்னையில்", "மதுரையில"
             tamil_base = re.sub(r'(?:ல|இல்|யில்|இடம்|பக்கம்|அருகே|பஸ் ஸ்டாண்ட்)$', '', kw_norm)
-            if len(tamil_base) >= 3 and tamil_base in norm_text:
+            if len(tamil_base) >= 3 and (tamil_base in norm_text or tamil_base in stripped_input):
                 score = 0.94
                 if score > highest_score:
                     highest_score = score
@@ -1792,16 +1833,24 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
         match = re.search(pattern, norm_text)
         if match:
             candidate = match.group(1).strip()
+            # Clean leading demonstratives and prepositions
+            candidate = re.sub(r'^(?:in\s+the|in\s+this|the|this|that|inda|indha|andha|இந்த|அந்த|எங்கள்|என்)\s+', '', candidate, flags=re.IGNORECASE).strip()
             # Ignore common non-location filler words, landmarks, and locatives
             excluded = [
                 "romba", "periya", "chinna", "the", "that", "this", "anga", "inga", "unga", "enaku", "namakku",
                 "romba dark", "damage", "thanni", "current", "problem", "issue", "theru", "road", "street",
-                "our", "my", "the street", "our street", "my street", "the area", "our area",
+                "our", "my", "the street", "our street", "my street", "the area", "our area", "in the", "in this",
+                "in the street", "in the road", "in the area", "in our street", "in this street", "in this area",
+                "இந்த", "அந்த", "எங்கள்", "என்", "இந்த தெரு", "இந்த பகுதி", "இந்த இடம்",
                 "அருக", "அருகி", "அருகில்", "பக்கத்", "பக்கத்தில்", "பக்கம்", "எதிர்", "எதிரில்", "நிலையம்",
                 "பேருந்து", "பேருந்து நிலையம்", "தெரு", "சாலை", "ரோடு", "வழி", "வீதி", "பஸ்", "bus stand",
                 "near", "opposite", "behind", "next", "door no", "plot no", "ward"
             ]
             if candidate and len(candidate) > 2 and candidate.lower() not in excluded and not any(candidate.lower() == ex for ex in excluded):
+                # Verify if candidate matches a known Tamil Nadu locality
+                is_valid, loc_obj, vconf = is_valid_tamil_nadu_location(candidate)
+                if is_valid and loc_obj:
+                    return loc_obj["name"], loc_obj.get("latitude"), loc_obj.get("longitude"), vconf
                 formatted_loc = candidate.title() if candidate.isascii() else candidate
                 return f"{formatted_loc}, Tamil Nadu", None, None, 0.70
 
@@ -1823,11 +1872,12 @@ def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, str, str, fl
 
     # 1. If exact/confident match exists in high-precision extractor, no clarification is needed
     exact_loc, _, _, conf = extract_location(text)
-    if exact_loc and conf >= 0.85:
+    if exact_loc and conf >= 0.90:
         return None
 
-    # Strip common postpositions and fillers
-    cleaned = re.sub(r'\b(la|le|kitta|pakkam|pakathula|near|in|at|area|nagar|theru|street|road|district)\b', '', lowered).strip()
+    # Strip common postpositions, fillers, and demonstratives
+    cleaned = re.sub(r'^(?:in\s+the|in\s+this|on\s+the|at\s+the|at|in|near|இந்த|அந்த|inda|indha)\s+', '', lowered).strip()
+    cleaned = re.sub(r'\b(la|le|kitta|pakkam|pakathula|near|in|at|area|nagar|theru|street|road|district)\b', '', cleaned).strip()
     norm_text = unicodedata.normalize("NFC", cleaned or lowered)
 
     if len(norm_text) < 3:
@@ -1870,6 +1920,7 @@ def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, str, str, fl
         return loc_name, best_loc.get("latitude"), best_loc.get("longitude"), highest_score
 
     return None
+
 
 
 

@@ -281,30 +281,48 @@ class ComplaintCollector:
         # Street detection
         street_match = re.search(r'\b([A-Za-z0-9\.\s]+(?:street|road|salai|theru|cross|avenue|lane|nagar|nagar\s+main\s+road|highway|boulevard))\b', text, re.IGNORECASE)
         if street_match:
-            street = street_match.group(1).strip()
+            cand = street_match.group(1).strip()
+            cand = re.sub(r'^(?:in\s+the|in\s+this|on\s+the|the|this|that|inda|indha|இந்த|அந்த|எங்கள்|என்)\s+', '', cand, flags=re.IGNORECASE).strip()
+            street = cand
         else:
             # Tamil street words
             ta_street = re.search(r'([\u0B80-\u0BFF\s]+(?:தெரு|சாலை|நகர்|மெயின்\s*ரோடு|வீதி))', text)
             if ta_street:
-                street = ta_street.group(1).strip()
+                cand = ta_street.group(1).strip()
+                cand = re.sub(r'^(?:இந்த|அந்த|எங்கள்|என்|நமது)\s+', '', cand).strip()
+                street = cand
 
         if street:
             low_st = street.strip().lower()
-            if any(low_st == v or low_st.startswith(v) for v in ["எங்க தெரு", "எங்கள் தெரு", "என் தெரு", "enga theru", "our street", "my street", "our road", "my road", "the street", "தெரு", "road", "street", "சாலை"]):
+            generic_streets = [
+                "எங்க தெரு", "எங்கள் தெரு", "என் தெரு", "இந்த தெரு", "அந்த தெரு", "enga theru", "our street",
+                "my street", "our road", "my road", "the street", "in the street", "in our street", "in this street",
+                "தெரு", "road", "street", "சாலை", "theru", "salai", "veethi"
+            ]
+            if low_st in generic_streets or any(low_st.startswith(v) for v in ["எங்க தெரு", "எங்கள் தெரு", "என் தெரு", "our street", "my street", "in the street"]):
                 street = None
 
         # Landmark detection
         landmark_match = re.search(r'\b(?:near|opposite|behind|beside|next to|close to|opp|kitta|pakkam|pakathula)\s+([A-Za-z0-9\s\.\,\-]+?)(?:\.|\,|$|\band\b)', text, re.IGNORECASE)
         if landmark_match:
-            landmark = landmark_match.group(1).strip()
+            cand_lm = landmark_match.group(1).strip()
+            cand_lm = re.sub(r'^(?:the|this|that|a|an|in\s+the|near\s+the|இந்த|அந்த)\s+', '', cand_lm, flags=re.IGNORECASE).strip()
+            if len(cand_lm) >= 3 and cand_lm.lower() not in ["area", "street", "road", "place", "house", "veedu", "theru"]:
+                landmark = cand_lm
         else:
             ta_landmark = re.search(r'(?:அருகில்|எதிரில்|பின்னால்|பக்கத்தில்)\s+([\u0B80-\u0BFF\s]+)', text)
             if ta_landmark:
-                landmark = ta_landmark.group(1).strip()
+                cand_lm = ta_landmark.group(1).strip()
+                cand_lm = re.sub(r'^(?:இந்த|அந்த)\s+', '', cand_lm).strip()
+                if len(cand_lm) >= 3 and cand_lm not in ["பகுதி", "தெரு", "வீடு", "இடம்"]:
+                    landmark = cand_lm
             else:
                 ta_landmark2 = re.search(r'([\u0B80-\u0BFF\s]+)\s+(?:அருகில்|எதிரில்|பின்னால்|பக்கத்தில்)', text)
                 if ta_landmark2:
-                    landmark = ta_landmark2.group(1).strip()
+                    cand_lm = ta_landmark2.group(1).strip()
+                    cand_lm = re.sub(r'^(?:இந்த|அந்த)\s+', '', cand_lm).strip()
+                    if len(cand_lm) >= 3 and cand_lm not in ["பகுதி", "தெரு", "வீடு", "இடம்"]:
+                        landmark = cand_lm
 
         return street, landmark
 
@@ -826,15 +844,16 @@ class ComplaintCollector:
         if not text:
             return None
 
-        # Check location-related fields or general location input
-        if field is None or field in ["district_area", "street_road_name", "landmark", "exact_location", "location"]:
+        # Check location-related fields or general location input (avoid hijacking direct landmark/street phrases)
+        if field in ["district_area", "location"] or field is None:
+            # Skip if text contains explicit relative landmark prepositions
+            if any(w in text.lower() for w in ["near", "opposite", "opp", "behind", "next to", "அருகில்", "எதிரில்", "பின்னால்", "பக்கத்தில்", "தெரு", "street", "road"]):
+                return None
             from app.ai.location_service import find_fuzzy_location_candidate
             candidate_tuple = find_fuzzy_location_candidate(text)
             if candidate_tuple:
                 candidate_name, _, _, conf = candidate_tuple
-                # Extract clean primary name (e.g., 'Gandhipuram' or 'Peelamedu')
                 primary_name = candidate_name.split(",")[0].split("&")[0].strip()
-                # Check if it differs from raw text (case-insensitive)
                 if primary_name.lower() != text.strip().lower() and candidate_name.lower() != text.strip().lower():
                     return primary_name
 
