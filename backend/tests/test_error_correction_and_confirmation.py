@@ -278,3 +278,131 @@ def test_tamil_ivr_speech_correction(client: TestClient):
     assert "மதுரை" in data2["collection_state"]["district_area"]
     assert "மாற்றப்பட்டது" in data2["ai_spoken_reply_tamil"]
 
+
+def test_ivr_unclear_misheard_prompt_multilingual(client: TestClient):
+    # 1. English IVR unclear
+    call_en = f"CA_unclear_en_{uuid.uuid4().hex[:8]}"
+    res_en = client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={"call_sid": call_en, "user_speech": "umm uhh", "dialogue_turn": 1, "language_preference": "English"}
+    )
+    assert res_en.status_code == 200
+    d_en = res_en.json()
+    assert d_en["intent"] == "UNCLEAR_INPUT"
+    assert "understood that correctly" in d_en["ai_spoken_reply"]
+    assert "spelling" in d_en["ai_spoken_reply"]
+
+    # 2. Tamil IVR unclear
+    call_ta = f"CA_unclear_ta_{uuid.uuid4().hex[:8]}"
+    res_ta = client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={"call_sid": call_ta, "user_speech": "...", "dialogue_turn": 1, "language_preference": "Tamil"}
+    )
+    assert res_ta.status_code == 200
+    d_ta = res_ta.json()
+    assert d_ta["intent"] == "UNCLEAR_INPUT"
+    assert "மன்னிக்கவும்" in d_ta["ai_spoken_reply_tamil"]
+
+    # 3. Tanglish IVR unclear
+    call_tg = f"CA_unclear_tg_{uuid.uuid4().hex[:8]}"
+    res_tg = client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={"call_sid": call_tg, "user_speech": "uhhhh...", "dialogue_turn": 1, "language_preference": "Tanglish"}
+    )
+    assert res_tg.status_code == 200
+    d_tg = res_tg.json()
+    assert d_tg["intent"] == "UNCLEAR_INPUT"
+    assert "purinjikkala" in d_tg["ai_spoken_reply"]
+
+
+def test_ivr_tanglish_spelling_variation_confirmation(client: TestClient):
+    call_sid = f"CA_tg_spell_{uuid.uuid4().hex[:8]}"
+
+    # Turn 1: Problem in Tanglish
+    client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={"call_sid": call_sid, "user_speech": "Water pipe leak aagi thanni waste aagudhu", "dialogue_turn": 1, "language_preference": "Tanglish"}
+    )
+
+    # Turn 2: Tanglish speaker says location with spelling variation: "Kandhipuram"
+    res2 = client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={"call_sid": call_sid, "user_speech": "Kandhipuram", "dialogue_turn": 2, "language_preference": "Tanglish"}
+    )
+    assert res2.status_code == 200
+    d2 = res2.json()
+    assert d2["intent"] == "SLOT_CONFIRMATION_PENDING"
+    assert "Gandhipuram" in d2["ai_spoken_reply"]
+    assert "correct spelling" in d2["ai_spoken_reply"] or "spelling" in d2["ai_spoken_reply"]
+
+    # Turn 3: Tanglish confirmation "Aama correct"
+    res3 = client.post(
+        "/api/v1/ivr/dialogue-turn",
+        json={"call_sid": call_sid, "user_speech": "Aama, correct", "dialogue_turn": 3, "language_preference": "Tanglish"}
+    )
+    assert res3.status_code == 200
+    d3 = res3.json()
+    assert d3["collection_state"]["district_area"] == "Gandhipuram"
+    assert "confirm panniyaachu" in d3["ai_spoken_reply"]
+
+
+def test_voice_register_error_correction_and_confirmation(client: TestClient):
+    sid = f"VR_err_{uuid.uuid4().hex[:8]}"
+
+    # Start session
+    client.post("/api/v1/voice-register/start", json={"session_id": sid, "language_hint": "English"})
+
+    # Turn 1: Unclear input
+    res1 = client.post(
+        "/api/v1/voice-register/turn",
+        json={"session_id": sid, "user_speech": "umm...", "language_preference": "English"}
+    )
+    assert res1.status_code == 200
+    assert res1.json()["intent"] == "UNCLEAR_INPUT"
+    assert "understood that correctly" in res1.json()["ai_reply"]
+
+    # Turn 2: State problem
+    res2 = client.post(
+        "/api/v1/voice-register/turn",
+        json={"session_id": sid, "user_speech": "Streetlight broken", "language_preference": "English"}
+    )
+    assert res2.status_code == 200
+
+    # Turn 3: Misspelled location
+    res3 = client.post(
+        "/api/v1/voice-register/turn",
+        json={"session_id": sid, "user_speech": "Pilamedu", "language_preference": "English"}
+    )
+    assert res3.status_code == 200
+    assert res3.json()["intent"] == "SLOT_CONFIRMATION_PENDING"
+    assert "Peelamedu" in res3.json()["ai_reply"]
+
+    # Turn 4: Confirm
+    res4 = client.post(
+        "/api/v1/voice-register/turn",
+        json={"session_id": sid, "user_speech": "Yes, correct", "language_preference": "English"}
+    )
+    assert res4.status_code == 200
+    assert res4.json()["collection_state"]["district_area"] == "Peelamedu"
+
+
+def test_conversation_service_spelling_variation_flow():
+    from app.ai.conversation_service import conversation_service
+    sid = f"conv_test_{uuid.uuid4().hex[:8]}"
+
+    # Turn 1: Problem
+    res1 = conversation_service.process_turn(sid, "Water pipe leakage in the street")
+    assert res1["state"] == "WAITING_FOR_USER"
+
+    # Turn 2: Misspelled location
+    res2 = conversation_service.process_turn(sid, "Kandhipuram")
+    assert res2["state"] == "SLOT_CONFIRMATION_PENDING"
+    assert "Gandhipuram" in res2["ai_text"]
+    assert "correct spelling" in res2["ai_text"] or "spelling" in res2["ai_text"]
+
+    # Turn 3: User confirms
+    res3 = conversation_service.process_turn(sid, "Yes, that is correct")
+    assert res3["context"]["location"] == "Gandhipuram"
+    assert "Gandhipuram" in res3["ai_text"]
+
+

@@ -83,7 +83,7 @@ def test_conversation_unclear_speech_handling(client: TestClient):
     assert res.status_code == 200
     data = res.json()
     assert data["state"] == "WAITING_FOR_USER"
-    assert "clear" in data["ai_text"].lower() or "புரியவில்லை" in data["ai_text"] or "repeat" in data["ai_text"].lower()
+    assert "understood that correctly" in data["ai_text"].lower() or "spelling" in data["ai_text"].lower() or "clear" in data["ai_text"].lower() or "மீண்டும்" in data["ai_text"]
 
 
 def test_conversation_service_annur_tanglish_water_flow(client: TestClient):

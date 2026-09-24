@@ -1778,23 +1778,10 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
     if best_loc and highest_score >= 0.90:
         return best_loc["name"], best_loc["latitude"], best_loc["longitude"], highest_score
 
-    # 2. Fuzzy Matching for spelling variations across all districts
-    for loc in TAMIL_NADU_DISTRICT_LOCATIONS:
-        for kw in loc["keywords"]:
-            kw_norm = unicodedata.normalize("NFC", kw.lower())
-            ratio = fuzz.token_set_ratio(kw_norm, norm_text)
-            if ratio >= 80:
-                calc_score = ratio / 100.0
-                if calc_score > highest_score:
-                    highest_score = calc_score
-                    best_loc = loc
-
-    if best_loc and highest_score >= 0.80:
-        return best_loc["name"], best_loc["latitude"], best_loc["longitude"], round(highest_score, 2)
-
-    # 3. Dynamic Grammatical Fallback extraction for unspecified localities
+    # 2. Dynamic Grammatical Fallback extraction for unspecified localities
     location_patterns = [
-        r'(?:near|at|opposite|in|around)\s+([A-Za-z0-9\s]{3,25})(?:\s+street|\s+road|\s+area|\s+nagar|\s+colony|\s+bus stand|\b)',
+        r'(?:near|at|opposite|around)\s+([A-Za-z0-9\s]{3,25})(?:\s+street|\s+road|\s+area|\s+nagar|\s+colony|\s+bus stand)',
+        r'in\s+([A-Za-z0-9\s]{3,25})(?:\s+area|\s+nagar|\s+colony|\s+town|\s+village)',
         r'([A-Za-z0-9]{3,20})\s*-\s*la\b',
         r'([A-Za-z0-9]{3,20})\s+pakkam\b',
         r'([A-Za-z0-9]{3,20})\s+kitta\b',
@@ -1809,6 +1796,7 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
             excluded = [
                 "romba", "periya", "chinna", "the", "that", "this", "anga", "inga", "unga", "enaku", "namakku",
                 "romba dark", "damage", "thanni", "current", "problem", "issue", "theru", "road", "street",
+                "our", "my", "the street", "our street", "my street", "the area", "our area",
                 "அருக", "அருகி", "அருகில்", "பக்கத்", "பக்கத்தில்", "பக்கம்", "எதிர்", "எதிரில்", "நிலையம்",
                 "பேருந்து", "பேருந்து நிலையம்", "தெரு", "சாலை", "ரோடு", "வழி", "வீதி", "பஸ்", "bus stand",
                 "near", "opposite", "behind", "next", "door no", "plot no", "ward"
@@ -1832,6 +1820,12 @@ def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, str, str, fl
 
     raw = text.strip()
     lowered = raw.lower()
+
+    # 1. If exact/confident match exists in high-precision extractor, no clarification is needed
+    exact_loc, _, _, conf = extract_location(text)
+    if exact_loc and conf >= 0.85:
+        return None
+
     # Strip common postpositions and fillers
     cleaned = re.sub(r'\b(la|le|kitta|pakkam|pakathula|near|in|at|area|nagar|theru|street|road|district)\b', '', lowered).strip()
     norm_text = unicodedata.normalize("NFC", cleaned or lowered)
@@ -1839,11 +1833,11 @@ def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, str, str, fl
     if len(norm_text) < 3:
         return None
 
-    # If exact match exists with high confidence, no need for clarification
+    # Check if exact keyword substring exists
     for loc in TAMIL_NADU_DISTRICT_LOCATIONS:
         for kw in loc["keywords"]:
             kw_norm = unicodedata.normalize("NFC", kw.lower())
-            if kw_norm == norm_text or kw_norm == lowered:
+            if kw_norm == norm_text or kw_norm == lowered or (len(kw_norm) >= 4 and kw_norm in norm_text):
                 return None  # Confident exact match
 
     # Search for fuzzy spelling candidates (ratio between 68 and 94)
@@ -1876,5 +1870,6 @@ def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, str, str, fl
         return loc_name, best_loc.get("latitude"), best_loc.get("longitude"), highest_score
 
     return None
+
 
 

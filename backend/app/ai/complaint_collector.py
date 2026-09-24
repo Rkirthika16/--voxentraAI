@@ -579,8 +579,12 @@ class ComplaintCollector:
         if not cleaned:
             return True
         # Filter mumbling or filler sounds
-        mumbles = ["umm", "uhh", "aaa", "hmm", "huh", "enna", "mm", "ah", "err", "uh", "um", "er", "ha", "zzz", "oho"]
+        mumbles = {"umm", "uhh", "uhhh", "aaa", "hmm", "huh", "enna", "mm", "ah", "err", "uh", "um", "er", "ha", "zzz", "oho", "oh"}
         if cleaned in mumbles or len(cleaned) <= 1:
+            return True
+        # Check if all tokens in speech are filler/mumble tokens
+        words = [w for w in re.split(r'[\s\.\,\-\_\?\!]+', lowered) if w]
+        if words and all(w in mumbles or re.match(r'^[uamhze]+$', w) for w in words):
             return True
         # Excessive repeated characters (e.g. "aaaaaa", "zzzzz", "xxxxxx")
         if re.search(r'(.)\1{3,}', cleaned):
@@ -632,16 +636,22 @@ class ComplaintCollector:
 
         # 1. District / Area / Location explicit correction
         loc_match = re.search(
-            r'(?:(?:change|update|modify|maathu|maathunga|மாற்று|மாற்றவும்)\s+(?:the\s*)?(?:district|area|location|place|city|town|மாவட்டம்|பகுதி|இடம்|ஊர்)|(?:district|location|area|place|மாவட்டம்|பகுதி|இடம்)\s*(?:is|name\s*is|to|:|ah|nu|as|என்)?)\s*([A-Za-z0-9\u0B80-\u0BFF\s\-\,]+)',
+            r'(?:(?:change|update|modify|maathu|maathunga|மாற்று|மாற்றவும்)\s+(?:the\s*)?(?:district|area|location|place|city|town|மாவட்டம்|பகுதி|இடம்|ஊர்)|(?:district|location|area|place|மாவட்டம்|பகுதி|இடம்)\s+(?:name\s+is|is|to|:|endru|nu\s+maathunga)\s*)\s*([A-Za-z0-9\u0B80-\u0BFF\s\-\,]+)',
             raw,
             re.IGNORECASE
         )
-        if loc_match and any(w in lowered for w in ["change", "update", "modify", "district", "location", "area", "மாவட்டம்", "பகுதி", "இடம்", "maathu", "maathunga"]):
+        if not loc_match:
+            loc_match = re.search(
+                r'(?:மாவட்டம்|பகுதி|இடம்|ஊர்|district|area|location)\s+([A-Za-z0-9\u0B80-\u0BFF\s\-\,]+?)\s+(?:என\s+மாற்றவும்|என\s+மாற்று|ஆக\s+மாற்றவும்|endru\s+maathunga|nu\s+maathunga|nu\s+maathavum|maathunga|maathavum)',
+                raw,
+                re.IGNORECASE
+            )
+        if loc_match and any(w in lowered for w in ["change", "update", "modify", "district", "location", "area", "மாவட்டம்", "பகுதி", "இடம்", "maathu", "maathunga", "மாற்று", "மாற்றவும்"]):
             cand = loc_match.group(1).strip()
             # Clean leading/trailing instructions
             cand = re.sub(r'^(?:to|is|name\s*is|as|என்)\s+', '', cand, flags=re.IGNORECASE).strip()
             cand = re.sub(r'\s+(?:nu|nu maathunga|endru|maathunga|maathavum|please|sollunga)$', '', cand, flags=re.IGNORECASE).strip()
-            if len(cand) >= 2 and cand.lower() not in ["to", "is", "nu", "the", "change"]:
+            if len(cand) >= 2 and cand.lower() not in ["to", "is", "nu", "the", "change", "full-ah", "full", "fulla", "wide"]:
                 cand_clean = self.clean_spelled_out_input(cand)
                 session["fields"]["district_area"] = cand_clean
                 session["pending_slot_confirmation"] = None
@@ -813,11 +823,11 @@ class ComplaintCollector:
         for crucial slots (especially location details: district, area, street, landmark).
         Returns the formatted candidate name for confirmation without silently guessing.
         """
-        if not text or not field:
+        if not text:
             return None
 
-        # Check location-related fields
-        if field in ["district_area", "street_road_name", "landmark", "exact_location"]:
+        # Check location-related fields or general location input
+        if field is None or field in ["district_area", "street_road_name", "landmark", "exact_location", "location"]:
             from app.ai.location_service import find_fuzzy_location_candidate
             candidate_tuple = find_fuzzy_location_candidate(text)
             if candidate_tuple:
@@ -836,10 +846,10 @@ class ComplaintCollector:
         """
         if lang == "Tamil":
             text = "மன்னிக்கவும், நான் அதை சரியாக புரிந்து கொள்ளவில்லை என நினைக்கிறேன். தயவுசெய்து மீண்டும் கூற முடியுமா அல்லது சரியான எழுத்துக் கூட்டலை (spelling) கூற முடியுமா?"
-            spoken = "மன்னிக்கவும், நான் அதை சரியாக புரிந்து கொள்ளவில்லை. தயவுசெய்து மீண்டும் கூற முடியுமா அல்லது சரியான பெயரை கூற முடியுமா?"
+            spoken = "மன்னிக்கவும், நான் அதை சரியாக புரிந்து கொள்ளவில்லை என நினைக்கிறேன். தயவுசெய்து மீண்டும் கூற முடியுமா அல்லது சரியான எழுத்துக் கூட்டலை கூற முடியுமா?"
         elif lang == "Tanglish":
             text = "I’m sorry, naan adha sariya purinjikkala. Marubadiyum solreengala illa correct spelling solreengala?"
-            spoken = "Sorry, sariya purinjukala. Marubadiyum sollunga or correct spelling sollunga?"
+            spoken = "I'm sorry, naan adha sariya purinjikkala. Marubadiyum solreengala illa correct spelling solreengala?"
         else:
             text = "I’m sorry, I may not have understood that correctly. Could you please say it again or provide the correct spelling?"
             spoken = "I'm sorry, I may not have understood that correctly. Could you please say it again or provide the correct spelling?"

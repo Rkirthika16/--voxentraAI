@@ -38,6 +38,7 @@ class ConversationContext:
     missing_fields: List[str] = field(default_factory=list)
     confirmation_required: bool = False
     conversation_complete: bool = False
+    pending_slot_confirmation: Optional[Dict[str, Any]] = None
     original_transcription: str = ""
     normalized_transcription: str = ""
     analysis_method: str = "offline_rule_based"
@@ -133,16 +134,21 @@ class ConversationService:
         street = None
         landmark = None
 
-        street_match = re.search(r'\b([A-Za-z0-9\.\s]+(?:street|road|salai|theru|cross|avenue|lane|nagar\s+main\s+road))\b', text, re.IGNORECASE)
+        street_match = re.search(r'\b(\d+(?:st|nd|rd|th)?\s+(?:street|road|salai|theru|cross|avenue|lane)|(?:[A-Z][a-z0-9]+\s+){1,3}(?:Street|Road|Salai|Theru|Cross|Avenue|Lane|Main\s+Road)|[A-Za-z0-9]{3,20}\s+(?:street|road|salai|theru|cross|avenue|lane))\b', text, re.IGNORECASE)
         if street_match:
             cand = street_match.group(1).strip()
-            if cand.lower() not in ["our street", "my street", "the street", "enga theru", "street", "road"]:
+            cand_low = cand.lower()
+            generic_streets = [
+                "our street", "my street", "the street", "in the street", "in our street", "enga theru",
+                "street", "road", "this street", "that street", "in this street"
+            ]
+            if cand_low not in generic_streets and not any(cand_low.endswith(g) for g in ["in the street", "in our street"]):
                 street = cand
         else:
-            ta_street = re.search(r'([\u0B80-\u0BFF\s0-9]+(?:தெரு|சாலை|வீதி|நகர்\s*மெயின்\s*ரோடு))', text)
+            ta_street = re.search(r'([\u0B80-\u0BFF\s0-9]{3,25}(?:தெரு|சாலை|வீதி|நகர்\s*மெயின்\s*ரோடு))', text)
             if ta_street:
                 cand = ta_street.group(1).strip()
-                if cand not in ["எங்கள் தெரு", "என் தெரு", "தெரு", "சாலை"]:
+                if cand not in ["எங்கள் தெரு", "என் தெரு", "தெரு", "சாலை", "இந்த தெரு"]:
                     street = cand
 
         landmark_match = re.search(r'\b(?:near|opposite|behind|beside|next to|close to|opp|kitta|pakkam|pakathula)\s+([A-Za-z0-9\s\.\,\-]+?)(?:\.|\,|$|\band\b)', text, re.IGNORECASE)
@@ -192,22 +198,113 @@ class ConversationService:
         return False
 
     def get_unclear_response(self, lang: str) -> Tuple[str, str]:
-        """Provides polite clarification when speech is unclear."""
+        """Provides polite clarification when speech is unclear or unrecognized."""
         if lang == "Tamil":
             return (
-                "மன்னிக்கவும், உங்கள் குரல் தெளிவாக புரியவில்லை. தயவுசெய்து மீண்டும் ஒருமுறை கூறவும்.",
-                "மன்னிக்கவும், உங்கள் குரல் தெளிவாக புரியவில்லை. தயவுசெய்து மீண்டும் கூறவும்."
+                "மன்னிக்கவும், நான் அதை சரியாக புரிந்து கொள்ளவில்லை என நினைக்கிறேன். தயவுசெய்து மீண்டும் கூற முடியுமா அல்லது சரியான எழுத்துக் கூட்டலை (spelling) கூற முடியுமா?",
+                "மன்னிக்கவும், நான் அதை சரியாக புரிந்து கொள்ளவில்லை என நினைக்கிறேன். தயவுசெய்து மீண்டும் கூற முடியுமா அல்லது சரியான எழுத்துக் கூட்டலை கூற முடியுமா?"
             )
         elif lang == "Tanglish":
             return (
-                "Sorry, unga voice-la konjam clear-ah puriyala. Please repeat pannunga.",
-                "Sorry, unga voice clear-ah puriyala. Please repeat pannunga."
+                "I’m sorry, naan adha sariya purinjikkala. Marubadiyum solreengala illa correct spelling solreengala?",
+                "I'm sorry, naan adha sariya purinjikkala. Marubadiyum solreengala illa correct spelling solreengala?"
             )
         else:
             return (
-                "I'm sorry, I couldn't hear that clearly. Could you please repeat your complaint?",
-                "I'm sorry, I couldn't hear that clearly. Could you please repeat?"
+                "I’m sorry, I may not have understood that correctly. Could you please say it again or provide the correct spelling?",
+                "I'm sorry, I may not have understood that correctly. Could you please say it again or provide the correct spelling?"
             )
+
+    def get_spelling_or_correction_prompt(self, candidate: str, lang: str) -> Tuple[str, str]:
+        """Returns polite confirmation question when a possible spelling or recognition variation is detected."""
+        if lang == "Tamil":
+            text = f"நான் இதை '{candidate}' என்று புரிந்து கொண்டேன். இது சரியானதா, அல்லது சரியான எழுத்துக் கூட்டலை (spelling) கூற முடியுமா?"
+            spoken = f"நான் இதை '{candidate}' என்று புரிந்து கொண்டேன். இது சரியானதா, அல்லது சரியான பெயரை கூற முடியுமா?"
+        elif lang == "Tanglish":
+            text = f"Naan idhai '{candidate}' nu purinjikiten. Idhu correct-ah, illa correct spelling solreengala?"
+            spoken = f"Naan idhai '{candidate}' nu purinjikiten. Idhu correct-ah, illa correct spelling solreengala?"
+        else:
+            text = f"I understood it as {candidate}. Is that correct, or could you please provide the correct spelling?"
+            spoken = f"I understood it as {candidate}. Is that correct, or could you please provide the correct spelling?"
+        return text, spoken
+
+    def clean_spelled_out_input(self, text: str) -> str:
+        """Cleans and reconstructs spelled-out inputs like 'P E E L A M E D U'."""
+        raw = text.strip()
+        prefix_pattern = r'^(?:no\s*,?\s*(?:it\s*is|its|it\'s|actually|wait)?|correct\s*(?:is|spelling\s*is)?|correction\s*:?|illai\s*,?|illa\s*,?|thappu\s*,?|மாற்றி\s*,?|இல்லை\s*,?|தவறு\s*,?)\s*'
+        cleaned = re.sub(prefix_pattern, '', raw, flags=re.IGNORECASE).strip()
+
+        if re.match(r'^[A-Za-z\u0B80-\u0BFF](?:[\s\-\.][A-Za-z\u0B80-\u0BFF]){2,}$', cleaned):
+            joined = re.sub(r'[\s\-\.]+', '', cleaned)
+            return joined.title() if joined.isascii() else joined
+
+        return cleaned or raw
+
+    def detect_explicit_correction(
+        self,
+        ctx: ConversationContext,
+        text: str,
+        lang: str = "English"
+    ) -> Optional[Tuple[str, str, str, str]]:
+        """Detects explicit slot corrections like 'Change location to Madurai', 'No it is Peelamedu'."""
+        raw = text.strip()
+        if not raw:
+            return None
+        lowered = raw.lower()
+
+        # Location explicit correction
+        loc_match = re.search(
+            r'(?:(?:change|update|modify|maathu|maathunga|மாற்று|மாற்றவும்)\s+(?:the\s*)?(?:district|area|location|place|city|town|மாவட்டம்|பகுதி|இடம்|ஊர்)|(?:district|location|area|place|மாவட்டம்|பகுதி|இடம்)\s+(?:name\s+is|is|to|:|endru|nu\s+maathunga)\s*)\s*([A-Za-z0-9\u0B80-\u0BFF\s\-\,]+)',
+            raw,
+            re.IGNORECASE
+        )
+        if not loc_match:
+            loc_match = re.search(
+                r'(?:மாவட்டம்|பகுதி|இடம்|ஊர்|district|area|location)\s+([A-Za-z0-9\u0B80-\u0BFF\s\-\,]+?)\s+(?:என\s+மாற்றவும்|என\s+மாற்று|ஆக\s+மாற்றவும்|endru\s+maathunga|nu\s+maathunga|nu\s+maathavum|maathunga|maathavum)',
+                raw,
+                re.IGNORECASE
+            )
+        if loc_match and any(w in lowered for w in ["change", "update", "modify", "district", "location", "area", "மாவட்டம்", "பகுதி", "இடம்", "maathu", "maathunga", "மாற்று", "மாற்றவும்"]):
+            cand = loc_match.group(1).strip()
+            cand = re.sub(r'^(?:to|is|name\s*is|as|என்)\s+', '', cand, flags=re.IGNORECASE).strip()
+            cand = re.sub(r'\s+(?:nu|nu maathunga|endru|maathunga|maathavum|please|sollunga)$', '', cand, flags=re.IGNORECASE).strip()
+            if len(cand) >= 2 and cand.lower() not in ["to", "is", "nu", "the", "change", "full-ah", "full", "fulla", "wide"]:
+                cand_clean = self.clean_spelled_out_input(cand)
+                ctx.location = cand_clean
+                ctx.pending_slot_confirmation = None
+                if lang == "Tamil":
+                    ack_r = f"சரி, உங்கள் இடம் '{cand_clean}' என மாற்றப்பட்டது. 👍"
+                    ack_s = f"சரி, உங்கள் இடம் {cand_clean} என மாற்றப்பட்டது."
+                elif lang == "Tanglish":
+                    ack_r = f"Sure, unga location '{cand_clean}' nu update panniyaachu. 👍"
+                    ack_s = f"Sure, unga location {cand_clean} nu update panniyaachu."
+                else:
+                    ack_r = f"Understood! I have updated your location to '{cand_clean}'. 👍"
+                    ack_s = f"Understood! I have updated your location to {cand_clean}."
+                return "location", cand_clean, ack_r, ack_s
+
+        # Spelled-out letters (e.g. "P E E L A M E D U", "P-E-E-L-A-M-E-D-U")
+        prefix_pattern = r'^(?:no\s*,?\s*(?:it\s*is|its|it\'s|actually|wait)?|correct\s*(?:is|spelling\s*is)?|correction\s*:?|illai\s*,?|illa\s*,?|thappu\s*,?|மாற்றி\s*,?|இல்லை\s*,?|தவறு\s*,?)\s*'
+        stripped_prefix = re.sub(prefix_pattern, '', raw, flags=re.IGNORECASE).strip()
+        is_letter_by_letter = bool(re.match(r'^[A-Za-z\u0B80-\u0BFF](?:[\s\-\.][A-Za-z\u0B80-\u0BFF]){2,}$', stripped_prefix))
+
+        if is_letter_by_letter:
+            joined = re.sub(r'[\s\-\.]+', '', stripped_prefix)
+            cleaned_spelled = joined.title() if joined.isascii() else joined
+            ctx.location = cleaned_spelled
+            ctx.pending_slot_confirmation = None
+            if lang == "Tamil":
+                ack_r = f"சரி, நீங்கள் கூறிய {cleaned_spelled} பதிவு செய்யப்பட்டது. 👍"
+                ack_s = f"சரி, {cleaned_spelled} பதிவு செய்யப்பட்டது."
+            elif lang == "Tanglish":
+                ack_r = f"Sure, {cleaned_spelled} update panniyaachu. 👍"
+                ack_s = f"Sure, {cleaned_spelled} update panniyaachu."
+            else:
+                ack_r = f"Understood! I have recorded {cleaned_spelled} as your location. 👍"
+                ack_s = f"Understood! I have recorded {cleaned_spelled} as your location."
+            return "location", cleaned_spelled, ack_r, ack_s
+
+        return None
 
     def generate_confirmation_summary(self, ctx: ConversationContext) -> Tuple[str, str]:
         """Generates structured pre-registration summary in detected language."""
@@ -452,6 +549,182 @@ class ConversationService:
         turn_lang, conf = detect_language(ctx.original_transcription)
         ctx.language = turn_lang
 
+        # 0. Check if session has a pending slot confirmation (e.g. confirming misheard word or location candidate)
+        if ctx.pending_slot_confirmation:
+            pending = ctx.pending_slot_confirmation
+            detected_word = pending.get("detected_word", "")
+            is_dec, is_conf = self._is_confirmation(ctx.original_transcription)
+
+            if is_dec and is_conf:
+                # Citizen confirmed the detected word
+                ctx.location = detected_word
+                ctx.pending_slot_confirmation = None
+                if ctx.language == "Tamil":
+                    ack_reply = f"நன்றி, **{detected_word}** உறுதிப்படுத்தப்பட்டது. 👍"
+                    ack_spoken = f"நன்றி, {detected_word} உறுதிப்படுத்தப்பட்டது."
+                elif ctx.language == "Tanglish":
+                    ack_reply = f"Thanks, **{detected_word}** confirm panniyaachu. 👍"
+                    ack_spoken = f"Thanks, {detected_word} confirm panniyaachu."
+                else:
+                    ack_reply = f"Thank you, **{detected_word}** has been confirmed. 👍"
+                    ack_spoken = f"Thank you, {detected_word} has been confirmed."
+
+                # If enough info, generate confirmation summary, else next question
+                is_sufficient = bool(ctx.problem and ctx.location and (ctx.duration or ctx.affected_scope or ctx.clarification_turn_count >= ctx.max_clarification_questions))
+                if is_sufficient:
+                    ctx.confirmation_required = True
+                    sum_txt, sum_spk = self.generate_confirmation_summary(ctx)
+                    return {
+                        "session_id": ctx.session_id,
+                        "state": "CONFIRMING",
+                        "ai_text": f"{ack_reply}\n\n{sum_txt}",
+                        "ai_spoken": f"{ack_spoken} {sum_spk}",
+                        "detected_language": ctx.language,
+                        "context": ctx.to_dict(),
+                        "confirmation_required": True,
+                        "conversation_complete": False
+                    }
+                else:
+                    q_txt, q_spk = self.get_category_followup_question(ctx)
+                    return {
+                        "session_id": ctx.session_id,
+                        "state": "WAITING_FOR_USER",
+                        "ai_text": f"{ack_reply} {q_txt}",
+                        "ai_spoken": f"{ack_spoken} {q_spk}",
+                        "detected_language": ctx.language,
+                        "context": ctx.to_dict(),
+                        "confirmation_required": False,
+                        "conversation_complete": False
+                    }
+
+            # Check if citizen provided a replacement / spelled out correction
+            cleaned_correction = self.clean_spelled_out_input(ctx.original_transcription)
+            rejection_words = ["no", "wrong", "thappu", "illa", "illai", "இல்லை", "தவறு", "வேண்டாம்"]
+            if ctx.original_transcription.lower().strip() in rejection_words:
+                if ctx.language == "Tamil":
+                    r_txt = "சரி, தயவுசெய்து சரியான பெயர் அல்லது எழுத்துக் கூட்டலை (spelling) கூறவும்."
+                    r_spk = "தயவுசெய்து சரியான பெயரை அல்லது எழுத்துக்களைக் கூறவும்."
+                elif ctx.language == "Tanglish":
+                    r_txt = "Sure, please correct place name or spelling sollunga."
+                    r_spk = "Please correct place name or spelling sollunga."
+                else:
+                    r_txt = "Understood. Please provide the correct name or spelling."
+                    r_spk = "Please provide the correct name or spelling."
+
+                return {
+                    "session_id": ctx.session_id,
+                    "state": "WAITING_FOR_USER",
+                    "ai_text": r_txt,
+                    "ai_spoken": r_spk,
+                    "detected_language": ctx.language,
+                    "context": ctx.to_dict(),
+                    "confirmation_required": False,
+                    "conversation_complete": False
+                }
+
+            if cleaned_correction and len(cleaned_correction) >= 2:
+                ctx.location = cleaned_correction
+                ctx.pending_slot_confirmation = None
+                if ctx.language == "Tamil":
+                    ack_reply = f"நன்றி, நீங்கள் கூறிய **{cleaned_correction}** பதிவு செய்யப்பட்டது. 👍"
+                    ack_spoken = f"நன்றி, {cleaned_correction} பதிவு செய்யப்பட்டது."
+                elif ctx.language == "Tanglish":
+                    ack_reply = f"Thanks, **{cleaned_correction}** noted. 👍"
+                    ack_spoken = f"Thanks, {cleaned_correction} noted."
+                else:
+                    ack_reply = f"Thank you, **{cleaned_correction}** has been noted. 👍"
+                    ack_spoken = f"Thank you, {cleaned_correction} has been noted."
+
+                is_sufficient = bool(ctx.problem and ctx.location and (ctx.duration or ctx.affected_scope or ctx.clarification_turn_count >= ctx.max_clarification_questions))
+                if is_sufficient:
+                    ctx.confirmation_required = True
+                    sum_txt, sum_spk = self.generate_confirmation_summary(ctx)
+                    return {
+                        "session_id": ctx.session_id,
+                        "state": "CONFIRMING",
+                        "ai_text": f"{ack_reply}\n\n{sum_txt}",
+                        "ai_spoken": f"{ack_spoken} {sum_spk}",
+                        "detected_language": ctx.language,
+                        "context": ctx.to_dict(),
+                        "confirmation_required": True,
+                        "conversation_complete": False
+                    }
+                else:
+                    q_txt, q_spk = self.get_category_followup_question(ctx)
+                    return {
+                        "session_id": ctx.session_id,
+                        "state": "WAITING_FOR_USER",
+                        "ai_text": f"{ack_reply} {q_txt}",
+                        "ai_spoken": f"{ack_spoken} {q_spk}",
+                        "detected_language": ctx.language,
+                        "context": ctx.to_dict(),
+                        "confirmation_required": False,
+                        "conversation_complete": False
+                    }
+
+        # 0b. Check for explicit slot correction
+        explicit_corr = self.detect_explicit_correction(ctx, ctx.original_transcription, ctx.language)
+        if explicit_corr:
+            corr_field, new_val, ack_r, ack_s = explicit_corr
+            is_sufficient = bool(ctx.problem and ctx.location and (ctx.duration or ctx.affected_scope or ctx.clarification_turn_count >= ctx.max_clarification_questions))
+            if is_sufficient:
+                ctx.confirmation_required = True
+                sum_txt, sum_spk = self.generate_confirmation_summary(ctx)
+                return {
+                    "session_id": ctx.session_id,
+                    "state": "CONFIRMING",
+                    "ai_text": f"{ack_r}\n\n{sum_txt}",
+                    "ai_spoken": f"{ack_s} {sum_spk}",
+                    "detected_language": ctx.language,
+                    "context": ctx.to_dict(),
+                    "confirmation_required": True,
+                    "conversation_complete": False
+                }
+            else:
+                q_txt, q_spk = self.get_category_followup_question(ctx)
+                return {
+                    "session_id": ctx.session_id,
+                    "state": "WAITING_FOR_USER",
+                    "ai_text": f"{ack_r} {q_txt}",
+                    "ai_spoken": f"{ack_s} {q_spk}",
+                    "detected_language": ctx.language,
+                    "context": ctx.to_dict(),
+                    "confirmation_required": False,
+                    "conversation_complete": False
+                }
+
+        # Category & Problem classification (ensure category/problem always captured early)
+        cat, dept, conf = classify_complaint(ctx.normalized_transcription)
+        if cat != "Other" or not ctx.category:
+            ctx.category = cat
+            ctx.department = dept
+
+        if not ctx.problem:
+            ctx.problem = ctx.original_transcription
+
+        # 0c. Check for potential spelling or STT recognition variation in location without guessing
+        from app.ai.location_service import find_fuzzy_location_candidate
+        fuzzy_cand = find_fuzzy_location_candidate(ctx.original_transcription)
+        if fuzzy_cand and (not ctx.location or ctx.location == "Tamil Nadu"):
+            cand_name = fuzzy_cand[0].split(",")[0].split("&")[0].strip()
+            if cand_name.lower() != ctx.original_transcription.strip().lower():
+                ctx.pending_slot_confirmation = {
+                    "field": "location",
+                    "detected_word": cand_name,
+                    "raw_input": ctx.original_transcription
+                }
+                conf_txt, conf_spk = self.get_spelling_or_correction_prompt(cand_name, ctx.language)
+                return {
+                    "session_id": ctx.session_id,
+                    "state": "SLOT_CONFIRMATION_PENDING",
+                    "ai_text": conf_txt,
+                    "ai_spoken": conf_spk,
+                    "detected_language": ctx.language,
+                    "context": ctx.to_dict(),
+                    "confirmation_required": False,
+                    "conversation_complete": False
+                }
+
         # Check if citizen is in confirmation stage
         if ctx.confirmation_required and not ctx.conversation_complete:
             is_dec, is_conf = self._is_confirmation(ctx.original_transcription)
@@ -578,10 +851,10 @@ class ConversationService:
         ctx.clarification_turn_count += 1
 
         # Check if enough information is collected:
-        # (Has problem + location + (duration or scope or max turns reached))
+        needs_scope = ctx.category in ["Water", "Electricity"] and not ctx.affected_scope and ctx.clarification_turn_count < 3
         is_sufficient = bool(
-            ctx.problem and ctx.location and (ctx.duration or ctx.affected_scope or ctx.clarification_turn_count >= ctx.max_clarification_questions)
-        )
+            ctx.problem and ctx.location and ctx.duration and not needs_scope
+        ) or (ctx.problem and ctx.location and ctx.clarification_turn_count >= ctx.max_clarification_questions)
 
         if is_sufficient and not ctx.confirmation_required:
             ctx.confirmation_required = True
