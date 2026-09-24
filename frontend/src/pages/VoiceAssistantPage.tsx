@@ -1,779 +1,672 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { voiceApi, VoiceSessionResponse } from '../api/voice';
+import { speech } from '../utils/speech';
+import { VoiceStatus, VoiceState } from '../components/voice/VoiceStatus';
+import { VoiceVisualizer } from '../components/voice/VoiceVisualizer';
+import { MicrophoneButton } from '../components/voice/MicrophoneButton';
+import { TranscriptionDisplay } from '../components/voice/TranscriptionDisplay';
+import { LiveConversation } from '../components/voice/LiveConversation';
+import { MessageItem } from '../components/voice/ConversationMessage';
 import { Link } from 'react-router-dom';
-import { apiClient } from '../api/client';
-
-type ConversationState =
-  | 'IDLE'
-  | 'LISTENING'
-  | 'PROCESSING'
-  | 'AI_RESPONDING'
-  | 'SPEAKING'
-  | 'WAITING_FOR_USER'
-  | 'CONFIRMING'
-  | 'COMPLETED'
-  | 'ERROR';
-
-interface TurnMessage {
-  turnIndex: number;
-  sender: 'citizen' | 'ai';
-  text: string;
-  spokenText?: string;
-  detectedLanguage?: string;
-  timestamp: string;
-}
-
-interface ContextState {
-  session_id?: string;
-  language?: string;
-  category?: string;
-  problem?: string;
-  location?: string;
-  district?: string;
-  area?: string;
-  street?: string;
-  landmark?: string;
-  duration?: string;
-  severity?: string;
-  affected_scope?: string;
-  priority?: string;
-  department?: string;
-  summary?: string;
-  confirmation_required?: boolean;
-  conversation_complete?: boolean;
-  complaint_number?: string;
-  complaint_id?: number;
-}
+import {
+  Sparkles,
+  Bot,
+  Send,
+  CheckCircle2,
+  AlertTriangle,
+  Building2,
+  MapPin,
+  Clock,
+  ArrowRight,
+  ShieldAlert,
+  HelpCircle,
+  FileText
+} from 'lucide-react';
 
 export const VoiceAssistantPage: React.FC = () => {
-  const [sessionId, setSessionId] = useState<string>(() => `conv_${Math.random().toString(36).substring(2, 11)}`);
-  const [convState, setConvState] = useState<ConversationState>('IDLE');
-  const [transcript, setTranscript] = useState<string>('');
-  const [interimSpeech, setInterimSpeech] = useState<string>('');
-  const [messages, setMessages] = useState<TurnMessage[]>([]);
-  const [context, setContext] = useState<ContextState>({});
+  const [sessionId, setSessionId] = useState<string>('');
+  const [voiceState, setVoiceState] = useState<VoiceState>('IDLE');
+  const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [spokenText, setSpokenText] = useState<string>('');
+  const [normalizedText, setNormalizedText] = useState<string>('');
   const [textInput, setTextInput] = useState<string>('');
-  const [isSpeechRecognitionSupported, setIsSpeechRecognitionSupported] = useState<boolean>(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
+  const [detectedLanguage, setDetectedLanguage] = useState<string>('Auto-Detecting...');
+  const [context, setContext] = useState<Record<string, any>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [completedComplaint, setCompletedComplaint] = useState<{
+    id?: number;
+    number?: string;
+    department?: string;
+    summary?: string;
+  } | null>(null);
 
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<any>(null);
-  const chatScrollRef = useRef<HTMLDivElement>(null);
-  const isSpeakingRef = useRef<boolean>(false);
 
-  // Auto scroll chat to bottom
+  // Initialize live voice assistant session on mount
   useEffect(() => {
-    if (chatScrollRef.current) {
-      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-    }
-  }, [messages, interimSpeech, convState]);
-
-  // Setup Web Speech API for in-browser speech recognition
-  useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setIsSpeechRecognitionSupported(false);
-      return;
-    }
-
-    const rec = new SpeechRecognition();
-    rec.continuous = false;
-    rec.interimResults = true;
-    rec.lang = 'ta-IN'; // Multi-lingual recognition accepts Tamil/English/Tanglish
-
-    rec.onstart = () => {
-      setConvState('LISTENING');
-      setInterimSpeech('');
-      setErrorMessage(null);
-    };
-
-    rec.onresult = (event: any) => {
-      let current = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        current += event.results[i][0].transcript;
-      }
-      setInterimSpeech(current);
-    };
-
-    rec.onerror = (event: any) => {
-      console.warn('Speech recognition error:', event.error);
-      if (event.error === 'no-speech') {
-        setConvState('WAITING_FOR_USER');
-      } else {
-        setErrorMessage(`Microphone error: ${event.error}. You can use the text box below.`);
-        setConvState('ERROR');
-      }
-    };
-
-    rec.onend = () => {
-      if (interimSpeech && interimSpeech.trim()) {
-        submitSpeechTurn(interimSpeech.trim());
-      } else {
-        if (convState === 'LISTENING') {
-          setConvState('WAITING_FOR_USER');
-        }
-      }
-    };
-
-    recognitionRef.current = rec;
-
+    initSession();
     return () => {
+      speech.stop();
       if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch (e) {}
+        try { recognitionRef.current.stop(); } catch (e) {}
       }
-      window.speechSynthesis.cancel();
     };
-  }, [interimSpeech, convState]);
+  }, []);
 
-  // Speak AI response aloud using native Web Speech Synthesis or backend TTS
-  const speakText = (textToSpeak: string, lang: string = 'Tamil') => {
-    if (!window.speechSynthesis) return;
-
-    window.speechSynthesis.cancel();
-    isSpeakingRef.current = true;
-    setConvState('SPEAKING');
-
-    const clean = textToSpeak.replace(/[*#_`~>📋🏢📍⏱️👥⚡]/g, '').trim();
-    const utterance = new SpeechSynthesisUtterance(clean);
-
-    // Try finding suitable voice for Tamil or English
-    const voices = window.speechSynthesis.getVoices();
-    if (lang === 'Tamil') {
-      const taVoice = voices.find(v => v.lang.includes('ta') || v.name.toLowerCase().includes('tamil'));
-      if (taVoice) utterance.voice = taVoice;
-      utterance.lang = 'ta-IN';
-    } else {
-      const enVoice = voices.find(v => v.lang.includes('en-IN') || v.lang.includes('en'));
-      if (enVoice) utterance.voice = enVoice;
-      utterance.lang = 'en-IN';
-    }
-
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    utterance.onend = () => {
-      isSpeakingRef.current = false;
-      setConvState(context.conversation_complete ? 'COMPLETED' : (context.confirmation_required ? 'CONFIRMING' : 'WAITING_FOR_USER'));
-    };
-
-    utterance.onerror = () => {
-      isSpeakingRef.current = false;
-      setConvState(context.conversation_complete ? 'COMPLETED' : (context.confirmation_required ? 'CONFIRMING' : 'WAITING_FOR_USER'));
-    };
-
-    window.speechSynthesis.speak(utterance);
-  };
-
-  // Start listening to citizen voice
-  const handleStartListening = () => {
-    setErrorMessage(null);
-    window.speechSynthesis.cancel();
-
-    if (!isSpeechRecognitionSupported) {
-      setErrorMessage("Speech recognition is not supported in this browser. Please type your message below.");
-      return;
-    }
-
+  const initSession = async () => {
+    setError(null);
+    setVoiceState('PROCESSING');
     try {
-      if (recognitionRef.current) {
-        recognitionRef.current.start();
+      const res = await voiceApi.startSession();
+      setSessionId(res.session_id);
+      setContext(res.context || {});
+      setVoiceState('WAITING_FOR_USER');
+
+      if (res.greeting_text) {
+        const aiMsg: MessageItem = {
+          id: `ai_${Date.now()}`,
+          sender: 'ai',
+          text: res.greeting_text,
+          language: 'Tamil',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages([aiMsg]);
+
+        // Speak greeting aloud
+        playVoiceAudio(res.greeting_spoken || res.greeting_text, 'Tamil', res.audio_base64);
       }
-    } catch (e) {
-      console.warn("Recognition already started or busy", e);
+    } catch (err: any) {
+      setError('Unable to start live voice assistant session. Backend might be offline.');
+      setVoiceState('ERROR');
     }
   };
 
-  // Stop listening
-  const handleStopListening = () => {
-    if (recognitionRef.current) {
+  const playVoiceAudio = (text: string, lang = 'Tamil', base64Audio?: string | null) => {
+    speech.stop();
+    setIsAiSpeaking(true);
+
+    if (base64Audio) {
       try {
-        recognitionRef.current.stop();
+        const snd = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+        snd.onended = () => setIsAiSpeaking(false);
+        snd.onerror = () => {
+          speech.speak(text, {
+            language: lang,
+            onStart: () => setIsAiSpeaking(true),
+            onEnd: () => setIsAiSpeaking(false),
+            onError: () => setIsAiSpeaking(false)
+          });
+        };
+        snd.play().catch(() => {
+          speech.speak(text, {
+            language: lang,
+            onStart: () => setIsAiSpeaking(true),
+            onEnd: () => setIsAiSpeaking(false),
+            onError: () => setIsAiSpeaking(false)
+          });
+        });
+        return;
       } catch (e) {}
     }
+
+    speech.speak(text, {
+      language: lang,
+      onStart: () => setIsAiSpeaking(true),
+      onEnd: () => setIsAiSpeaking(false),
+      onError: () => setIsAiSpeaking(false)
+    });
   };
 
-  // Cancel and reset session
-  const handleResetConversation = () => {
-    window.speechSynthesis.cancel();
-    handleStopListening();
-    const newId = `conv_${Math.random().toString(36).substring(2, 11)}`;
-    setSessionId(newId);
-    setConvState('IDLE');
-    setMessages([]);
-    setContext({});
-    setTranscript('');
-    setInterimSpeech('');
-    setTextInput('');
-    setErrorMessage(null);
-  };
-
-  // Send turn to backend
-  const submitSpeechTurn = async (speechText: string) => {
-    if (!speechText.trim()) return;
-
-    setConvState('PROCESSING');
-    setInterimSpeech('');
-    setTranscript(speechText);
-
-    // Append Citizen Turn to history
-    const citizenMsg: TurnMessage = {
-      turnIndex: messages.length + 1,
-      sender: 'citizen',
-      text: speechText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    setMessages(prev => [...prev, citizenMsg]);
-
-    try {
-      const response = await apiClient.post('/conversation/turn', {
-        session_id: sessionId,
-        user_speech: speechText,
-        caller_phone: '+919843098765'
-      });
-
-      const data = response.data;
-      setContext(data.context || {});
-
-      const aiMsg: TurnMessage = {
-        turnIndex: messages.length + 2,
-        sender: 'ai',
-        text: data.ai_text,
-        spokenText: data.ai_spoken,
-        detectedLanguage: data.detected_language,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, aiMsg]);
-
-      // Speak response aloud
-      speakText(data.ai_spoken || data.ai_text, data.detected_language);
-
-    } catch (err: any) {
-      console.error("Conversation turn error:", err);
-      setErrorMessage("Could not reach VoxentraAI engine. Please verify server connection.");
-      setConvState('ERROR');
+  const handleToggleRecord = async () => {
+    speech.unlock();
+    if (isRecording) {
+      // Stop recording and send audio turn
+      stopRecordingAndSend();
+    } else {
+      // Start recording
+      startRecording();
     }
   };
 
-  const handleTextSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!textInput.trim()) return;
-    const text = textInput.trim();
+  const startRecording = async () => {
+    setError(null);
+    speech.stop();
+    setIsAiSpeaking(false);
+    setSpokenText('');
+    setNormalizedText('');
+
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const mediaRecorder = new MediaRecorder(stream);
+          mediaRecorderRef.current = mediaRecorder;
+          audioChunksRef.current = [];
+
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) audioChunksRef.current.push(e.data);
+          };
+
+          mediaRecorder.start(250);
+        } catch (mediaErr) {
+          console.warn('Microphone stream error:', mediaErr);
+        }
+      }
+
+      setIsRecording(true);
+      setVoiceState('LISTENING');
+
+      // Continuous Speech Recognition
+      if (speech.isSTTSupported()) {
+        const rec = speech.createRecognition(
+          'en-IN' as any,
+          (transcript) => setSpokenText(transcript),
+          (err) => console.log('STT status:', err),
+          () => {}
+        );
+        if (rec) {
+          recognitionRef.current = rec;
+          try { rec.start(); } catch (e) {}
+        }
+      }
+    } catch (err: any) {
+      setError('Microphone permission was denied or is not supported in your browser.');
+      setVoiceState('ERROR');
+    }
+  };
+
+  const stopRecordingAndSend = async () => {
+    setIsRecording(false);
+    setVoiceState('PROCESSING');
+
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (e) {}
+    }
+
+    if (mediaRecorderRef.current) {
+      try { mediaRecorderRef.current.stop(); } catch (e) {}
+    }
+
+    setTimeout(async () => {
+      const textToSend = spokenText.trim();
+      const audioBlob = audioChunksRef.current.length > 0
+        ? new Blob(audioChunksRef.current, { type: 'audio/wav' })
+        : null;
+
+      if (!textToSend && (!audioBlob || audioBlob.size === 0)) {
+        setError('No speech was detected. Please speak your grievance clearly.');
+        setVoiceState('WAITING_FOR_USER');
+        return;
+      }
+
+      // Add citizen turn message to UI
+      const citizenMsg: MessageItem = {
+        id: `cit_${Date.now()}`,
+        sender: 'citizen',
+        text: textToSend || 'Voice Recording (Processing...)',
+        language: detectedLanguage,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages((prev) => [...prev, citizenMsg]);
+
+      try {
+        let res: VoiceSessionResponse;
+        if (audioBlob && audioBlob.size > 500) {
+          res = await voiceApi.sendAudioTurn(sessionId, audioBlob);
+        } else {
+          res = await voiceApi.sendMessageTurn(sessionId, textToSend);
+        }
+
+        handleTurnResponse(res);
+      } catch (err: any) {
+        setError('Failed to process voice turn. Falling back to text mode.');
+        setVoiceState('WAITING_FOR_USER');
+      }
+    }, 400);
+  };
+
+  const handleSendTextMessage = async (customMessage?: string) => {
+    const text = (customMessage || textInput).trim();
+    if (!text) return;
+
     setTextInput('');
-    submitSpeechTurn(text);
+    setError(null);
+    speech.stop();
+    setVoiceState('PROCESSING');
+
+    const citizenMsg: MessageItem = {
+      id: `cit_${Date.now()}`,
+      sender: 'citizen',
+      text: text,
+      language: detectedLanguage,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages((prev) => [...prev, citizenMsg]);
+
+    try {
+      const res = await voiceApi.sendMessageTurn(sessionId, text);
+      handleTurnResponse(res);
+    } catch (err: any) {
+      setError('Failed to process message.');
+      setVoiceState('WAITING_FOR_USER');
+    }
+  };
+
+  const handleTurnResponse = (res: VoiceSessionResponse) => {
+    if (res.detected_language) setDetectedLanguage(res.detected_language);
+    if (res.context) setContext(res.context);
+    if (res.transcription) setSpokenText(res.transcription);
+    if (res.normalized_transcription) setNormalizedText(res.normalized_transcription);
+
+    const replyText = res.ai_text || res.ai_spoken || '';
+    const spokenLang = res.detected_language || 'Tamil';
+
+    const aiMsg: MessageItem = {
+      id: `ai_${Date.now()}`,
+      sender: 'ai',
+      text: replyText,
+      language: spokenLang,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      state: res.state
+    };
+    setMessages((prev) => [...prev, aiMsg]);
+
+    if (res.conversation_complete || res.state === 'COMPLETED') {
+      setCompletedComplaint({
+        id: res.complaint_id,
+        number: res.complaint_number || 'VX-2026-000001',
+        department: res.department || res.context?.department || 'Municipal Administration',
+        summary: res.context?.summary || replyText
+      });
+      setVoiceState('COMPLETED');
+    } else if (res.confirmation_required || res.state === 'CONFIRMING') {
+      setVoiceState('CONFIRMING');
+    } else {
+      setVoiceState('WAITING_FOR_USER');
+    }
+
+    // Play AI spoken voice
+    playVoiceAudio(res.ai_spoken || replyText, spokenLang, res.audio_base64);
+  };
+
+  const handleConfirmComplaint = async () => {
+    setVoiceState('PROCESSING');
+    try {
+      const res = await voiceApi.confirmSession(sessionId);
+      handleTurnResponse(res);
+    } catch (err: any) {
+      setError('Failed to confirm complaint.');
+      setVoiceState('CONFIRMING');
+    }
+  };
+
+  const handleReset = async () => {
+    speech.stop();
+    try {
+      if (sessionId) await voiceApi.cancelSession(sessionId);
+    } catch (e) {}
+    setMessages([]);
+    setContext({});
+    setSpokenText('');
+    setNormalizedText('');
+    setCompletedComplaint(null);
+    initSession();
   };
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '1.5rem 1rem' }}>
-      {/* Top Banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #31104b 100%)',
-        borderRadius: '16px',
-        padding: '2rem',
-        color: '#fff',
-        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-        marginBottom: '1.5rem',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
-              <span style={{
-                background: '#8b5cf6',
-                color: '#fff',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                padding: '0.2rem 0.6rem',
-                borderRadius: '999px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Natural Live Voice AI
-              </span>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                fontSize: '0.8rem',
-                color: '#34d399',
-                background: 'rgba(52, 211, 153, 0.1)',
-                padding: '0.2rem 0.5rem',
-                borderRadius: '6px'
-              }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }}></span>
-                Citizen Speaks First
-              </span>
-            </div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: '0 0 0.5rem 0', letterSpacing: '-0.02em' }}>
-              VoxentraAI Conversational Voice Helpline
-            </h1>
-            <p style={{ color: '#cbd5e1', margin: 0, fontSize: '1rem', maxWidth: '650px', lineHeight: 1.5 }}>
-              Speak naturally in Tamil, English, or Tanglish without choosing menus or questionnaires. VoxentraAI understands, clarifies missing information, and registers your complaint automatically.
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              onClick={handleResetConversation}
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                color: '#fff',
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                transition: 'all 0.2s'
-              }}
-            >
-              🔄 Reset / New Call
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Layout Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem', alignItems: 'start' }}>
-        {/* Left Column: Voice Interaction & Dialogue History */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '580px'
-        }}>
-          {/* Status Header */}
-          <div style={{
-            padding: '1rem 1.25rem',
-            borderBottom: '1px solid #f1f5f9',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            background: '#fafafa',
-            borderTopLeftRadius: '16px',
-            borderTopRightRadius: '16px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {convState === 'LISTENING' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontWeight: 700, fontSize: '0.9rem' }}>
-                  <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444', animation: 'pulse 1.5s infinite' }}></span>
-                  🎤 Listening... You can speak now
-                </div>
-              )}
-              {convState === 'PROCESSING' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f59e0b', fontWeight: 700, fontSize: '0.9rem' }}>
-                  <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b', animation: 'spin 1s linear infinite' }}></span>
-                  🤖 Processing & understanding context...
-                </div>
-              )}
-              {convState === 'SPEAKING' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#8b5cf6', fontWeight: 700, fontSize: '0.9rem' }}>
-                  <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#8b5cf6', animation: 'bounce 1s infinite' }}></span>
-                  🔊 VoxentraAI is speaking...
-                </div>
-              )}
-              {convState === 'WAITING_FOR_USER' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#3b82f6', fontWeight: 700, fontSize: '0.9rem' }}>
-                  🎤 Your turn. Click mic or speak your reply.
-                </div>
-              )}
-              {convState === 'CONFIRMING' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10b981', fontWeight: 700, fontSize: '0.9rem' }}>
-                  📋 Review summary & say "Aama / Yes" to register.
-                </div>
-              )}
-              {convState === 'COMPLETED' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#059669', fontWeight: 700, fontSize: '0.9rem' }}>
-                  ✅ Complaint Registered Successfully!
-                </div>
-              )}
-              {convState === 'IDLE' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>
-                  Tap microphone below to start speaking directly
-                </div>
-              )}
-              {convState === 'ERROR' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#dc2626', fontWeight: 600, fontSize: '0.9rem' }}>
-                  ⚠️ {errorMessage || "Voice input error"}
-                </div>
-              )}
-            </div>
-
-            {context.language && (
-              <span style={{
-                background: '#ede9fe',
-                color: '#6d28d9',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                padding: '0.2rem 0.5rem',
-                borderRadius: '6px'
-              }}>
-                🌐 {context.language}
-              </span>
-            )}
-          </div>
-
-          {/* Conversation History Stream */}
+    <div className="page-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '960px', margin: '0 auto' }}>
+      
+      {/* 1. Header & Live Status */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div
-            ref={chatScrollRef}
             style={{
-              flex: 1,
-              padding: '1.25rem',
-              overflowY: 'auto',
-              maxHeight: '380px',
+              width: '46px',
+              height: '46px',
+              borderRadius: 'var(--radius-md)',
+              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
               display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-              background: '#f8fafc'
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ffffff',
+              boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)',
             }}
           >
-            {messages.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎙️</div>
-                <h3 style={{ margin: '0 0 0.5rem 0', color: '#334155', fontWeight: 700 }}>No Fixed Menu — Just Speak</h3>
-                <p style={{ margin: 0, fontSize: '0.9rem', maxWidth: '420px', marginInline: 'auto' }}>
-                  Example: <em>"Gandhipuram-la thanni varala"</em> or <em>"எங்க தெருவுல 3 நாளா கரண்ட் இல்ல"</em> or <em>"Potholes on Cross Cut Road"</em>
-                </p>
-              </div>
-            )}
-
-            {messages.map((m, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: m.sender === 'citizen' ? 'flex-end' : 'flex-start'
-                }}
-              >
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  marginBottom: '0.25rem',
-                  fontSize: '0.75rem',
-                  color: '#64748b'
-                }}>
-                  <span>{m.sender === 'citizen' ? '👤 Citizen (You)' : '🤖 VoxentraAI'}</span>
-                  <span>• {m.timestamp}</span>
-                </div>
-                <div style={{
-                  background: m.sender === 'citizen' ? '#2563eb' : '#ffffff',
-                  color: m.sender === 'citizen' ? '#ffffff' : '#1e293b',
-                  padding: '0.85rem 1.15rem',
-                  borderRadius: m.sender === 'citizen' ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                  maxWidth: '85%',
-                  fontSize: '0.95rem',
-                  lineHeight: 1.5,
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                  border: m.sender === 'citizen' ? 'none' : '1px solid #e2e8f0',
-                  whiteSpace: 'pre-wrap'
-                }}>
-                  {m.text}
-                </div>
-              </div>
-            ))}
-
-            {interimSpeech && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <div style={{ fontSize: '0.75rem', color: '#ef4444', marginBottom: '0.25rem' }}>Listening...</div>
-                <div style={{
-                  background: 'rgba(37, 99, 235, 0.15)',
-                  color: '#1d4ed8',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '16px 16px 2px 16px',
-                  maxWidth: '85%',
-                  fontSize: '0.95rem',
-                  fontStyle: 'italic',
-                  border: '1px dashed #60a5fa'
-                }}>
-                  {interimSpeech}...
-                </div>
-              </div>
-            )}
+            <Bot className="w-6 h-6" />
           </div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '1.4rem', color: 'var(--text-primary)', fontWeight: 700 }}>
+              Live Conversational Voice Assistant
+            </h1>
+            <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Citizen Speaks First • Auto Language Recognition (Tamil, Tanglish, English) • Dynamic Context
+            </p>
+          </div>
+        </div>
 
-          {/* Voice Microphone Control Panel */}
-          <div style={{
-            padding: '1.25rem',
-            borderTop: '1px solid #f1f5f9',
-            background: '#ffffff',
+        <button
+          type="button"
+          onClick={handleReset}
+          style={{
+            padding: '0.5rem 0.9rem',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-secondary)',
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+          }}
+        >
+          New Conversation
+        </button>
+      </div>
+
+      {/* 2. Real-time Status Banner */}
+      <VoiceStatus
+        state={voiceState}
+        language={detectedLanguage !== 'Auto-Detecting...' ? detectedLanguage : undefined}
+        category={context.category}
+        location={context.location}
+      />
+
+      {/* Error Alert */}
+      {error && (
+        <div
+          style={{
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius-md)',
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#f87171',
+            fontSize: '0.875rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* 3. Main Conversational Card */}
+      <div
+        style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '1.5rem',
+          boxShadow: 'var(--shadow-lg)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.25rem',
+        }}
+      >
+        {/* Visualizer & Mic Hero */}
+        <div
+          style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '1rem',
-            borderBottomLeftRadius: '16px',
-            borderBottomRightRadius: '16px'
-          }}>
-            {/* Big Pulsing Mic Button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            justifyContent: 'center',
+            padding: '1.5rem 1rem',
+            background: 'linear-gradient(180deg, rgba(99, 102, 241, 0.04), transparent)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid rgba(99, 102, 241, 0.1)',
+          }}
+        >
+          <VoiceVisualizer isActive={isRecording} isAiSpeaking={isAiSpeaking} />
+
+          <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+            {isRecording
+              ? '🎙️ Listening... Speak naturally in Tamil, English, or Tanglish. Click to finish.'
+              : voiceState === 'CONFIRMING'
+              ? '💬 Please confirm or say "Yes, register" / "Aama" to create your complaint.'
+              : isAiSpeaking
+              ? '🔊 VoxentraAI is speaking...'
+              : 'Click microphone to speak your grievance.'}
+          </p>
+
+          <MicrophoneButton
+            isRecording={isRecording}
+            isProcessing={voiceState === 'PROCESSING'}
+            onToggleRecord={handleToggleRecord}
+            onCancel={handleReset}
+          />
+        </div>
+
+        {/* Live Transcription Display */}
+        <TranscriptionDisplay
+          originalText={spokenText}
+          normalizedText={normalizedText}
+          isProcessing={voiceState === 'PROCESSING'}
+          onEditSubmit={(edited) => handleSendTextMessage(edited)}
+        />
+
+        {/* Live Conversation Stream */}
+        <LiveConversation
+          messages={messages}
+          isAiResponding={voiceState === 'PROCESSING'}
+          onPlayAudio={(text, lang) => playVoiceAudio(text, lang)}
+        />
+
+        {/* Confirmation Action Box (When state is CONFIRMING) */}
+        {voiceState === 'CONFIRMING' && (
+          <div
+            style={{
+              padding: '1.25rem',
+              borderRadius: 'var(--radius-lg)',
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fbbf24', fontWeight: 600 }}>
+              <HelpCircle className="w-5 h-5" />
+              <span>Confirm Grievance Registration</span>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              Are the gathered complaint details correct? Click "Confirm & Register" or speak "Yes / ஆமாம் / Correct".
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <button
-                onClick={convState === 'LISTENING' ? handleStopListening : handleStartListening}
-                disabled={convState === 'PROCESSING' || convState === 'SPEAKING'}
+                type="button"
+                onClick={handleConfirmComplaint}
                 style={{
-                  width: '76px',
-                  height: '76px',
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: convState === 'LISTENING'
-                    ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-                    : 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
                   color: '#ffffff',
-                  fontSize: '2rem',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: (convState === 'PROCESSING' || convState === 'SPEAKING') ? 'not-allowed' : 'pointer',
-                  boxShadow: convState === 'LISTENING'
-                    ? '0 0 0 12px rgba(239, 68, 68, 0.25), 0 10px 15px -3px rgba(239, 68, 68, 0.4)'
-                    : '0 10px 20px -5px rgba(109, 40, 217, 0.4)',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  transform: convState === 'LISTENING' ? 'scale(1.08)' : 'scale(1)'
+                  gap: '0.4rem',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
                 }}
-                title={convState === 'LISTENING' ? "Click to stop listening" : "Click to start speaking"}
               >
-                {convState === 'LISTENING' ? '⏹️' : '🎙️'}
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Confirm & Register</span>
               </button>
 
-              {convState === 'LISTENING' && (
-                <button
-                  onClick={handleStopListening}
-                  style={{
-                    background: '#fee2e2',
-                    color: '#991b1b',
-                    border: '1px solid #fca5a5',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
-                    fontWeight: 600,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Done Speaking
-                </button>
-              )}
-            </div>
-
-            <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 500 }}>
-              {convState === 'LISTENING' ? "Listening to your voice... Speak your complaint" : "Tap microphone to speak directly"}
-            </div>
-
-            {/* Text Fallback Input */}
-            <form onSubmit={handleTextSubmit} style={{ width: '100%', display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-              <input
-                type="text"
-                value={textInput}
-                onChange={e => setTextInput(e.target.value)}
-                placeholder="Or type your complaint here in Tamil, English, or Tanglish..."
-                disabled={convState === 'PROCESSING'}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem 1rem',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '0.9rem',
-                  outline: 'none'
-                }}
-              />
               <button
-                type="submit"
-                disabled={!textInput.trim() || convState === 'PROCESSING'}
+                type="button"
+                onClick={() => handleSendTextMessage("No, I want to change location")}
                 style={{
-                  background: '#2563eb',
+                  padding: '0.65rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Change Details
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Completion Card */}
+        {completedComplaint && (
+          <div
+            style={{
+              padding: '1.5rem',
+              borderRadius: 'var(--radius-lg)',
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.2))',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#34d399' }}>
+              <CheckCircle2 className="w-7 h-7" />
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
+                  Complaint Registered Successfully!
+                </h3>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Assigned Public Tracking ID: <strong>{completedComplaint.number}</strong>
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <Link
+                to={`/complaints?search=${completedComplaint.number}`}
+                style={{
+                  padding: '0.6rem 1.25rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--primary-color)',
                   color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '10px',
-                  padding: '0 1.25rem',
+                  textDecoration: 'none',
+                  fontSize: '0.875rem',
                   fontWeight: 600,
-                  fontSize: '0.9rem',
-                  cursor: (!textInput.trim() || convState === 'PROCESSING') ? 'not-allowed' : 'pointer'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
                 }}
               >
-                Send
-              </button>
-            </form>
-          </div>
-        </div>
+                <span>Track Complaint</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
 
-        {/* Right Column: Structured Live Context Card */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            padding: '1.25rem',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
-          }}>
-            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.05rem', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>📊</span> Live Complaint Context
-            </h3>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>Language:</span>
-                <span style={{ fontWeight: 600, color: '#0f172a' }}>{context.language || 'Auto-detecting...'}</span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>Category:</span>
-                <span style={{
-                  fontWeight: 700,
-                  color: context.category ? '#2563eb' : '#94a3b8',
-                  background: context.category ? '#dbeafe' : 'transparent',
-                  padding: context.category ? '0.1rem 0.4rem' : '0',
-                  borderRadius: '4px'
-                }}>
-                  {context.category || 'Extracting...'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>Location:</span>
-                <span style={{ fontWeight: 600, color: context.location ? '#0f172a' : '#94a3b8' }}>
-                  {context.location || 'Pending...'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>Duration:</span>
-                <span style={{ fontWeight: 600, color: context.duration ? '#0f172a' : '#94a3b8' }}>
-                  {context.duration || 'Pending...'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>Affected Scope:</span>
-                <span style={{ fontWeight: 600, color: context.affected_scope ? '#0f172a' : '#94a3b8' }}>
-                  {context.affected_scope || 'Pending...'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>Priority:</span>
-                <span style={{
-                  fontWeight: 700,
-                  color: context.priority === 'CRITICAL' ? '#dc2626' : (context.priority === 'HIGH' ? '#ea580c' : '#16a34a')
-                }}>
-                  {context.priority || 'MEDIUM'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                <span style={{ color: '#64748b' }}>Department:</span>
-                <span style={{ fontWeight: 600, color: '#334155' }}>
-                  {context.department || 'Auto-routing...'}
-                </span>
-              </div>
-
-              {context.complaint_number && (
-                <div style={{
-                  marginTop: '0.5rem',
-                  padding: '0.85rem',
-                  background: '#ecfdf5',
-                  border: '1px solid #a7f3d0',
-                  borderRadius: '10px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '0.75rem', color: '#065f46', fontWeight: 600, textTransform: 'uppercase' }}>Tracking ID Issued</div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#047857', marginTop: '0.25rem' }}>{context.complaint_number}</div>
-                  <Link
-                    to={`/complaints/${context.complaint_id}`}
-                    style={{
-                      display: 'inline-block',
-                      marginTop: '0.5rem',
-                      fontSize: '0.8rem',
-                      color: '#059669',
-                      fontWeight: 700,
-                      textDecoration: 'underline'
-                    }}
-                  >
-                    View Status & Details →
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Simulation Chips */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            padding: '1.25rem',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
-          }}>
-            <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem', fontWeight: 700, color: '#475569' }}>
-              💡 Quick Test Phrases
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <button
-                onClick={() => submitSpeechTurn("Gandhipuram-la thanni varala.")}
+                type="button"
+                onClick={handleReset}
                 style={{
-                  textAlign: 'left',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '8px',
-                  fontSize: '0.8rem',
-                  color: '#334155',
-                  cursor: 'pointer'
+                  padding: '0.6rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
                 }}
               >
-                🌊 <strong>Tanglish Water</strong>: "Gandhipuram-la thanni varala."
-              </button>
-              <button
-                onClick={() => submitSpeechTurn("எங்க தெருவுல 3 நாளா கரண்ட் இல்ல.")}
-                style={{
-                  textAlign: 'left',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '8px',
-                  fontSize: '0.8rem',
-                  color: '#334155',
-                  cursor: 'pointer'
-                }}
-              >
-                ⚡ <strong>Tamil Power</strong>: "எங்க தெருவுல 3 நாளா கரண்ட் இல்ல."
-              </button>
-              <button
-                onClick={() => submitSpeechTurn("Heavy garbage accumulated on Cross Cut Road for four days.")}
-                style={{
-                  textAlign: 'left',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '8px',
-                  fontSize: '0.8rem',
-                  color: '#334155',
-                  cursor: 'pointer'
-                }}
-              >
-                🗑️ <strong>English Sanitation</strong>: "Heavy garbage on Cross Cut Road."
-              </button>
-              <button
-                onClick={() => submitSpeechTurn("Aama, register pannunga.")}
-                style={{
-                  textAlign: 'left',
-                  background: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '8px',
-                  fontSize: '0.8rem',
-                  color: '#15803d',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                ✅ <strong>Confirmation</strong>: "Aama, register pannunga."
+                Start New Grievance
               </button>
             </div>
           </div>
+        )}
+
+        {/* Text Fallback Input Bar */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <input
+            type="text"
+            placeholder="Type your message here (Tamil / Tanglish / English) if you prefer typing..."
+            value={textInput}
+            onChange={(e) => setTextInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendTextMessage()}
+            style={{
+              flex: 1,
+              padding: '0.75rem 1rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              fontSize: '0.9rem',
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => handleSendTextMessage()}
+            disabled={!textInput.trim() || voiceState === 'PROCESSING'}
+            style={{
+              padding: '0.75rem 1.25rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--primary-color)',
+              color: '#ffffff',
+              border: 'none',
+              fontWeight: 600,
+              cursor: !textInput.trim() || voiceState === 'PROCESSING' ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+            }}
+          >
+            <Send className="w-4 h-4" />
+            <span>Send</span>
+          </button>
         </div>
       </div>
+
+      {/* 4. Structured Memory Context Card */}
+      {Object.keys(context).length > 0 && (
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.25rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>
+            <FileText className="w-4 h-4" />
+            <span>EXTRACTED CONVERSATION MEMORY (STRUCTURED SLOTS)</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+            <div style={{ background: 'var(--bg-secondary)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-md)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Category</span>
+              <p style={{ margin: '0.15rem 0 0 0', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {context.category || 'Extracting...'}
+              </p>
+            </div>
+
+            <div style={{ background: 'var(--bg-secondary)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-md)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Location</span>
+              <p style={{ margin: '0.15rem 0 0 0', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {context.location || 'Extracting...'}
+              </p>
+            </div>
+
+            <div style={{ background: 'var(--bg-secondary)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-md)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Duration / Scope</span>
+              <p style={{ margin: '0.15rem 0 0 0', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {context.duration ? `${context.duration}${context.affected_scope ? ` • ${context.affected_scope}` : ''}` : (context.affected_scope || 'Pending...')}
+              </p>
+            </div>
+
+            <div style={{ background: 'var(--bg-secondary)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-md)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Department</span>
+              <p style={{ margin: '0.15rem 0 0 0', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {context.department || 'Municipal Administration'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -128,6 +128,11 @@ export const Sidebar: React.FC = () => {
         <span>Full IVR Simulator</span>
       </NavLink>
 
+      <NavLink to="/voice-assistant" style={linkStyle}>
+        <Sparkles size={18} color="#a855f7" />
+        <span>Live Voice Assistant</span>
+      </NavLink>
+
       <NavLink to="/notifications" style={linkStyle}>
         <Bell size={18} />
         <span>System Alerts</span>

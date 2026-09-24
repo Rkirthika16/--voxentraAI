@@ -1,3 +1,4 @@
+from app.ai import audio_prediction_service
 import os
 import uuid
 import logging

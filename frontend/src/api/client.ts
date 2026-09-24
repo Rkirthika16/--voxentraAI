@@ -7,10 +7,10 @@ const getApiBaseUrl = (): string => {
   }
   if (typeof window !== 'undefined' && window.location.hostname) {
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      return `http://${window.location.hostname}:8001/api/v1`;
+      return `http://${window.location.hostname}:8000/api/v1`;
     }
   }
-  return 'http://127.0.0.1:8001/api/v1';
+  return 'http://127.0.0.1:8000/api/v1';
 };
 
 export const apiClient = axios.create({
