@@ -177,8 +177,9 @@ class TollFreeService:
                     return self._generate_edit_prompt(db, session, detected_lang)
 
         # 5. Extract slots & update structured memory (Handling explicit corrections)
+        prompted_slot = session.current_field_prompted
         memory = dict(session.structured_memory or {})
-        self._extract_and_update_memory(raw_text, cleaned, memory)
+        self._extract_and_update_memory(raw_text, cleaned, memory, prompted_slot=prompted_slot)
 
         # Synchronize columns with memory
         session.category = memory.get("category")
@@ -241,30 +242,31 @@ class TollFreeService:
                 "complaint_created": False
             }
 
-    def _extract_and_update_memory(self, raw_text: str, cleaned: str, memory: Dict[str, Any]) -> None:
+    def _extract_and_update_memory(self, raw_text: str, cleaned: str, memory: Dict[str, Any], prompted_slot: Optional[str] = None) -> None:
         """
         Extracts civic entities and updates memory.
-        Handles explicit corrections (e.g. "No, water problem", "No, actually Saibaba Colony").
+        Uses prompted_slot context so citizen answers are never lost or asked repeatedly.
         """
-        lowered = raw_text.lower()
+        lowered = raw_text.lower().strip()
 
         # Check explicit correction for category
         if any(w in lowered for w in ["water problem", "water issue", "தண்ணீர்", "thanni", "குடிநீர்"]):
             memory["category"] = "Water Supply"
             memory["department"] = "Water Supply Department"
-            memory["problem"] = raw_text
+            memory["problem"] = raw_text.strip()
         elif any(w in lowered for w in ["current problem", "power problem", "electricity problem", "மின்வெட்டு", "மின்சாரம்"]):
             memory["category"] = "Electricity"
             memory["department"] = "Electricity & Power Department"
-            memory["problem"] = raw_text
+            memory["problem"] = raw_text.strip()
 
         # 1. Problem & Category Detection
-        if not memory.get("problem"):
+        if not memory.get("problem") or prompted_slot == "problem":
             cat, dept, cat_conf = classify_complaint(cleaned)
-            if cat != "Other" or any(w in lowered for w in ["water", "thanni", "power", "current", "road", "garbage", "drainage", "light", "குடிநீர்", "மின்சாரம்", "குப்பை", "சாலை", "சாக்கடை"]):
-                memory["problem"] = raw_text
-                memory["category"] = cat
-                memory["department"] = DEPARTMENT_MASTER.get(cat, dept)
+            if cat != "Other" or any(w in lowered for w in ["water", "thanni", "power", "current", "road", "garbage", "drainage", "light", "குடிநீர்", "மின்சாரம்", "குப்பை", "சாலை", "சாக்கடை"]) or prompted_slot == "problem" or not memory.get("problem"):
+                if not memory.get("problem") or prompted_slot == "problem":
+                    memory["problem"] = raw_text.strip()
+                    memory["category"] = cat if cat != "Other" else (memory.get("category") or "Water Supply")
+                    memory["department"] = DEPARTMENT_MASTER.get(memory["category"], dept)
 
         # 2. Location Detection
         loc_name, lat, lon, conf = extract_location(raw_text)
@@ -275,30 +277,56 @@ class TollFreeService:
                 memory["location"] = f"{loc_name}, {memory['location']}"
 
         # Explicit location road/street regex
-        street_match = re.search(r'\b([A-Za-z0-9\s]+(?:street|road|salai|theru|cross|avenue|nagar|colony|bus\s*stand))\b', raw_text, re.IGNORECASE)
+        street_match = re.search(r'\b([A-Za-z0-9\s]+(?:street|road|salai|theru|cross|avenue|nagar|colony|bus\s*stand|village|town|junction|bridge))\b', raw_text, re.IGNORECASE)
         if street_match and (not memory.get("location") or "actually" in lowered or "no" in lowered):
             memory["location"] = street_match.group(1).strip()
 
-        # 3. Duration Detection (e.g. "two days", "3 days", "since yesterday", "today morning")
+        # CONTEXTUAL FALLBACK for Location if AI prompted for location
+        if prompted_slot == "location" and not memory.get("location"):
+            cleaned_loc = re.sub(r'^(?:in|at|near|the|enga|anga|unga|inda|indha|இந்த|அந்த|பகுதியில்|இடத்தில்|area\s*is|location\s*is)\s+', '', raw_text, flags=re.IGNORECASE).strip()
+            if len(cleaned_loc) >= 2:
+                memory["location"] = cleaned_loc
+
+        # 3. Duration Detection (e.g. "two days", "3 days", "since yesterday", "today morning", "rendu naal", "nethu lendhu")
         dur_patterns = [
             r'\b(\d+\s*(?:days?|hours?|weeks?|months?)(?:-ah)?)\b',
-            r'\b((?:two|three|four|five|six|seven|one)\s*(?:days?|hours?|weeks?)(?:-ah)?)\b',
+            r'\b((?:two|three|four|five|six|seven|one|ten)\s*(?:days?|hours?|weeks?)(?:-ah)?)\b',
             r'\b(since\s*(?:yesterday|morning|last\s*week|\d+\s*days?))\b',
-            r'\b(yesterday|today\s*morning|last\s*night|netru|inniku|kaalai)\b',
-            r'\b(\d+\s*(?:நாட்களாக|நாளாக|நாளா|வாரமாக))\b',
-            r'\b((?:ரெண்டு|மூணு|நாலு|அஞ்சு|இரண்டு|மூன்று)\s*(?:நாட்களாக|நாளாக|நாளா))\b'
+            r'\b(yesterday|today\s*morning|last\s*night|netru|inniku|kaalai|just\s*now|1\s*hour)\b',
+            r'\b(\d+\s*(?:நாட்களாக|நாளாக|நாளா|வாரமாக|மணி நேரமாக|நாட்கள்|நாள்))\b',
+            r'\b((?:ரெண்டு|மூணு|நாலு|அஞ்சு|பத்து|இரண்டு|மூன்று|ஒரு வாரம்)\s*(?:நாட்களாக|நாளாக|நாளா|நாள்|வாரம்))\b',
+            r'\b(rendu\s*naal[a-z]*|moonu\s*naal[a-z]*|nethu\s*lendhu|nethula\s*irundhu|kaalaila\s*irundhu|morning\s*lendhu|romba\s*naal[a-z]*|palanaal[a-z]*|oru\s*varam[a-z]*|oru\s*masam[a-z]*|ippo\s*dhaan)\b'
         ]
         for pat in dur_patterns:
             m = re.search(pat, lowered)
-            if m:
+            if m and not memory.get("duration"):
                 memory["duration"] = m.group(0).strip()
                 break
 
+        # CONTEXTUAL FALLBACK for Duration if AI prompted for duration
+        if prompted_slot == "duration" and not memory.get("duration"):
+            memory["duration"] = raw_text.strip()
+
         # 4. Scope / Affected Area
-        if any(w in lowered for w in ["full", "full-ah", "fulla", "entire", "whole", "area full", "street full", "எல்லா", "முழுவதும்"]):
+        area_wide_indicators = [
+            "full", "full-ah", "fulla", "entire", "whole", "area full", "street full", "எல்லா", "முழுவதும்", "முழு தெரு",
+            "ellarukum", "all houses", "ellam", "all", "colony full", "area", "street"
+        ]
+        individual_indicators = [
+            "only my house", "veedu mattum", "single house", "எங்கள் வீடு மட்டும்", "enga veedu mattum",
+            "en veedu", "my house", "only house", "individual"
+        ]
+        if any(w in lowered for w in area_wide_indicators):
             memory["affected_scope"] = "Entire Area / Street Affected"
-        elif any(w in lowered for w in ["only my house", "veedu mattum", "single house", "எங்கள் வீடு மட்டும்"]):
+        elif any(w in lowered for w in individual_indicators):
             memory["affected_scope"] = "Single House Affected"
+        elif prompted_slot == "affected_scope":
+            if any(w in lowered for w in ["aama", "aamam", "ama", "aam", "yes", "seri", "sari", "ok", "okay", "correct", "right", "ஆமாம்", "சரி", "ஆம்", "sure", "kandippa"]):
+                memory["affected_scope"] = "Entire Area / Street Affected"
+            elif any(w in lowered for w in ["illa", "illai", "no", "vendaam", "இல்லை"]):
+                memory["affected_scope"] = "Single House Affected"
+            elif not memory.get("affected_scope"):
+                memory["affected_scope"] = raw_text.strip()
 
         # 5. Frequency
         if any(w in lowered for w in ["daily", "every day", "dinamum", "thinamum", "தினமும்"]):
@@ -307,11 +335,13 @@ class TollFreeService:
             memory["frequency"] = "First Time"
 
         # 6. Citizen Name
-        name_match = re.search(r'(?:name\s*is|i\s*am|பெயர்|naan|peyar)\s*([A-Za-z\u0B80-\u0BFF\s]+)', raw_text, re.IGNORECASE)
-        if name_match:
+        name_match = re.search(r'(?:name\s*is|i\s*am|my\s*name\s*is|பெயர்|naan|peyar|en\s*peru)\s*([A-Za-z\u0B80-\u0BFF\s]{2,25})', raw_text, re.IGNORECASE)
+        if name_match and not memory.get("citizen_name"):
             cand = name_match.group(1).strip()
-            if cand.lower() not in ["seri", "ok", "problem", "thanni", "water"]:
-                memory["citizen_name"] = cand
+            if cand.lower() not in ["seri", "ok", "problem", "thanni", "water", "tamil", "english"]:
+                memory["citizen_name"] = cand.title() if cand.isascii() else cand
+        elif prompted_slot == "citizen_name" and not memory.get("citizen_name"):
+            memory["citizen_name"] = raw_text.strip()
 
         # 7. Priority Assessment
         if memory.get("problem"):
@@ -585,18 +615,34 @@ class TollFreeService:
         lowered = text.strip().lower()
         if len(lowered) <= 1:
             return True
+        valid_conversational = {
+            "aama", "aamam", "ama", "amam", "aam", "seri", "sari", "ok", "yes", "no", "right", "correct",
+            "sure", "confirm", "proceed", "cancel", "stop", "wait", "change", "edit", "wrong", "thappu",
+            "illa", "illai", "vendaam", "kandippa", "pannunga", "podunga", "submit", "register",
+            "ஆமாம்", "சரி", "உறுதி", "பதிவு", "ஆம்", "இல்லை", "வேண்டாம்", "தவறு"
+        }
+        tokens = [t for t in re.split(r'[\s\.\,\-]+', lowered) if t]
+        if any(t in valid_conversational for t in tokens):
+            return False
         mumbles = {"umm", "uhh", "uhhh", "aaa", "hmm", "huh", "enna", "mm", "ah", "err", "uh", "um"}
-        tokens = re.split(r'[\s\.\,\-]+', lowered)
         return all(t in mumbles for t in tokens if t)
 
     def _is_confirmation_response(self, text: str) -> Tuple[bool, bool]:
         lowered = text.strip().lower()
-        positive = ["yes", "aama", "aamam", "ஆம்", "சரி", "correct", "correct-ah", "right", "confirm", "proceed", "register", "sure"]
-        negative = ["no", "illa", "இல்லை", "wrong", "change", "cancel", "stop", "thappu"]
+        positive = [
+            "yes", "confirm", "confirmed", "register", "proceed", "okay", "ok", "correct", "right",
+            "aama", "aamam", "ama", "amam", "aam", "seri", "sari", "pannunga", "podunga", "panlama",
+            "pannidunga", "padhivu", "seiyunga", "seiyalam", "kandippa", "sure", "done", "fine", "super",
+            "nandri", "thanks", "thank you", "go ahead"
+        ]
+        negative = [
+            "no", "cancel", "stop", "wait", "change", "edit", "wrong", "thappu", "illai", "illa",
+            "vendaam", "modify", "maathanum", "maathu"
+        ]
 
-        if any(w in lowered for w in positive) or any(w in lowered for w in ["ஆமாம்", "சரி", "ஆம்"]):
+        if any(re.search(r'\b' + re.escape(w) + r'\b', lowered) for w in positive) or any(w in lowered for w in ["ஆமாம்", "சரி", "பதிவு", "ஆம்", "உறுதி", "செய்யலாம்", "பதிவு செய்க"]):
             return True, True
-        if any(w in lowered for w in negative) or any(w in lowered for w in ["இல்லை", "தவறு"]):
+        if any(re.search(r'\b' + re.escape(w) + r'\b', lowered) for w in negative) or any(w in lowered for w in ["வேண்டாம்", "இல்லை", "தவறு", "மாற்ற வேண்டும்"]):
             return True, False
         return False, False
 

@@ -212,3 +212,41 @@ def test_new_ivr_end_session_endpoint():
     end_res = client.post(f"/api/v1/new-ivr/session/{session_id}/end")
     assert end_res.status_code == 200
     assert end_res.json()["state"] == "COMPLETED"
+
+
+def test_new_ivr_no_repeating_questions_with_casual_speech():
+    """Verify that casual responses ('nethula irundhu', 'aama') fill slots and never repeat questions."""
+    init_res = client.post("/api/v1/new-ivr/session", json={"caller_phone": "+919876500001"})
+    session_id = init_res.json()["session_id"]
+
+    # Turn 1: Problem + Location
+    t1 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Saravanampatti-la current cut aaiduchu"
+    }).json()
+    assert t1["next_field"] == "duration"
+
+    # Turn 2: Casual duration in Tanglish ("nethu lendhu")
+    t2 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "nethu lendhu"
+    }).json()
+    # Must NOT ask duration again! Must advance to affected_scope
+    assert t2["next_field"] == "affected_scope"
+    assert t2["memory"]["duration"] is not None
+
+    # Turn 3: Simple affirmative answer to scope ("Aama")
+    t3 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Aama"
+    }).json()
+    # Must NOT ask scope again! Must advance to CONFIRMATION
+    assert t3["state"] == "CONFIRMATION"
+    assert t3["is_confirmation"] is True
+    assert t3["memory"]["affected_scope"] == "Entire Locality / Street"
+
+    # Turn 4: Citizen confirms with "Pannunga"
+    t4 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Pannunga"
+    }).json()
+    assert t4["complaint_created"] is True
+    assert t4["state"] == "COMPLETED"
+    assert t4["complaint_number"].startswith("VX-")
+
