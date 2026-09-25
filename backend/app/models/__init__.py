@@ -7,6 +7,7 @@ from app.models.assignment import Assignment
 from app.models.notification import Notification
 from app.models.escalation import Escalation, EscalationStatus
 from app.models.ivr import IVRSession, IVRMessage, IVRState
+from app.models.tollfree import TollFreeCallSession, TollFreeMessage, TollFreeState
 
 __all__ = [
     "Base",
@@ -24,6 +25,10 @@ __all__ = [
     "EscalationStatus",
     "IVRSession",
     "IVRMessage",
-    "IVRState"
+    "IVRState",
+    "TollFreeCallSession",
+    "TollFreeMessage",
+    "TollFreeState"
 ]
+
 

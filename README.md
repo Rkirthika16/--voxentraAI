@@ -8,10 +8,11 @@ Citizens can report civic issues naturally in **Tamil**, **English**, or **Tangl
 
 ## 🌟 Key Features
 
-- 🎙️ **Live Two-Way Conversational AI IVR (`/new-ivr` & `/api/v1/new-ivr`)**:
-  - Real hands-free two-way conversational turn taking (AI greeting ➔ AI stops speaking ➔ Citizen speaks first ➔ STT ➔ Language Detection ➔ Contextual Slot Extraction ➔ AI follow-up ➔ Confirmation ➔ Real Complaint Creation with Unique ID ➔ Twilio SMS).
+- 🎙️ **Live Two-Way Conversational AI IVR (`/tollfree-ivr`, `/new-ivr` & `/api/v1/tollfree`)**:
+  - Real hands-free two-way conversational turn taking (AI greeting ➔ AI stops speaking ➔ Citizen speaks first ➔ STT ➔ Language Detection ➔ Contextual Slot Extraction ➔ AI follow-up ➔ Confirmation ➔ Real Complaint Creation with Unique ID ➔ Department Routing).
   - Browser MediaRecorder audio stream processing (WebM/Opus, Ogg, WAV) with automatic 16kHz mono PCM conversion via FFmpeg.
-  - Speech-To-Text via Whisper (faster-whisper / openai-whisper) with clear error handling when offline.
+  - Speech-To-Text via Whisper (faster-whisper / openai-whisper) with clear, deterministic offline fallback when unavailable.
+  - Provider-agnostic Telephony Provider Interface (`TelephonyProvider`) for Exotel, Twilio, and future toll-free telco webhooks (`/api/v1/tollfree/webhook/incoming`, `/webhook/audio`, `/webhook/events`, `/webhook/status`).
 - 🌐 **True Multilingual Intelligence**: Native dynamic adaptation across Tamil script, English, and Tanglish (*e.g., "Gandhipuram-la thanni varala"*).
 - 🧠 **Context-Aware Structured Dialogue Memory**:
   - Retains Category, Problem, Location, Duration, Scope, Frequency, Severity across all turns.

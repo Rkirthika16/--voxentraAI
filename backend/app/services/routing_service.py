@@ -4,14 +4,27 @@ from app.models.department import Department
 
 CATEGORY_CODE_MAP: Dict[str, str] = {
     "Water": "WATER",
+    "Water Supply": "WATER",
     "Electricity": "ELECTRICITY",
+    "Power": "ELECTRICITY",
     "Roads": "ROADS",
+    "Roads & Infrastructure": "ROADS",
     "Sanitation/Garbage": "SANITATION",
+    "Sanitation": "SANITATION",
+    "Garbage": "SANITATION",
+    "Sanitation / Solid Waste Management": "SANITATION",
     "Drainage": "DRAINAGE",
+    "Drainage / Sewerage": "DRAINAGE",
     "Streetlights": "STREETLIGHTS",
+    "Street Lighting": "STREETLIGHTS",
     "Public Safety": "SAFETY",
+    "Public Health": "SAFETY",
+    "Animal Control": "SAFETY",
+    "Revenue / Property Tax": "GENERAL",
+    "Civil Registration": "GENERAL",
     "Other": "GENERAL"
 }
+
 
 
 class RoutingService:

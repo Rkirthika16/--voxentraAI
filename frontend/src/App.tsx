@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 // Pages
 import { LandingPage } from './pages/LandingPage';
 import { TollFreeHelplinePage } from './pages/TollFreeHelplinePage';
+import { TollFreeIVRPage } from './pages/TollFreeIVRPage';
 import { LiveTwoWayIVRPage } from './pages/LiveTwoWayIVRPage';
 import { LiveMapPage } from './pages/LiveMapPage';
 import { LoginPage } from './pages/LoginPage';
@@ -41,11 +42,13 @@ export const App: React.FC = () => {
               <Routes>
                 {/* Friction-Free Public Routes (No Login Required) */}
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/tollfree-ivr" element={<TollFreeIVRPage />} />
+                <Route path="/toll-free-ivr" element={<TollFreeIVRPage />} />
                 <Route path="/new-ivr" element={<LiveTwoWayIVRPage />} />
                 <Route path="/live-ivr" element={<LiveTwoWayIVRPage />} />
-                <Route path="/ivr" element={<TollFreeHelplinePage />} />
-                <Route path="/toll-free" element={<TollFreeHelplinePage />} />
-                <Route path="/helpline" element={<TollFreeHelplinePage />} />
+                <Route path="/ivr" element={<TollFreeIVRPage />} />
+                <Route path="/toll-free" element={<TollFreeIVRPage />} />
+                <Route path="/helpline" element={<TollFreeIVRPage />} />
 
                 <Route path="/voice-assistant" element={<VoiceAssistantPage />} />
                 <Route path="/map" element={<LiveMapPage />} />
