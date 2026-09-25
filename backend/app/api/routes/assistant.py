@@ -122,7 +122,7 @@ async def voice_chat_with_assistant(
 
 
 from fastapi.responses import Response
-from app.ai.tts_service import synthesize_speech
+from app.ai import tts_service
 
 @router.get("/suggestions", response_model=SuggestionsResponse)
 def get_assistant_suggestions():
@@ -141,7 +141,7 @@ def stream_tts_audio(text: str, lang: Optional[str] = None):
     if not text or not text.strip():
         return Response(content=b"", media_type="audio/mpeg")
 
-    audio_bytes = synthesize_speech(text, lang=lang)
+    audio_bytes = tts_service.synthesize_speech(text, lang=lang)
     return Response(
         content=audio_bytes,
         media_type="audio/mpeg",

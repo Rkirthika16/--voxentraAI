@@ -26,6 +26,7 @@ from app.schemas.ivr import (
     TelephonyLogItem
 )
 from app.services.complaint_service import complaint_service
+from app.services.ivr_session_service import ivr_session_service, IVRState
 from app.ai.provider import ai_provider
 from app.ai.speech_service import speech_service
 from app.ai.conversation_service import conversation_service, ConversationContext
@@ -54,16 +55,45 @@ def dispatch_sms_notification(to_phone: str, message: str) -> bool:
 
 @router.post("/ivr/session")
 @router.post("/ivr/session/start")
-def create_ivr_conversational_session(
-    session_id: Optional[str] = None,
-    caller_phone: Optional[str] = "+919843098765"
+async def create_ivr_conversational_session(
+    request: Request,
+    session_id: Optional[str] = Query(None),
+    caller_phone: Optional[str] = Query(None)
 ):
     """
     Initiates a new two-way conversational voice session for the IVR Toll-Free Helpline.
+    Accepts JSON body, form data, or query params.
     The citizen hears a welcoming prompt and can speak first in Tamil, English, or Tanglish.
     """
-    sid = session_id or f"IVR_{uuid.uuid4().hex[:12]}"
-    ctx = conversation_service.get_or_create_context(sid, caller_phone)
+    body_sid = None
+    body_phone = None
+    try:
+        content_type = request.headers.get("content-type", "")
+        if "application/json" in content_type:
+            body = await request.json()
+            if isinstance(body, dict):
+                body_sid = body.get("session_id")
+                body_phone = body.get("caller_phone")
+        elif "form" in content_type:
+            form = await request.form()
+            body_sid = form.get("session_id")
+            body_phone = form.get("caller_phone")
+    except Exception:
+        pass
+
+    sid = session_id or body_sid or f"IVR_{uuid.uuid4().hex[:12]}"
+    phone = caller_phone or body_phone or "+919843098765"
+
+    ctx = conversation_service.get_or_create_context(sid, phone)
+    ivr_sess = ivr_session_service.get_or_create_session(sid, phone, provider="ivr_helpline")
+    ivr_sess.transition_to(IVRState.WAITING_FOR_CITIZEN)
+
+    # Log incoming call attempt in telephony tracker
+    exotel_adapter.handle_incoming_call({
+        "CallSid": sid,
+        "From": phone,
+        "To": "1913"
+    })
 
     welcome_text = "வணக்கம்! VoxentraAI citizen complaint service-ku welcome. Ungaloda complaint-a sollunga."
     welcome_spoken = ""
@@ -162,6 +192,19 @@ async def process_ivr_session_audio(
         tts_lang = turn_res.get("language") or "Tamil"
         audio_bytes = synthesize_speech(spoken_text, tts_lang)
         turn_res["audio_base64"] = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
+
+        # Update session service state
+        ivr_sess = ivr_session_service.get_session(session_id)
+        if ivr_sess:
+            ivr_sess.add_turn(speaker="citizen", text=transcription)
+            ivr_sess.add_turn(speaker="ivr", text=spoken_text)
+            if turn_res.get("conversation_complete"):
+                ivr_sess.end_call(IVRState.COMPLETED)
+            elif turn_res.get("confirmation_required"):
+                ivr_sess.transition_to(IVRState.CONFIRMING)
+            else:
+                ivr_sess.transition_to(IVRState.WAITING_FOR_RESPONSE)
+
         return turn_res
 
     finally:
@@ -173,27 +216,61 @@ async def process_ivr_session_audio(
 
 
 @router.post("/ivr/session/{session_id}/message")
-def process_ivr_session_message(
+async def process_ivr_session_message(
     session_id: str,
-    message: str = Form(None),
-    caller_phone: Optional[str] = Form("+919843098765"),
+    request: Request,
+    message: Optional[str] = Form(None),
+    caller_phone: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     """
     Text-based turn fallback entering the exact same conversation engine.
+    Supports JSON, Form, and Query parameters.
     """
     raw_message = (message or "").strip()
+    phone = caller_phone or "+919843098765"
+
+    if not raw_message:
+        try:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+                if isinstance(body, dict):
+                    raw_message = (body.get("message") or "").strip()
+                    if body.get("caller_phone"):
+                        phone = body.get("caller_phone")
+            elif "form" in content_type:
+                form = await request.form()
+                raw_message = (form.get("message") or "").strip()
+                if form.get("caller_phone"):
+                    phone = form.get("caller_phone")
+        except Exception:
+            pass
+
     turn_res = conversation_service.process_turn(
         session_id=session_id,
         user_speech=raw_message,
         db=db,
-        caller_phone=caller_phone
+        caller_phone=phone
     )
 
     spoken_text = turn_res.get("ai_spoken") or turn_res.get("response_text") or ""
     tts_lang = turn_res.get("language") or "Tamil"
     audio_bytes = synthesize_speech(spoken_text, tts_lang)
     turn_res["audio_base64"] = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
+
+    # Update session service state
+    ivr_sess = ivr_session_service.get_session(session_id)
+    if ivr_sess:
+        ivr_sess.add_turn(speaker="citizen", text=raw_message)
+        ivr_sess.add_turn(speaker="ivr", text=spoken_text)
+        if turn_res.get("conversation_complete"):
+            ivr_sess.end_call(IVRState.COMPLETED)
+        elif turn_res.get("confirmation_required"):
+            ivr_sess.transition_to(IVRState.CONFIRMING)
+        else:
+            ivr_sess.transition_to(IVRState.WAITING_FOR_RESPONSE)
+
     return turn_res
 
 
@@ -227,15 +304,31 @@ def get_ivr_session_state(session_id: str):
 
 
 @router.post("/ivr/session/{session_id}/confirm")
-def confirm_ivr_session(
+async def confirm_ivr_session(
     session_id: str,
+    request: Request,
     caller_phone: Optional[str] = Form("+919843098765"),
     db: Session = Depends(get_db)
 ):
     """
     Explicitly confirms the gathered complaint and registers the official database record.
+    Supports JSON and Form data.
     """
-    ctx = conversation_service.get_or_create_context(session_id, caller_phone)
+    phone = caller_phone or "+919843098765"
+    try:
+        content_type = request.headers.get("content-type", "")
+        if "application/json" in content_type:
+            body = await request.json()
+            if isinstance(body, dict) and body.get("caller_phone"):
+                phone = body.get("caller_phone")
+        elif "form" in content_type:
+            form = await request.form()
+            if form.get("caller_phone"):
+                phone = form.get("caller_phone")
+    except Exception:
+        pass
+
+    ctx = conversation_service.get_or_create_context(session_id, phone)
     ctx.conversation_complete = True
     created_comp = conversation_service._create_database_complaint(ctx, db)
     ctx.complaint_id = created_comp.id
@@ -250,6 +343,13 @@ def confirm_ivr_session(
 
     audio_bytes = synthesize_speech(ai_text, ctx.language)
     audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
+
+    # Update session service
+    ivr_sess = ivr_session_service.get_session(session_id)
+    if ivr_sess:
+        ivr_sess.complaint_id = created_comp.id
+        ivr_sess.complaint_number = created_comp.complaint_number
+        ivr_sess.end_call(IVRState.COMPLETED)
 
     return {
         "session_id": session_id,
@@ -283,6 +383,10 @@ def cancel_ivr_session(session_id: str):
     Cancels active conversational voice session and clears memory.
     """
     conversation_service.reset_session(session_id)
+    ivr_sess = ivr_session_service.get_session(session_id)
+    if ivr_sess:
+        ivr_sess.end_call(IVRState.CANCELLED)
+
     return {
         "session_id": session_id,
         "conversation_state": "CANCELLED",
