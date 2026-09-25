@@ -152,17 +152,15 @@ export const TollFreeIVRPage: React.FC = () => {
       setDetectedLanguage(data.language || 'Auto');
       setCallActive(true);
 
-      const initialGreetingMsg: TollFreeMessage = {
+      const systemBannerMsg: TollFreeMessage = {
         id: Date.now(),
-        role: 'ai',
-        content: data.greeting || 'வணக்கம்! VoxentraAI குடிமக்கள் புகார் சேவைக்கு வரவேற்கிறோம். உங்கள் பிரச்சனையைப் பற்றி சொல்லுங்கள்.',
-        language: data.language,
+        role: 'system',
+        content: '📞 Call Connected. Citizen speaks first — please describe your complaint in Tamil, English, or Tanglish.',
+        language: 'Auto',
         created_at: new Date().toISOString(),
       };
-      setMessages([initialGreetingMsg]);
-
-      // Speak greeting and then open microphone for citizen first turn
-      speakText(data.spoken_greeting || initialGreetingMsg.content, data.language || 'Tanglish');
+      setMessages([systemBannerMsg]);
+      // Do NOT play AI voice first — line is open for the citizen to speak first!
     } catch (err: any) {
       console.error('Failed to start tollfree call:', err);
       setErrorMessage(err.response?.data?.detail?.message || err.message || 'Failed to connect toll-free call.');

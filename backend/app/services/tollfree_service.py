@@ -93,26 +93,11 @@ class TollFreeService:
         db.commit()
         db.refresh(session)
 
-        # Build initial greeting (Tanglish/Tamil/English)
-        greeting_text = (
-            "Vanakkam! VoxentraAI citizen complaint service-ku welcome. "
-            "Ungaloda problem-a sollunga."
-        )
-        greeting_spoken = greeting_text
+        # Call connects directly in WAITING_FOR_CITIZEN state so the citizen speaks first
+        greeting_text = ""
+        greeting_spoken = ""
 
-        # Record AI greeting in message history
-        ai_msg = TollFreeMessage(
-            session_id=session.id,
-            role="ai",
-            content=greeting_text,
-            normalized_content=greeting_spoken,
-            language="Tanglish",
-            created_at=datetime.now(timezone.utc)
-        )
-        db.add(ai_msg)
-        db.commit()
-
-        logger.info(f"[TollFree] Call connected: {session_id} from {caller_phone}. Waiting for citizen.")
+        logger.info(f"[TollFree] Call connected: {session_id} from {caller_phone}. Waiting for citizen first utterance.")
         return session, greeting_text, greeting_spoken
 
     def get_session(self, db: Session, session_id: str) -> Optional[TollFreeCallSession]:

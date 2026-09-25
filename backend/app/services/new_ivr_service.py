@@ -87,31 +87,9 @@ class NewIVRService:
         db.commit()
         db.refresh(ivr_session)
 
-        # Build multilingual greeting
-        greeting_text = (
-            "Vanakkam! Welcome to VoxentraAI Citizen Grievance Helpline. "
-            "Please describe your civic complaint in Tamil, English, or Tanglish."
-        )
-        greeting_ta = (
-            "வணக்கம்! வாக்ஸென்ட்ரா AI பொது குறைதீர்ப்பு சேவைக்கு நல்வரவு. "
-            "உங்கள் புகாரை தமிழ், ஆங்கிலம் அல்லது தங்க்லீஷில் கூறவும்."
-        )
-        greeting_spoken = (
-            "Vanakkam! VoxentraAI citizen complaint service-ku welcome. "
-            "Ungaloda complaint-a sollunga."
-        )
-
-        # Store initial AI greeting message
-        ai_msg = IVRMessage(
-            session_id=ivr_session.id,
-            role="ai",
-            content=greeting_text,
-            normalized_content=greeting_spoken,
-            language="Tanglish",
-            created_at=datetime.now(timezone.utc)
-        )
-        db.add(ai_msg)
-        db.commit()
+        # Call connects directly in WAITING_FOR_CITIZEN state so the citizen speaks first
+        greeting_text = ""
+        greeting_spoken = ""
 
         logger.info(f"[NewIVR] Session created: {session_id}, waiting for citizen to speak first.")
         return ivr_session, greeting_text, greeting_spoken

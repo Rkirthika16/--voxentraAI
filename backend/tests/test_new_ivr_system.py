@@ -38,8 +38,6 @@ def test_new_ivr_session_retrieval():
     data = get_res.json()
     assert data["session_id"] == session_id
     assert data["state"] == "WAITING_FOR_CITIZEN"
-    assert len(data["messages"]) >= 1
-    assert data["messages"][0]["role"] == "ai"
 
 
 def test_new_ivr_multiturn_conversational_flow_with_memory():

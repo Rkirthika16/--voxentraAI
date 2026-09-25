@@ -153,26 +153,22 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       const res = await newIvrApi.createSession('+919843098765', 'Auto');
       setSessionId(res.session_id);
       setCallActive(true);
-      setIvrState('GREETING');
+      setIvrState('WAITING_FOR_CITIZEN');
       setDetectedLanguage(res.language || 'Auto');
       setMemory(res.structured_memory);
 
-      const initialAiMsg: NewIVRMessage = {
+      const systemMsg: NewIVRMessage = {
         id: 1,
-        role: 'ai',
-        content: res.greeting,
-        normalized_content: res.spoken_greeting,
-        language: 'Tanglish',
+        role: 'system',
+        content: '📞 Call Connected. Citizen speaks first — please describe your civic issue in Tamil, English, or Tanglish.',
+        language: 'Auto',
         created_at: new Date().toISOString(),
       };
-      setMessages([initialAiMsg]);
+      setMessages([systemMsg]);
       setIsProcessing(false);
 
-      // AI speaks greeting, then stops speaking and enables microphone
-      speakText(res.spoken_greeting, 'Tanglish', () => {
-        // Citizen speaks first
-        startRecording();
-      });
+      // Microphone opens immediately for citizen to speak first
+      startRecording();
     } catch (err: any) {
       setIsProcessing(false);
       setErrorCode('BACKEND_UNAVAILABLE');
