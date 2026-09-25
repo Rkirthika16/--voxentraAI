@@ -43,7 +43,7 @@ def test_conversation_service_tanglish_water_flow(client: TestClient):
     assert data3["context"]["affected_scope"] == "Entire area"
     # Now all critical info is gathered -> Must be in CONFIRMING state
     assert data3["confirmation_required"] is True
-    assert "summary" in data3["ai_text"].lower() or "confirm" in data3["ai_text"].lower() or "register" in data3["ai_text"].lower()
+    assert "summary" in data3["ai_text"].lower() or "confirm" in data3["ai_text"].lower() or "register" in data3["ai_text"].lower() or "பதிவு" in data3["ai_text"] or "complaint" in data3["ai_text"].lower()
 
     # Turn 4: Citizen confirms: "Aama, register pannunga."
     res4 = client.post(

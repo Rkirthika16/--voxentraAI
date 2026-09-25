@@ -104,26 +104,27 @@ def detect_language(text: str, current_session_lang: Optional[str] = None) -> Tu
             tanglish_matches += 1
 
     if has_tanglish_particles or tanglish_matches > 0:
-        return "Tanglish" if current_session_lang != "Tamil" else "Tamil", 0.98
+        return "Tanglish", 0.98
 
-    # 6. Contextual Session Stickiness for Short Responses and Established Session Language
+    # 6. English Grammar & Indicators
+    english_matches = sum(1 for w in words if w in ENGLISH_INDICATORS or w in ["two", "days", "day", "one", "three", "four", "five", "six", "seven", "leakage", "water", "garbage", "problem", "broken", "street", "road", "area", "house", "there", "severe", "since", "yesterday"])
+
+    if english_matches >= 2 and len(words) >= 3 and tanglish_matches == 0 and not has_tanglish_particles:
+        return "English", 0.95
+
+    # 7. Short Response Session Stickiness (preserve ongoing Tamil or Tanglish session for short affirmative/slot replies)
     if current_session_lang and current_session_lang in ["Tamil", "Tanglish"]:
-        # If user is in an ongoing Tamil or Tanglish conversation, short answers or mixed civic terms (e.g. "2 days", "current cut", "water supply", "RS Puram", "yes", "no") STAY in that session language!
-        if len(words) <= 6 or tanglish_matches > 0:
+        if len(words) <= 3 or english_matches <= 1:
             return current_session_lang, 0.92
 
-    # 7. English Grammar & Indicators
-    english_matches = sum(1 for w in words if w in ENGLISH_INDICATORS or w in ["two", "days", "day", "one", "three", "four", "five", "six", "seven"])
-    if english_matches >= 1 and not current_session_lang and not has_tanglish_particles and tanglish_matches == 0:
-        return "English", 0.95
-    if english_matches >= 2 and len(words) >= 3 and current_session_lang not in ["Tamil", "Tanglish"]:
-        return "English", 0.95
+    if english_matches >= 1 and not has_tanglish_particles and tanglish_matches == 0:
+        return "English", 0.90
 
     # Default fallback
     if current_session_lang and current_session_lang not in ["Auto", None]:
         return current_session_lang, 0.85
 
-    return "Tamil", 0.85
+    return "Tanglish", 0.85
 
 
 class LanguageService:

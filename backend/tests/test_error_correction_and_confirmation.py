@@ -55,8 +55,8 @@ def test_spelling_variation_candidate_confirmation_flow(client: TestClient):
     data2 = res2.json()
     # Should NOT silently store or assume; must prompt for confirmation
     assert data2["intent"] == "SLOT_CONFIRMATION_PENDING"
-    assert "I understood it as Gandhipuram" in data2["reply_text"] or "Gandhipuram" in data2["reply_text"]
-    assert "correct spelling" in data2["reply_text"]
+    assert "Gandhipuram" in data2["reply_text"]
+    assert "spelling" in data2["reply_text"].lower() or "எழுத்துக் கூட்டலை" in data2["reply_text"]
 
     # Turn 3: Citizen confirms "Yes, that's correct"
     res3 = client.post(

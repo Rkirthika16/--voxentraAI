@@ -7,6 +7,7 @@ from app.ai.speech_service import speech_service, SpeechService
 from app.ai.provider import ai_provider, AIProvider
 
 from app.ai.conversation_service import conversation_service, ConversationService, ConversationContext
+from app.ai.gemini_service import gemini_service, GeminiService, GeminiAnalysisResult
 
 __all__ = [
     "detect_language",
@@ -22,5 +23,8 @@ __all__ = [
     "AIProvider",
     "conversation_service",
     "ConversationService",
-    "ConversationContext"
+    "ConversationContext",
+    "gemini_service",
+    "GeminiService",
+    "GeminiAnalysisResult"
 ]
