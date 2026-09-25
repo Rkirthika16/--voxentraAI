@@ -1,5 +1,7 @@
 import os
 import logging
+import importlib.util
+import importlib
 from typing import Dict, Any, Optional
 from app.config import settings
 
@@ -23,22 +25,24 @@ class SpeechService:
             }
 
         # Check for faster-whisper
-        try:
-            import faster_whisper
-            self._engine_type = "faster-whisper"
-            self._is_available = True
-            return {"available": True, "engine": self._engine_type, "error": None}
-        except ImportError:
-            pass
+        if importlib.util.find_spec("faster_whisper") is not None:
+            try:
+                importlib.import_module("faster_whisper")
+                self._engine_type = "faster-whisper"
+                self._is_available = True
+                return {"available": True, "engine": self._engine_type, "error": None}
+            except Exception as e:
+                logger.debug(f"faster-whisper found but import failed: {e}")
 
         # Check for openai-whisper
-        try:
-            import whisper
-            self._engine_type = "openai-whisper"
-            self._is_available = True
-            return {"available": True, "engine": self._engine_type, "error": None}
-        except ImportError:
-            pass
+        if importlib.util.find_spec("whisper") is not None:
+            try:
+                importlib.import_module("whisper")
+                self._engine_type = "openai-whisper"
+                self._is_available = True
+                return {"available": True, "engine": self._engine_type, "error": None}
+            except Exception as e:
+                logger.debug(f"openai-whisper found but import failed: {e}")
 
         self._is_available = False
         self._engine_type = "none"
@@ -60,7 +64,8 @@ class SpeechService:
 
         try:
             if self._engine_type == "faster-whisper":
-                from faster_whisper import WhisperModel
+                faster_mod = importlib.import_module("faster_whisper")
+                WhisperModel = getattr(faster_mod, "WhisperModel")
                 logger.info(f"Loading faster-whisper model '{settings.WHISPER_MODEL_SIZE}' on {settings.WHISPER_DEVICE}...")
                 self._model = WhisperModel(
                     settings.WHISPER_MODEL_SIZE,
@@ -68,9 +73,9 @@ class SpeechService:
                     compute_type=settings.WHISPER_COMPUTE_TYPE
                 )
             elif self._engine_type == "openai-whisper":
-                import whisper
+                whisper_mod = importlib.import_module("whisper")
                 logger.info(f"Loading openai-whisper model '{settings.WHISPER_MODEL_SIZE}' on {settings.WHISPER_DEVICE}...")
-                self._model = whisper.load_model(settings.WHISPER_MODEL_SIZE, device=settings.WHISPER_DEVICE)
+                self._model = whisper_mod.load_model(settings.WHISPER_MODEL_SIZE, device=settings.WHISPER_DEVICE)
             return self._model
         except Exception as e:
             logger.warning(f"Failed to load Whisper model: {e}")
