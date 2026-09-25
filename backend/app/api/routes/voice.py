@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database.session import get_db
 from app.ai.conversation_service import conversation_service, ConversationContext
 from app.ai.speech_service import speech_service
