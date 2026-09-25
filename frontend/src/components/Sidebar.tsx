@@ -118,6 +118,11 @@ export const Sidebar: React.FC = () => {
         </span>
       </div>
 
+      <NavLink to="/new-ivr" style={linkStyle}>
+        <Sparkles size={18} color="#60a5fa" />
+        <span style={{ color: '#60a5fa', fontWeight: 600 }}>🎙️ Two-Way AI IVR</span>
+      </NavLink>
+
       <NavLink to="/" style={linkStyle}>
         <Radio size={18} color="#4ade80" />
         <span style={{ color: '#4ade80', fontWeight: 600 }}>1913 AI Call Dispatch</span>
@@ -127,6 +132,7 @@ export const Sidebar: React.FC = () => {
         <PhoneCall size={18} color="#38bdf8" />
         <span>Full IVR Simulator</span>
       </NavLink>
+
 
       <NavLink to="/voice-assistant" style={linkStyle}>
         <Sparkles size={18} color="#a855f7" />

@@ -13,7 +13,8 @@ from app.api.routes import (
     assistant,
     voice_register,
     voice,
-    ai
+    ai,
+    new_ivr
 )
 
 api_router = APIRouter()
@@ -32,3 +33,5 @@ api_router.include_router(ivr.router)
 api_router.include_router(assistant.router)
 api_router.include_router(voice_register.router)
 api_router.include_router(voice.router)
+api_router.include_router(new_ivr.router)
+

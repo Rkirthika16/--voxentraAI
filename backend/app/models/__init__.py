@@ -6,6 +6,7 @@ from app.models.complaint_history import ComplaintHistory
 from app.models.assignment import Assignment
 from app.models.notification import Notification
 from app.models.escalation import Escalation, EscalationStatus
+from app.models.ivr import IVRSession, IVRMessage, IVRState
 
 __all__ = [
     "Base",
@@ -20,5 +21,9 @@ __all__ = [
     "Assignment",
     "Notification",
     "Escalation",
-    "EscalationStatus"
+    "EscalationStatus",
+    "IVRSession",
+    "IVRMessage",
+    "IVRState"
 ]
+

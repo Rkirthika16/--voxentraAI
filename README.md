@@ -8,10 +8,16 @@ Citizens can report civic issues naturally in **Tamil**, **English**, or **Tangl
 
 ## 🌟 Key Features
 
-- 🎙️ **Live Two-Way Conversational AI IVR**: Real continuous turn-taking loop with energy-based Voice Activity Detection (VAD), interruption safety, and seamless STT fallback.
+- 🎙️ **Live Two-Way Conversational AI IVR (`/new-ivr` & `/api/v1/new-ivr`)**:
+  - Real hands-free two-way conversational turn taking (AI greeting ➔ AI stops speaking ➔ Citizen speaks first ➔ STT ➔ Language Detection ➔ Contextual Slot Extraction ➔ AI follow-up ➔ Confirmation ➔ Real Complaint Creation with Unique ID ➔ Twilio SMS).
+  - Browser MediaRecorder audio stream processing (WebM/Opus, Ogg, WAV) with automatic 16kHz mono PCM conversion via FFmpeg.
+  - Speech-To-Text via Whisper (faster-whisper / openai-whisper) with clear error handling when offline.
 - 🌐 **True Multilingual Intelligence**: Native dynamic adaptation across Tamil script, English, and Tanglish (*e.g., "Gandhipuram-la thanni varala"*).
-- 🧠 **Context-Aware Dialogue Engine**: Remembers previously gathered slots, asks only for missing information (one question at a time), handles corrections and "I don't know" gracefully.
+- 🧠 **Context-Aware Structured Dialogue Memory**:
+  - Retains Category, Problem, Location, Duration, Scope, Frequency, Severity across all turns.
+  - Asks category-specific questions **one question at a time**, never re-asking already gathered information.
 - 🛡️ **Role-Based Access Control**:
+
   - **Citizen**: Submit complaints, live IVR simulator, track step-by-step progress, view audit history, receive notifications.
   - **Officer**: Manage departmental queues (Water, Electricity, Roads, Sanitation, Drainage, Streetlights, Public Safety), update status with notes, track SLAs.
   - **Admin**: Monitor live municipal analytics, manage departments, manage officers, inspect escalations.

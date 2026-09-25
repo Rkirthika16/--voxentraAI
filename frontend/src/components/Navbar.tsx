@@ -51,6 +51,24 @@ export const Navbar: React.FC = () => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        {/* Live Two-Way AI IVR */}
+        <Link
+          to="/new-ivr"
+          className="btn btn-sm"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(29, 78, 216, 0.35))',
+            border: '1px solid rgba(59, 130, 246, 0.6)',
+            color: '#60a5fa',
+            fontWeight: 700,
+          }}
+        >
+          <Sparkles size={14} className="animate-pulse" />
+          <span>🎙️ Two-Way AI IVR</span>
+        </Link>
+
         {/* Live Inbound Call & AI Dispatcher link */}
         <Link
           to="/voice-assistant"
@@ -65,9 +83,10 @@ export const Navbar: React.FC = () => {
             fontWeight: 700,
           }}
         >
-          <Sparkles size={14} className="animate-pulse" />
-          <span>🎙️ Live Voice AI</span>
+          <Sparkles size={14} />
+          <span>Multilingual Voice</span>
         </Link>
+
 
         <Link
           to="/"
