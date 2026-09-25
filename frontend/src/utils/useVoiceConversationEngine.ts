@@ -143,30 +143,24 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
       sessionIdRef.current = res.session_id;
       if (res.analysis) setAnalysis(res.analysis);
       if (res.detected_language) setDetectedLanguage(res.detected_language);
-      setIsSpeechRecognitionAvailable(res.speech_recognition_available !== false);
+      const welcomeText = res.response_text || '🎙️ Call connected. Microphone is active — please speak your complaint now in Tamil, English, or Tanglish.';
 
-      const welcomeText = res.response_text || res.greeting_text || 'வணக்கம். உங்கள் புகாரைக் கூறவும்.';
-      const welcomeSpoken = res.ai_spoken || res.greeting_spoken || welcomeText;
-      const initialLang = res.language || res.detected_language || 'Tamil';
-
-      const aiMsg: MessageItem = {
-        id: `ai_${Date.now()}`,
+      const initialNotice: MessageItem = {
+        id: `sys_${Date.now()}`,
         sender: 'ai',
         text: welcomeText,
-        language: initialLang,
+        language: 'Auto-Detecting...',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        state: res.conversation_state || 'WAITING_FOR_CITIZEN'
+        state: 'WAITING_FOR_CITIZEN'
       };
-      setMessages([aiMsg]);
+      setMessages([initialNotice]);
 
-      // Enable hands-free mode
+      // Enable hands-free continuous loop
       setIsHandsFreeActive(true);
       isHandsFreeActiveRef.current = true;
 
-      // Play AI welcome speech. When finished, automatic microphone loop triggers!
-      playAiSpeech(welcomeSpoken, initialLang, res.audio_base64, () => {
-        armCitizenMicrophone();
-      });
+      // Citizen speaks FIRST: arm microphone immediately without AI talking first
+      armCitizenMicrophone();
     } catch (err: any) {
       console.error('Session start error:', err);
       setError('Unable to start conversational session. Backend may be offline.');

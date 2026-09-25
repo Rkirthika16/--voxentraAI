@@ -46,16 +46,13 @@ def create_voice_session(req: VoiceSessionStartRequest = VoiceSessionStartReques
     sid = req.session_id or f"VS_{uuid.uuid4().hex[:12]}"
     ctx = conversation_service.get_or_create_context(sid, req.caller_phone)
 
-    welcome_text = "வணக்கம். வாக்ஸென்ட்ரா தமிழ்நாடு அரசு குரல் சேவைக்கு நல்வரவு. உங்கள் புகாரை தமிழ், ஆங்கிலம் அல்லது தங்கிலீஷில் கூறலாம்."
-    welcome_spoken = "வணக்கம். உங்கள் புகாரை தமிழ், ஆங்கிலம் அல்லது தங்கிலீஷில் கூறலாம்."
-
-    welcome_audio_bytes = synthesize_speech(welcome_spoken, "Tamil")
-    welcome_audio_b64 = base64.b64encode(welcome_audio_bytes).decode("utf-8") if welcome_audio_bytes else None
+    welcome_text = "வணக்கம்! VoxentraAI citizen complaint service-ku welcome. Ungaloda complaint-a sollunga."
+    welcome_spoken = ""
 
     return {
         "session_id": sid,
         "transcription": "",
-        "language": "Tamil",
+        "language": "Auto-Detecting...",
         "analysis": {
             "category": "Other",
             "location": "",
@@ -71,7 +68,7 @@ def create_voice_session(req: VoiceSessionStartRequest = VoiceSessionStartReques
         "ai_text": welcome_text,
         "ai_spoken": welcome_spoken,
         "greeting_spoken": welcome_spoken,
-        "audio_base64": welcome_audio_b64,
+        "audio_base64": None,
         "conversation_state": "WAITING_FOR_CITIZEN",
         "state": "WAITING_FOR_USER",
         "should_continue": True,
