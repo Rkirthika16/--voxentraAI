@@ -124,8 +124,9 @@ class NewIVRService:
         normalized_text_str = normalize_text(raw_text)
         cleaned = clean_transcription(raw_text)
 
-        # 2. Language Detection
-        detected_lang, conf = detect_language(raw_text)
+        # 2. Language Detection with Session Stickiness
+        current_lang = ivr_session.language if ivr_session.language not in ["Auto", None] else None
+        detected_lang, conf = detect_language(raw_text, current_session_lang=current_lang)
         ivr_session.language = detected_lang
         ivr_session.language_confidence = float(conf)
 

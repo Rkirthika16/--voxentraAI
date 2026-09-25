@@ -126,8 +126,11 @@ export const TollFreeIVRPage: React.FC = () => {
     }
   };
 
+  // Selected AI Language Preference (Default: Tamil)
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('Tamil');
+
   // Start Call Session
-  const handleStartCall = async () => {
+  const handleStartCall = async (langChoice?: string) => {
     try {
       setErrorMessage(null);
       setIsProcessing(true);
@@ -146,21 +149,21 @@ export const TollFreeIVRPage: React.FC = () => {
         citizen_name: null,
       });
 
-      const data = await tollfreeApi.createSession(callerPhone, tollFreeNumber);
+      const chosenLang = langChoice || selectedLanguage || 'Tamil';
+      const data = await tollfreeApi.createSession(callerPhone, tollFreeNumber, chosenLang);
       setSessionId(data.session_id);
       setIvrState(data.state || 'WAITING_FOR_CITIZEN');
-      setDetectedLanguage(data.language || 'Auto');
+      setDetectedLanguage(data.language || chosenLang);
       setCallActive(true);
 
       const systemBannerMsg: TollFreeMessage = {
         id: Date.now(),
         role: 'system',
-        content: '📞 Call Connected. Citizen speaks first — please describe your complaint in Tamil, English, or Tanglish.',
-        language: 'Auto',
+        content: `📞 Call Connected. Language: ${chosenLang}. Citizen speaks first — please describe your complaint in Tamil, Tanglish, or English.`,
+        language: chosenLang,
         created_at: new Date().toISOString(),
       };
       setMessages([systemBannerMsg]);
-      // Do NOT play AI voice first — line is open for the citizen to speak first!
     } catch (err: any) {
       console.error('Failed to start tollfree call:', err);
       setErrorMessage(err.response?.data?.detail?.message || err.message || 'Failed to connect toll-free call.');
@@ -300,6 +303,44 @@ export const TollFreeIVRPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Language Preference Control Bar */}
+      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.85rem', padding: '0.75rem 1.25rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '1.1rem' }}>🗣️</span>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>Select AI Voice Language:</span>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+          {[
+            { id: 'Tamil', label: '🇮🇳 தமிழ் (Tamil - Default)' },
+            { id: 'Tanglish', label: '🗣️ Tanglish' },
+            { id: 'English', label: '🌐 English' },
+            { id: 'Auto', label: '✨ Auto Detect' },
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                setSelectedLanguage(item.id);
+                setDetectedLanguage(item.id);
+              }}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '0.55rem',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                border: selectedLanguage === item.id ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                background: selectedLanguage === item.id ? '#eff6ff' : '#f8fafc',
+                color: selectedLanguage === item.id ? '#1d4ed8' : '#475569',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* 1. Header & Call Screen Dialer */}
       <CallScreen
         isCallActive={callActive}

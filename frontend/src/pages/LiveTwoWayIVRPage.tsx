@@ -151,8 +151,11 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     }
   };
 
+  // Language Selection Preference (Default: Tamil)
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('Tamil');
+
   // Start Call Flow
-  const handleStartCall = async () => {
+  const handleStartCall = async (langChoice?: string) => {
     try {
       setErrorCode(null);
       setErrorMessage(null);
@@ -161,18 +164,19 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       setLiveTranscript('');
       transcriptRef.current = '';
 
-      const res = await newIvrApi.createSession('+919843098765', 'Auto');
+      const chosenLang = langChoice || selectedLanguage || 'Tamil';
+      const res = await newIvrApi.createSession('+919843098765', chosenLang);
       setSessionId(res.session_id);
       setCallActive(true);
       setIvrState('WAITING_FOR_CITIZEN');
-      setDetectedLanguage(res.language || 'Auto');
+      setDetectedLanguage(res.language || chosenLang);
       setMemory(res.structured_memory);
 
       const systemMsg: NewIVRMessage = {
         id: 1,
         role: 'system',
-        content: '📞 Call Connected. Citizen speaks first — please describe your civic issue in Tamil, English, or Tanglish.',
-        language: 'Auto',
+        content: `📞 Call Connected. Language: ${chosenLang}. Citizen speaks first — please describe your civic issue in Tamil, Tanglish, or English.`,
+        language: chosenLang,
         created_at: new Date().toISOString(),
       };
       setMessages([systemMsg]);
@@ -180,7 +184,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
 
       // Microphone activates for citizen to speak
       setTimeout(() => {
-        startRecording();
+        startRecording(chosenLang);
       }, 300);
     } catch (err: any) {
       setIsProcessing(false);
@@ -207,7 +211,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
   };
 
   // Microphone Recording with Web Speech Recognition
-  const startRecording = async () => {
+  const startRecording = async (overrideLang?: string) => {
     if (isRecording || isAiSpeaking) return;
 
     try {
@@ -216,6 +220,8 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       transcriptRef.current = '';
       setLiveTranscript('');
 
+      const activeLang = overrideLang || detectedLanguage || selectedLanguage || 'Tamil';
+
       // Initialize Web Speech Recognition
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
@@ -223,7 +229,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
           const recognition = new SpeechRecognition();
           recognition.continuous = true;
           recognition.interimResults = true;
-          recognition.lang = detectedLanguage === 'Tamil' ? 'ta-IN' : detectedLanguage === 'English' ? 'en-IN' : 'ta-IN';
+          recognition.lang = activeLang === 'English' ? 'en-IN' : 'ta-IN';
           recognition.onresult = (e: any) => {
             let current = '';
             for (let i = 0; i < e.results.length; i++) {
@@ -465,6 +471,44 @@ export const LiveTwoWayIVRPage: React.FC = () => {
         </div>
       )}
 
+      {/* Language Preference Control Bar */}
+      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.85rem', padding: '0.75rem 1.25rem', marginBottom: '1.25rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Languages size={18} style={{ color: '#2563eb' }} />
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>Select AI Voice Language:</span>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+          {[
+            { id: 'Tamil', label: '🇮🇳 தமிழ் (Tamil - Recommended)', sub: 'Primary Tamil Nadu Helpline Voice' },
+            { id: 'Tanglish', label: '🗣️ Tanglish (Tamil + English)', sub: 'Tamil in English text' },
+            { id: 'English', label: '🌐 English', sub: 'Standard English' },
+            { id: 'Auto', label: '✨ Auto Detect', sub: 'Adaptive' },
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                setSelectedLanguage(item.id);
+                setDetectedLanguage(item.id);
+              }}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '0.55rem',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                border: selectedLanguage === item.id ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                background: selectedLanguage === item.id ? '#eff6ff' : '#f8fafc',
+                color: selectedLanguage === item.id ? '#1d4ed8' : '#475569',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Main Grid: Call Console & Memory Card */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '1.5rem' }}>
         {/* Left Column: Live Call Interface */}
@@ -587,7 +631,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
           <div style={{ padding: '1rem', background: '#ffffff', borderTop: '1px solid #e2e8f0' }}>
             {!callActive ? (
               <button
-                onClick={handleStartCall}
+                onClick={() => handleStartCall()}
                 style={{
                   width: '100%',
                   padding: '0.85rem',
@@ -643,7 +687,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
                     </button>
                   ) : (
                     <button
-                      onClick={startRecording}
+                      onClick={() => startRecording()}
                       disabled={isAiSpeaking || isProcessing}
                       style={{
                         flex: 1,

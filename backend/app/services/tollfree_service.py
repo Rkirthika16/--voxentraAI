@@ -138,8 +138,9 @@ class TollFreeService:
         cleaned = clean_transcription(raw_text)
         normalized_str = normalize_text(raw_text)
 
-        # 2. Dynamic Language Detection & Adaptation
-        detected_lang, conf = detect_language(raw_text)
+        # 2. Dynamic Language Detection with Session Stickiness
+        current_lang = session.language if session.language not in ["Auto", None] else None
+        detected_lang, conf = detect_language(raw_text, current_session_lang=current_lang)
         session.language = detected_lang
         session.language_confidence = float(conf)
 

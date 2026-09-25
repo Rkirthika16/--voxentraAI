@@ -63,10 +63,11 @@ export interface TollFreeTurnResponse {
 }
 
 export const tollfreeApi = {
-  createSession: async (callerPhone = '+919843098765', tollFreeNumber = '1800-425-8693') => {
+  createSession: async (callerPhone = '+919843098765', tollFreeNumber = '1800-425-8693', languagePreference = 'Tamil') => {
     const res = await apiClient.post('/tollfree/session', {
       caller_phone: callerPhone,
       toll_free_number: tollFreeNumber,
+      language_preference: languagePreference,
     });
     return res.data;
   },

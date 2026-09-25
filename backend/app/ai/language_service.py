@@ -65,14 +65,14 @@ def detect_language(text: str, current_session_lang: Optional[str] = None) -> Tu
 
     - Dynamically adapts across turns
     - Detects Tanglish markers, root verbs, and particles (-ah, -la, varala, work aagala)
-    - Preserves established conversational language for short slot replies (e.g. 'Two days', 'RS Puram')
+    - Preserves established conversational language for short slot replies (e.g. 'Two days', 'RS Puram', 'Aama')
+    - If session language is Tamil or Tanglish, sticky preservation prevents sudden switching to English
     Returns: (language_name, confidence)
     """
     if not text or not text.strip():
-        return current_session_lang or "English", 0.0
+        return current_session_lang or "Tamil", 0.0
 
     cleaned = text.strip()
-    total_len = len(cleaned)
     tamil_chars = len(re.findall(r'[\u0B80-\u0BFF]', cleaned))
 
     # 1. Tamil Script Detection
@@ -81,13 +81,21 @@ def detect_language(text: str, current_session_lang: Optional[str] = None) -> Tu
 
     lowered = cleaned.lower()
 
-    # 2. Strong Tanglish Particles & Suffix Patterns
+    # 2. Check for explicit switch to English request
+    if any(phrase in lowered for phrase in ["speak in english", "switch to english", "change to english", "in english please", "speak english"]):
+        return "English", 0.99
+
+    # 3. Check for explicit switch to Tamil / Tanglish request
+    if any(phrase in lowered for phrase in ["speak in tamil", "tamil la pesunga", "thamizh", "தமிழ்", "தமிழில் பேசுங்கள்", "tamil"]):
+        return "Tamil", 0.99
+
+    # 4. Strong Tanglish Particles & Suffix Patterns
     has_tanglish_particles = bool(re.search(
-        r'(?:-\s*ah\b|-\s*aa\b|-\s*la\b|-\s*le\b|-\s*kitta\b|-\s*pakkam\b|-\s*nu\b|-\s*dhaan\b|-\s*thaan\b|-\s*lendhu\b|\b(?:full-ah|fulla|fullah|varala|varla|thanni|thani|aagala|aagudhu|aachu|aayiduchu|eriyala|adaichu|seri|aama|ama|aamam|illai|illa|rendu|moonu|naalu|naala|enga|unga|veetla|pannunga|seiyunga|solren|sollunga|theriyala|paravala|kitta|pakkam|lendhu)\b)',
+        r'(?:-\s*ah\b|-\s*aa\b|-\s*la\b|-\s*le\b|-\s*kitta\b|-\s*pakkam\b|-\s*nu\b|-\s*dhaan\b|-\s*thaan\b|-\s*lendhu\b|\b(?:full-ah|fulla|fullah|varala|varla|thanni|thani|aagala|aagudhu|aachu|aayiduchu|eriyala|adaichu|seri|sari|aama|ama|aamam|illai|illa|rendu|moonu|naalu|naala|enga|unga|veetla|pannunga|seiyunga|solren|sollunga|theriyala|paravala|kitta|pakkam|lendhu|irukku|iruku|irukka|kudineer|kuppai|saakadai|velicham|iruttu|romba|mosam|pallam|theru|salai)\b)',
         lowered
     ))
 
-    # 3. Match word-level Tanglish keywords
+    # 5. Match word-level Tanglish keywords
     words = [w for w in re.findall(r'[a-zA-Z0-9\-]+', lowered)]
     tanglish_matches = 0
     for w in words:
@@ -96,26 +104,26 @@ def detect_language(text: str, current_session_lang: Optional[str] = None) -> Tu
             tanglish_matches += 1
 
     if has_tanglish_particles or tanglish_matches > 0:
-        return "Tanglish", 0.98
+        return "Tanglish" if current_session_lang != "Tamil" else "Tamil", 0.98
 
-    # 4. Contextual Session Stickiness for Short Responses
-    # If the user replies with a short phrase like "Two days", "RS Puram", "Yes", "No", "100 Feet Road"
-    # in an ongoing Tanglish or Tamil conversation, preserve the established conversational language!
-    if current_session_lang and current_session_lang in ["Tanglish", "Tamil"]:
-        if len(words) <= 4:
-            # Short slot reply: keep conversation in citizen's chosen language
-            return current_session_lang, 0.90
+    # 6. Contextual Session Stickiness for Short Responses and Established Session Language
+    if current_session_lang and current_session_lang in ["Tamil", "Tanglish"]:
+        # If user is in an ongoing Tamil or Tanglish conversation, short answers or mixed civic terms (e.g. "2 days", "current cut", "water supply", "RS Puram", "yes", "no") STAY in that session language!
+        if len(words) <= 6 or tanglish_matches > 0:
+            return current_session_lang, 0.92
 
-    # 5. English Grammar & Indicators
-    english_matches = sum(1 for w in words if w in ENGLISH_INDICATORS)
-    if english_matches > 0 or len(words) >= 3:
+    # 7. English Grammar & Indicators
+    english_matches = sum(1 for w in words if w in ENGLISH_INDICATORS or w in ["two", "days", "day", "one", "three", "four", "five", "six", "seven"])
+    if english_matches >= 1 and not current_session_lang and not has_tanglish_particles and tanglish_matches == 0:
+        return "English", 0.95
+    if english_matches >= 2 and len(words) >= 3 and current_session_lang not in ["Tamil", "Tanglish"]:
         return "English", 0.95
 
     # Default fallback
-    if current_session_lang:
+    if current_session_lang and current_session_lang not in ["Auto", None]:
         return current_session_lang, 0.85
 
-    return "English", 0.85
+    return "Tamil", 0.85
 
 
 class LanguageService:
