@@ -1,10 +1,10 @@
-from app.ai import audio_prediction_service
 import os
 import uuid
+import base64
 import logging
 import aiofiles
 from typing import Dict, Any, Optional, List
-from fastapi import APIRouter, Request, Depends, UploadFile, File, Form, Query, Response
+from fastapi import APIRouter, Request, Depends, UploadFile, File, Form, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -28,6 +28,9 @@ from app.schemas.ivr import (
 from app.services.complaint_service import complaint_service
 from app.ai.provider import ai_provider
 from app.ai.speech_service import speech_service
+from app.ai.conversation_service import conversation_service, ConversationContext
+from app.ai.tts_service import synthesize_speech
+from app.ai import audio_prediction_service
 from app.integrations.telephony.exotel_adapter import exotel_adapter
 from app.integrations.telephony.twilio_adapter import twilio_adapter
 from app.utils.validators import validate_audio_file
@@ -43,6 +46,273 @@ def dispatch_sms_notification(to_phone: str, message: str) -> bool:
     if settings.TELEPHONY_PROVIDER.lower() == "twilio":
         return twilio_adapter.send_sms(to_phone, message)
     return exotel_adapter.send_sms(to_phone, message)
+
+
+# -------------------------------------------------------------
+# Unified Two-Way Conversational Voice IVR Session Endpoints
+# -------------------------------------------------------------
+
+@router.post("/ivr/session")
+@router.post("/ivr/session/start")
+def create_ivr_conversational_session(
+    session_id: Optional[str] = None,
+    caller_phone: Optional[str] = "+919843098765"
+):
+    """
+    Initiates a new two-way conversational voice session for the IVR Toll-Free Helpline.
+    The citizen hears a welcoming prompt and can speak first in Tamil, English, or Tanglish.
+    """
+    sid = session_id or f"IVR_{uuid.uuid4().hex[:12]}"
+    ctx = conversation_service.get_or_create_context(sid, caller_phone)
+
+    welcome_text = "வணக்கம். வாக்ஸென்ட்ரா தமிழ்நாடு அரசு குறைதீர்ப்பு குரல் சேவைக்கு நல்வரவு. உங்கள் புகாரை தமிழ், ஆங்கிலம் அல்லது தங்கிலீஷில் கூறலாம்."
+    welcome_spoken = "வணக்கம். உங்கள் புகாரை தமிழ், ஆங்கிலம் அல்லது தங்கிலீஷில் தெளிவாக கூறவும்."
+
+    welcome_audio_bytes = synthesize_speech(welcome_spoken, "Tamil")
+    welcome_audio_b64 = base64.b64encode(welcome_audio_bytes).decode("utf-8") if welcome_audio_bytes else None
+
+    return {
+        "session_id": sid,
+        "transcription": "",
+        "language": "Tamil",
+        "analysis": {
+            "category": "Other",
+            "location": "",
+            "problem": "",
+            "duration": "",
+            "affected_scope": "",
+            "severity": "normal",
+            "priority": "MEDIUM",
+            "department": "Municipal Administration"
+        },
+        "response_text": welcome_text,
+        "ai_spoken": welcome_spoken,
+        "audio_base64": welcome_audio_b64,
+        "conversation_state": "WAITING_FOR_CITIZEN",
+        "state": "WAITING_FOR_USER",
+        "should_continue": True,
+        "complaint_id": None,
+        "complaint_number": None,
+        "context": ctx.to_dict(),
+        "speech_recognition_available": speech_service.check_availability()["available"]
+    }
+
+
+@router.post("/ivr/session/{session_id}/audio")
+async def process_ivr_session_audio(
+    session_id: str,
+    file: UploadFile = File(...),
+    caller_phone: Optional[str] = Form("+919843098765"),
+    db: Session = Depends(get_db)
+):
+    """
+    Receives caller's microphone voice recording, runs Whisper transcription,
+    processes conversational logic, and returns structured analysis and synthesized response voice.
+    """
+    temp_dir = os.path.join(settings.UPLOAD_DIR, "temp_ivr")
+    os.makedirs(temp_dir, exist_ok=True)
+    temp_path = os.path.join(temp_dir, f"{session_id}_{uuid.uuid4().hex[:6]}.wav")
+
+    try:
+        async with aiofiles.open(temp_path, "wb") as f:
+            content = await file.read()
+            await f.write(content)
+
+        # 1. Transcribe speech honestly with Whisper
+        stt_result = speech_service.transcribe(temp_path)
+        transcription = (stt_result.get("transcription") or "").strip()
+
+        if not transcription:
+            if not stt_result.get("success") and stt_result.get("status") in ["speech_engine_not_configured", "engine_unavailable"]:
+                ctx = conversation_service.get_or_create_context(session_id, caller_phone)
+                return {
+                    "session_id": session_id,
+                    "transcription": "",
+                    "language": ctx.language,
+                    "analysis": {
+                        "category": ctx.category or "Other",
+                        "location": ctx.location or "",
+                        "problem": ctx.problem or "",
+                        "duration": ctx.duration or "",
+                        "affected_scope": ctx.affected_scope or "",
+                        "severity": ctx.severity or "normal",
+                        "priority": ctx.priority or "MEDIUM",
+                        "department": ctx.department or "Municipal Administration"
+                    },
+                    "response_text": "Speech recognition is not configured. Please type your complaint.",
+                    "ai_spoken": "Speech recognition is not configured. Please type your complaint.",
+                    "audio_base64": None,
+                    "conversation_state": "WAITING_FOR_CITIZEN",
+                    "state": "WAITING_FOR_USER",
+                    "should_continue": True,
+                    "speech_recognition_available": False,
+                    "error": "Speech recognition is not configured."
+                }
+
+            # Unclear speech response
+            unclear_txt, unclear_spk = conversation_service.get_unclear_response("Tamil")
+            unclear_audio = synthesize_speech(unclear_spk, "Tamil")
+            ctx = conversation_service.get_or_create_context(session_id, caller_phone)
+            return {
+                "session_id": session_id,
+                "transcription": "",
+                "language": ctx.language,
+                "analysis": {
+                    "category": ctx.category or "Other",
+                    "location": ctx.location or "",
+                    "problem": ctx.problem or "",
+                    "duration": ctx.duration or "",
+                    "affected_scope": ctx.affected_scope or "",
+                    "severity": ctx.severity or "normal",
+                    "priority": ctx.priority or "MEDIUM",
+                    "department": ctx.department or "Municipal Administration"
+                },
+                "response_text": unclear_txt,
+                "ai_spoken": unclear_spk,
+                "audio_base64": base64.b64encode(unclear_audio).decode("utf-8") if unclear_audio else None,
+                "conversation_state": "WAITING_FOR_CITIZEN",
+                "state": "WAITING_FOR_USER",
+                "should_continue": True,
+                "speech_recognition_available": True,
+                "error": None
+            }
+
+        # 2. Process multi-turn conversational dialogue turn
+        turn_res = conversation_service.process_turn(session_id, transcription, db=db, caller_phone=caller_phone)
+
+        # 3. Synthesize natural TTS voice audio
+        spoken_text = turn_res.get("ai_spoken") or turn_res.get("response_text") or ""
+        tts_lang = turn_res.get("language") or "Tamil"
+        audio_bytes = synthesize_speech(spoken_text, tts_lang)
+        turn_res["audio_base64"] = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
+        return turn_res
+
+    finally:
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
+
+
+@router.post("/ivr/session/{session_id}/message")
+def process_ivr_session_message(
+    session_id: str,
+    message: str = Form(None),
+    caller_phone: Optional[str] = Form("+919843098765"),
+    db: Session = Depends(get_db)
+):
+    """
+    Text-based turn fallback entering the exact same conversation engine.
+    """
+    raw_message = (message or "").strip()
+    turn_res = conversation_service.process_turn(
+        session_id=session_id,
+        user_speech=raw_message,
+        db=db,
+        caller_phone=caller_phone
+    )
+
+    spoken_text = turn_res.get("ai_spoken") or turn_res.get("response_text") or ""
+    tts_lang = turn_res.get("language") or "Tamil"
+    audio_bytes = synthesize_speech(spoken_text, tts_lang)
+    turn_res["audio_base64"] = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
+    return turn_res
+
+
+@router.get("/ivr/session/{session_id}")
+def get_ivr_session_state(session_id: str):
+    """
+    Returns current conversation memory, extracted slots, and state.
+    """
+    ctx = conversation_service.get_or_create_context(session_id)
+    return {
+        "session_id": session_id,
+        "conversation_state": "CONFIRMED" if ctx.conversation_complete else ("WAITING_FOR_CITIZEN"),
+        "state": "CONFIRMING" if ctx.confirmation_required else ("COMPLETED" if ctx.conversation_complete else "WAITING_FOR_USER"),
+        "analysis": {
+            "category": ctx.category or "Other",
+            "location": ctx.location or "",
+            "problem": ctx.problem or "",
+            "duration": ctx.duration or "",
+            "affected_scope": ctx.affected_scope or "",
+            "severity": ctx.severity or "normal",
+            "priority": ctx.priority or "MEDIUM",
+            "department": ctx.department or "Municipal Administration"
+        },
+        "context": ctx.to_dict(),
+        "should_continue": not ctx.conversation_complete,
+        "confirmation_required": ctx.confirmation_required,
+        "conversation_complete": ctx.conversation_complete,
+        "complaint_number": ctx.complaint_number,
+        "complaint_id": ctx.complaint_id
+    }
+
+
+@router.post("/ivr/session/{session_id}/confirm")
+def confirm_ivr_session(
+    session_id: str,
+    caller_phone: Optional[str] = Form("+919843098765"),
+    db: Session = Depends(get_db)
+):
+    """
+    Explicitly confirms the gathered complaint and registers the official database record.
+    """
+    ctx = conversation_service.get_or_create_context(session_id, caller_phone)
+    ctx.conversation_complete = True
+    created_comp = conversation_service._create_database_complaint(ctx, db)
+    ctx.complaint_id = created_comp.id
+    ctx.complaint_number = created_comp.complaint_number
+
+    if ctx.language == "Tamil":
+        ai_text = f"உங்கள் புகார் எண் {created_comp.complaint_number} என வெற்றிகரமாக பதிவு செய்யப்பட்டது. நன்றி!"
+    elif ctx.language == "Tanglish":
+        ai_text = f"Seri. Unga complaint #{created_comp.complaint_number} successfully register aaiduchu."
+    else:
+        ai_text = f"Thank you. Your complaint #{created_comp.complaint_number} has been registered successfully."
+
+    audio_bytes = synthesize_speech(ai_text, ctx.language)
+    audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
+
+    return {
+        "session_id": session_id,
+        "conversation_state": "CONFIRMED",
+        "state": "COMPLETED",
+        "should_continue": False,
+        "complaint_number": created_comp.complaint_number,
+        "complaint_id": created_comp.id,
+        "department": ctx.department,
+        "response_text": ai_text,
+        "ai_spoken": ai_text,
+        "audio_base64": audio_b64,
+        "analysis": {
+            "category": ctx.category or "Other",
+            "location": ctx.location or "",
+            "problem": ctx.problem or "",
+            "duration": ctx.duration or "",
+            "affected_scope": ctx.affected_scope or "",
+            "severity": ctx.severity or "normal",
+            "priority": ctx.priority or "MEDIUM",
+            "department": ctx.department or "Municipal Administration"
+        },
+        "context": ctx.to_dict(),
+        "conversation_complete": True
+    }
+
+
+@router.post("/ivr/session/{session_id}/cancel")
+def cancel_ivr_session(session_id: str):
+    """
+    Cancels active conversational voice session and clears memory.
+    """
+    conversation_service.reset_session(session_id)
+    return {
+        "session_id": session_id,
+        "conversation_state": "CANCELLED",
+        "state": "CANCELLED",
+        "should_continue": False,
+        "message": "IVR conversation session cancelled successfully."
+    }
 
 
 @router.post("/ivr/initiate-call", response_model=IVRCallInitiateResponse)

@@ -105,4 +105,77 @@ export const ivrApi = {
     });
     return res.data;
   },
+
+  /**
+   * Starts a true two-way conversational voice session with automatic turn taking.
+   */
+  startConversationalSession: async (callerPhone = '+919843098765'): Promise<any> => {
+    const res = await apiClient.post('/ivr/session', {
+      caller_phone: callerPhone,
+    });
+    return res.data;
+  },
+
+  /**
+   * Sends caller microphone audio turn to unified conversational engine.
+   */
+  sendAudioTurn: async (sessionId: string, audioBlob: Blob, callerPhone = '+919843098765'): Promise<any> => {
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'turn_audio.wav');
+    formData.append('caller_phone', callerPhone);
+
+    const res = await apiClient.post(`/ivr/session/${sessionId}/audio`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  },
+
+  /**
+   * Sends text fallback turn to unified conversational engine.
+   */
+  sendMessageTurn: async (sessionId: string, message: string, callerPhone = '+919843098765'): Promise<any> => {
+    const formData = new FormData();
+    formData.append('message', message);
+    formData.append('caller_phone', callerPhone);
+
+    const res = await apiClient.post(`/ivr/session/${sessionId}/message`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  },
+
+  /**
+   * Gets active session state and memory from backend.
+   */
+  getSessionState: async (sessionId: string): Promise<any> => {
+    const res = await apiClient.get(`/ivr/session/${sessionId}`);
+    return res.data;
+  },
+
+  /**
+   * Confirms session and generates official complaint record in database.
+   */
+  confirmSession: async (sessionId: string, callerPhone = '+919843098765'): Promise<any> => {
+    const formData = new FormData();
+    formData.append('caller_phone', callerPhone);
+
+    const res = await apiClient.post(`/ivr/session/${sessionId}/confirm`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  },
+
+  /**
+   * Cancels active conversation session.
+   */
+  cancelSession: async (sessionId: string): Promise<any> => {
+    const res = await apiClient.post(`/ivr/session/${sessionId}/cancel`);
+    return res.data;
+  },
 };

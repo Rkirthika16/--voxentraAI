@@ -47,21 +47,38 @@ def create_voice_session(req: VoiceSessionStartRequest = VoiceSessionStartReques
     ctx = conversation_service.get_or_create_context(sid, req.caller_phone)
 
     welcome_text = "வணக்கம். வாக்ஸென்ட்ரா தமிழ்நாடு அரசு குரல் சேவைக்கு நல்வரவு. உங்கள் புகாரை தமிழ், ஆங்கிலம் அல்லது தங்கிலீஷில் கூறலாம்."
-    welcome_spoken = "வணக்கம். வாக்ஸென்ட்ரா தமிழ்நாடு அரசு குரல் சேவைக்கு நல்வரவு. உங்கள் புகாரை தமிழ், ஆங்கிலம் அல்லது தங்கிலீஷில் கூறலாம்."
+    welcome_spoken = "வணக்கம். உங்கள் புகாரை தமிழ், ஆங்கிலம் அல்லது தங்கிலீஷில் கூறலாம்."
 
-    # Pre-synthesize initial welcoming TTS audio
     welcome_audio_bytes = synthesize_speech(welcome_spoken, "Tamil")
     welcome_audio_b64 = base64.b64encode(welcome_audio_bytes).decode("utf-8") if welcome_audio_bytes else None
 
     return {
         "session_id": sid,
-        "state": "WAITING_FOR_USER",
+        "transcription": "",
+        "language": "Tamil",
+        "analysis": {
+            "category": "Other",
+            "location": "",
+            "problem": "",
+            "duration": "",
+            "affected_scope": "",
+            "severity": "normal",
+            "priority": "MEDIUM",
+            "department": "Municipal Administration"
+        },
+        "response_text": welcome_text,
         "greeting_text": welcome_text,
+        "ai_text": welcome_text,
+        "ai_spoken": welcome_spoken,
         "greeting_spoken": welcome_spoken,
         "audio_base64": welcome_audio_b64,
-        "detected_language": "Auto-Detecting...",
+        "conversation_state": "WAITING_FOR_CITIZEN",
+        "state": "WAITING_FOR_USER",
+        "should_continue": True,
+        "complaint_id": None,
+        "complaint_number": None,
         "context": ctx.to_dict(),
-        "speech_engine_available": speech_service.check_availability()["available"]
+        "speech_recognition_available": speech_service.check_availability()["available"]
     }
 
 
@@ -76,7 +93,7 @@ async def process_voice_audio_turn(
     Receives caller's voice audio, performs Speech-to-Text with Whisper,
     runs the conversational understanding engine, and synthesizes natural audio response.
     """
-    temp_dir = os.path.join(os.path.dirname(__file__), "..", "..", "temp_voice")
+    temp_dir = os.path.join(settings.UPLOAD_DIR, "temp_voice")
     os.makedirs(temp_dir, exist_ok=True)
     temp_path = os.path.join(temp_dir, f"{session_id}_{uuid.uuid4().hex[:6]}.wav")
 
@@ -90,48 +107,70 @@ async def process_voice_audio_turn(
         transcription = (stt_result.get("transcription") or "").strip()
 
         if not transcription:
-            if not stt_result.get("success") and stt_result.get("status") == "engine_unavailable":
+            if not stt_result.get("success") and stt_result.get("status") in ["speech_engine_not_configured", "engine_unavailable"]:
+                ctx = conversation_service.get_or_create_context(session_id, caller_phone)
                 return {
                     "session_id": session_id,
-                    "state": "ERROR",
-                    "error": "Voice recognition is not configured. Please type your complaint.",
                     "transcription": "",
+                    "language": ctx.language,
+                    "analysis": {
+                        "category": ctx.category or "Other",
+                        "location": ctx.location or "",
+                        "problem": ctx.problem or "",
+                        "duration": ctx.duration or "",
+                        "affected_scope": ctx.affected_scope or "",
+                        "severity": ctx.severity or "normal",
+                        "priority": ctx.priority or "MEDIUM",
+                        "department": ctx.department or "Municipal Administration"
+                    },
+                    "response_text": "Speech recognition is not configured. Please type your complaint.",
+                    "ai_text": "Speech recognition is not configured. Please type your complaint.",
+                    "ai_spoken": "Speech recognition is not configured. Please type your complaint.",
+                    "audio_base64": None,
+                    "conversation_state": "WAITING_FOR_CITIZEN",
+                    "state": "WAITING_FOR_USER",
+                    "should_continue": True,
                     "speech_recognition_available": False,
-                    "ai_text": "Voice recognition is currently not configured on this server. Please type your complaint.",
-                    "ai_spoken": "",
-                    "audio_base64": None
+                    "error": "Speech recognition is not configured."
                 }
 
             # Unclear speech
             unclear_txt, unclear_spk = conversation_service.get_unclear_response("Tamil")
             unclear_audio = synthesize_speech(unclear_spk, "Tamil")
+            ctx = conversation_service.get_or_create_context(session_id, caller_phone)
             return {
                 "session_id": session_id,
-                "state": "WAITING_FOR_USER",
                 "transcription": "",
-                "original_transcription": "",
-                "normalized_transcription": "",
-                "detected_language": "Unknown",
+                "language": ctx.language,
+                "analysis": {
+                    "category": ctx.category or "Other",
+                    "location": ctx.location or "",
+                    "problem": ctx.problem or "",
+                    "duration": ctx.duration or "",
+                    "affected_scope": ctx.affected_scope or "",
+                    "severity": ctx.severity or "normal",
+                    "priority": ctx.priority or "MEDIUM",
+                    "department": ctx.department or "Municipal Administration"
+                },
+                "response_text": unclear_txt,
                 "ai_text": unclear_txt,
                 "ai_spoken": unclear_spk,
                 "audio_base64": base64.b64encode(unclear_audio).decode("utf-8") if unclear_audio else None,
-                "context": conversation_service.get_or_create_context(session_id).to_dict(),
-                "confirmation_required": False,
-                "conversation_complete": False
+                "conversation_state": "WAITING_FOR_CITIZEN",
+                "state": "WAITING_FOR_USER",
+                "should_continue": True,
+                "speech_recognition_available": True,
+                "error": None
             }
 
         # 2. Process multi-turn conversational dialogue turn
         turn_res = conversation_service.process_turn(session_id, transcription, db=db, caller_phone=caller_phone)
 
         # 3. Synthesize natural TTS voice audio in detected language
-        spoken_text = turn_res.get("ai_spoken") or turn_res.get("ai_text") or ""
-        tts_lang = turn_res.get("detected_language") or "Tamil"
+        spoken_text = turn_res.get("ai_spoken") or turn_res.get("response_text") or ""
+        tts_lang = turn_res.get("language") or "Tamil"
         audio_bytes = synthesize_speech(spoken_text, tts_lang)
-        audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
-
-        turn_res["audio_base64"] = audio_b64
-        turn_res["transcription"] = transcription
-        turn_res["speech_recognition_available"] = True
+        turn_res["audio_base64"] = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
         return turn_res
 
     finally:
@@ -159,14 +198,10 @@ def process_voice_text_message(
         caller_phone=req.caller_phone
     )
 
-    spoken_text = turn_res.get("ai_spoken") or turn_res.get("ai_text") or ""
-    tts_lang = turn_res.get("detected_language") or "Tamil"
+    spoken_text = turn_res.get("ai_spoken") or turn_res.get("response_text") or ""
+    tts_lang = turn_res.get("language") or "Tamil"
     audio_bytes = synthesize_speech(spoken_text, tts_lang)
-    audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
-
-    turn_res["audio_base64"] = audio_b64
-    turn_res["transcription"] = req.message
-    turn_res["speech_recognition_available"] = True
+    turn_res["audio_base64"] = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
     return turn_res
 
 
@@ -178,8 +213,20 @@ def get_voice_session(session_id: str):
     ctx = conversation_service.get_or_create_context(session_id)
     return {
         "session_id": session_id,
+        "conversation_state": "CONFIRMED" if ctx.conversation_complete else "WAITING_FOR_CITIZEN",
         "state": "CONFIRMING" if ctx.confirmation_required else ("COMPLETED" if ctx.conversation_complete else "WAITING_FOR_USER"),
+        "analysis": {
+            "category": ctx.category or "Other",
+            "location": ctx.location or "",
+            "problem": ctx.problem or "",
+            "duration": ctx.duration or "",
+            "affected_scope": ctx.affected_scope or "",
+            "severity": ctx.severity or "normal",
+            "priority": ctx.priority or "MEDIUM",
+            "department": ctx.department or "Municipal Administration"
+        },
         "context": ctx.to_dict(),
+        "should_continue": not ctx.conversation_complete,
         "confirmation_required": ctx.confirmation_required,
         "conversation_complete": ctx.conversation_complete,
         "complaint_number": ctx.complaint_number,
@@ -207,23 +254,37 @@ def confirm_voice_session(
     ctx.complaint_number = created_comp.complaint_number
 
     if ctx.language == "Tamil":
-        ai_text = f"உங்கள் புகார் எண் {created_comp.complaint_number} என வெற்றிகரமாக பதிவு செய்யப்பட்டுள்ளது. நன்றி!"
+        ai_text = f"உங்கள் புகார் எண் {created_comp.complaint_number} என வெற்றிகரமாக பதிவு செய்யப்பட்டது. நன்றி!"
     elif ctx.language == "Tanglish":
-        ai_text = f"Unga complaint #{created_comp.complaint_number} successfully register aaiduchu. Thanks!"
+        ai_text = f"Seri. Unga complaint #{created_comp.complaint_number} successfully register aaiduchu."
     else:
-        ai_text = f"Your complaint #{created_comp.complaint_number} has been registered successfully. Thank you!"
+        ai_text = f"Thank you. Your complaint #{created_comp.complaint_number} has been registered successfully."
 
     audio_bytes = synthesize_speech(ai_text, ctx.language)
     audio_b64 = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
 
     return {
         "session_id": session_id,
+        "conversation_state": "CONFIRMED",
         "state": "COMPLETED",
+        "should_continue": False,
         "complaint_number": created_comp.complaint_number,
         "complaint_id": created_comp.id,
         "department": ctx.department,
+        "response_text": ai_text,
         "ai_text": ai_text,
+        "ai_spoken": ai_text,
         "audio_base64": audio_b64,
+        "analysis": {
+            "category": ctx.category or "Other",
+            "location": ctx.location or "",
+            "problem": ctx.problem or "",
+            "duration": ctx.duration or "",
+            "affected_scope": ctx.affected_scope or "",
+            "severity": ctx.severity or "normal",
+            "priority": ctx.priority or "MEDIUM",
+            "department": ctx.department or "Municipal Administration"
+        },
         "context": ctx.to_dict(),
         "conversation_complete": True
     }
@@ -237,6 +298,8 @@ def cancel_voice_session(session_id: str):
     conversation_service.reset_session(session_id)
     return {
         "session_id": session_id,
+        "conversation_state": "CANCELLED",
         "state": "CANCELLED",
+        "should_continue": False,
         "message": "Voice session cancelled successfully."
     }

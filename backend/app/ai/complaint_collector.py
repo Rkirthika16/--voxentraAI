@@ -596,13 +596,24 @@ class ComplaintCollector:
         cleaned = re.sub(r'[\.\?\!\,\-\_\s]+', '', lowered)
         if not cleaned:
             return True
+
+        # Valid conversational and affirmative words must never be treated as mumbles
+        valid_words = {
+            "aama", "aamam", "ama", "amam", "aam", "seri", "ok", "yes", "no", "right", "correct", "sure",
+            "confirm", "confirmed", "proceed", "cancel", "stop", "wait", "change", "edit", "wrong",
+            "thappu", "illa", "illai", "vendaam", "kandippa", "pannunga", "podunga", "submit", "register",
+            "ஆமாம்", "சரி", "உறுதி", "பதிவு", "ஆம்", "இல்லை", "வேண்டாம்", "தவறு"
+        }
+        if cleaned in valid_words or any(w in valid_words for w in re.split(r'[\s\.\,\-\_\?\!]+', lowered) if w):
+            return False
+
         # Filter mumbling or filler sounds
         mumbles = {"umm", "uhh", "uhhh", "aaa", "hmm", "huh", "enna", "mm", "ah", "err", "uh", "um", "er", "ha", "zzz", "oho", "oh"}
         if cleaned in mumbles or len(cleaned) <= 1:
             return True
         # Check if all tokens in speech are filler/mumble tokens
         words = [w for w in re.split(r'[\s\.\,\-\_\?\!]+', lowered) if w]
-        if words and all(w in mumbles or re.match(r'^[uamhze]+$', w) for w in words):
+        if words and all(w in mumbles or re.match(r'^[umhz]+$', w) for w in words):
             return True
         # Excessive repeated characters (e.g. "aaaaaa", "zzzzz", "xxxxxx")
         if re.search(r'(.)\1{3,}', cleaned):

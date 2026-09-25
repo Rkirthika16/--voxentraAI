@@ -372,3 +372,51 @@ export interface TelephonyLogsResponse {
   total: number;
   logs: TelephonyLogItem[];
 }
+
+export interface ConversationalAnalysis {
+  category: string;
+  location: string;
+  problem: string;
+  duration?: string;
+  affected_scope?: string;
+  severity?: string;
+  priority?: string;
+  department?: string;
+}
+
+export interface IVRConversationalSessionResponse {
+  session_id: string;
+  transcription: string;
+  original_transcription?: string;
+  normalized_transcription?: string;
+  language: string;
+  detected_language?: string;
+  analysis?: ConversationalAnalysis;
+  response_text: string;
+  ai_text?: string;
+  ai_spoken?: string;
+  audio_base64?: string | null;
+  conversation_state:
+    | 'AI_SPEAKING'
+    | 'WAITING_FOR_CITIZEN'
+    | 'CITIZEN_SPEAKING'
+    | 'PROCESSING_AUDIO'
+    | 'TRANSCRIBING'
+    | 'DETECTING_LANGUAGE'
+    | 'UNDERSTANDING'
+    | 'GENERATING_RESPONSE'
+    | 'CONFIRMED'
+    | 'CANCELLED'
+    | 'CALL_ENDED'
+    | 'ERROR'
+    | string;
+  state?: string;
+  should_continue: boolean;
+  complaint_id?: number | null;
+  complaint_number?: string | null;
+  context?: Record<string, any>;
+  confirmation_required?: boolean;
+  conversation_complete?: boolean;
+  speech_recognition_available?: boolean;
+  error?: string | null;
+}

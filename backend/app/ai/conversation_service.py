@@ -195,11 +195,22 @@ class ConversationService:
         cleaned = re.sub(r'[\.\?\!\,\-\_\s]+', '', raw.lower())
         if not cleaned:
             return True
+
+        # Valid conversational and affirmative words must never be treated as mumbles
+        valid_words = {
+            "aama", "aamam", "ama", "amam", "aam", "seri", "ok", "yes", "no", "right", "correct", "sure",
+            "confirm", "confirmed", "proceed", "cancel", "stop", "wait", "change", "edit", "wrong",
+            "thappu", "illa", "illai", "vendaam", "kandippa", "pannunga", "podunga", "submit", "register",
+            "ஆமாம்", "சரி", "உறுதி", "பதிவு", "ஆம்", "இல்லை", "வேண்டாம்", "தவறு"
+        }
+        if cleaned in valid_words or any(w in valid_words for w in re.split(r'[\s\.\,\-\_\?\!]+', raw.lower()) if w):
+            return False
+
         mumbles = {"umm", "uhh", "uhhh", "aaa", "hmm", "huh", "enna", "mm", "ah", "err", "uh", "um", "er", "ha", "zzz", "ummuhhh", "ummuh"}
         if cleaned in mumbles or len(cleaned) <= 1:
             return True
-        words = re.findall(r'[a-zA-Z\u0B80-\u0BFF]+', raw.lower())
-        if words and all(w in mumbles or re.match(r'^[uamhze]+$', w) for w in words):
+        words = [w for w in re.split(r'[\s\.\,\-\_\?\!]+', raw.lower()) if w]
+        if words and all(w in mumbles or re.match(r'^[umhz]+$', w) for w in words):
             return True
         if re.search(r'(.)\1{3,}', cleaned):
             return True
@@ -318,58 +329,40 @@ class ConversationService:
         """Generates structured pre-registration summary in detected language."""
         dept = ctx.department or "Municipal Administration"
         prob = ctx.problem or "Civic Grievance"
-        loc = ctx.location or "Not specified"
+        disp_loc = self.get_display_location(ctx.location)
         duration_str = ctx.duration or "Recently"
-        scope_str = ctx.affected_scope or "Not specified"
-        priority_str = ctx.priority or "MEDIUM"
+        scope_str = ctx.affected_scope or ""
+        cat_lower = (ctx.category or "Civic issue").lower()
 
         if ctx.language == "Tamil":
             text = (
-                "உங்கள் புகார் விவரங்களை உறுதிப்படுத்துகிறேன்:\n\n"
-                f"📋 பிரச்சினை: {prob}\n"
-                f"🏢 துறை: {dept}\n"
-                f"📍 இடம்: {loc}\n"
-                f"⏱️ காலம்: {duration_str}\n"
-                f"👥 பாதிக்கப்பட்ட அளவு: {scope_str}\n"
-                f"⚡ முன்னுரிமை: {priority_str}\n\n"
-                "இந்த தகவல்கள் சரியாக இருக்கிறதா? புகாரை பதிவு செய்யலாமா?"
+                f"உங்கள் புகார் {disp_loc} பகுதி {prob} பற்றியது. "
+                f"{duration_str} நாட்களாக பிரச்சினை உள்ளது" + (f", {scope_str}" if scope_str else "") + ". "
+                "புகாரை பதிவு செய்யலாமா?"
             )
             spoken = (
-                f"உங்கள் புகார் விவரங்களை உறுதிப்படுத்துகிறேன். "
-                f"பிரச்சினை: {prob}. இடம்: {loc}. காலம்: {duration_str}. துறை: {dept}. "
-                "இந்த தகவல்கள் சரியாக இருக்கிறதா? புகாரை பதிவு செய்யலாமா?"
+                f"உங்கள் புகார் {disp_loc} பகுதி {prob} பற்றியது. "
+                f"காலம் {duration_str}. புகாரை பதிவு செய்யலாமா?"
             )
         elif ctx.language == "Tanglish":
             text = (
-                "Ungaloda complaint summary:\n\n"
-                f"📋 Problem: {prob}\n"
-                f"🏢 Department: {dept}\n"
-                f"📍 Location: {loc}\n"
-                f"⏱️ Duration: {duration_str}\n"
-                f"👥 Affected scope: {scope_str}\n"
-                f"⚡ Priority: {priority_str}\n\n"
-                "Idha complaint-ah register pannalama?"
+                f"Ungaloda complaint {disp_loc} area {cat_lower} pathi. "
+                f"{duration_str} issue irukku" + (f", {scope_str}" if scope_str else "") + ". "
+                "Complaint register pannava?"
             )
             spoken = (
-                f"Ungaloda complaint summary: "
-                f"{prob}. Location: {loc}. Duration: {duration_str}. Department: {dept}. "
-                "Idha confirm pannalama?"
+                f"Ungaloda complaint {disp_loc} area {cat_lower} pathi. "
+                f"{duration_str} issue irukku. Complaint register pannava?"
             )
         else:
             text = (
-                "Here is your complaint summary:\n\n"
-                f"📋 Issue: {prob}\n"
-                f"🏢 Department: {dept}\n"
-                f"📍 Location: {loc}\n"
-                f"⏱️ Duration: {duration_str}\n"
-                f"👥 Affected Area: {scope_str}\n"
-                f"⚡ Priority: {priority_str}\n\n"
-                "Are these details correct? Shall I register the complaint?"
+                f"Your complaint is regarding {cat_lower} in {disp_loc} area for {duration_str}"
+                + (f" affecting {scope_str}" if scope_str else "") + ". "
+                "Shall I register the complaint now?"
             )
             spoken = (
-                f"Here is your complaint summary: "
-                f"{prob} at {loc}. Duration: {duration_str}. Department: {dept}. "
-                "Are these details correct? Shall I register this complaint now?"
+                f"Your complaint is regarding {cat_lower} in {disp_loc} area for {duration_str}. "
+                "Shall I register this complaint now?"
             )
 
         return text, spoken
@@ -387,14 +380,14 @@ class ConversationService:
         Dynamically chooses the next most relevant question based on:
         - Complaint category (Water, Electricity, Roads, Drainage, Sanitation, etc.)
         - Already collected vs missing fields
-        - Priority indicators (sparks/wires -> immediate urgent handling)
+        - Does NOT re-ask details already provided
         """
         cat = ctx.category or "Other"
         lang = ctx.language
         disp_loc = self.get_display_location(ctx.location)
 
         # 1. Location missing
-        if not ctx.location:
+        if not ctx.location or ctx.location == "Tamil Nadu":
             if lang == "Tamil":
                 return (
                     "சரி. இந்த பிரச்சினை எந்த பகுதியில் அல்லது தெருவில் உள்ளது?",
@@ -413,112 +406,258 @@ class ConversationService:
 
         # 2. Duration missing
         if not ctx.duration:
-            if lang == "Tamil":
-                return (
-                    f"சரி, {disp_loc} பகுதியில் இந்தப் பிரச்சினை எத்தனை நாட்களாக அல்லது எப்போது இருந்து உள்ளது?",
-                    f"இந்தப் பிரச்சினை எப்போது இருந்து உள்ளது?"
-                )
-            elif lang == "Tanglish":
-                return (
-                    f"Okay, {disp_loc}-la indha issue eppo lendhu irukku?",
-                    f"Idhu eppo lendhu irukku?"
-                )
-            else:
-                return (
-                    f"Okay, how long has this problem existed in {disp_loc}?",
-                    "How long has this problem existed?"
-                )
-
-        # 3. Category-Specific Depth Questions
-        if cat == "Water" and not ctx.affected_scope:
-            if lang == "Tamil":
-                return (
-                    "இது உங்கள் பகுதியில் உள்ள அனைவருக்கும் உள்ள பிரச்சனையா அல்லது உங்கள் வீட்டில் மட்டுமா?",
-                    "இது பகுதி முழுவதும் உள்ள பிரச்சனையா அல்லது உங்கள் வீட்டில் மட்டுமா?"
-                )
-            elif lang == "Tanglish":
-                return (
-                    "Idhu area full-ah water problem-aa, illa unga veetla mattum-aa?",
-                    "Idhu area full-ah water problem-aa, illa unga veetla mattum-aa?"
-                )
-            else:
-                return (
-                    "Is this a water interruption affecting the entire area or only your individual house?",
-                    "Is this affecting the entire area or only your house?"
-                )
-
-        if cat == "Electricity":
-            if not ctx.affected_scope:
+            if cat == "Water":
                 if lang == "Tamil":
                     return (
-                        "இது மொத்த பகுதியில் ஏற்பட்டுள்ள மின்வெட்டா அல்லது உங்கள் வீட்டில் மட்டுமா? தீப்பொறி அல்லது அறுந்த கம்பி ஏதேனும் உள்ளதா?",
-                        "இது பகுதி முழுவதும் உள்ள மின்வெட்டா அல்லது உங்கள் வீட்டில் மட்டுமா?"
+                        f"சரி, {disp_loc} பகுதியில் தண்ணீர் விநியோகப் பிரச்சினை உள்ளதை புரிந்து கொண்டேன். இது எப்போது இருந்து உள்ளது?",
+                        f"சரி, {disp_loc} பகுதியில் தண்ணீர் பிரச்சினை உள்ளதை புரிந்து கொண்டேன். இது எப்போது இருந்து உள்ளது?"
                     )
                 elif lang == "Tanglish":
                     return (
-                        "Idhu area full-ah power cut-aa, illa unga veetla mattum-aa? Any live wire or spark risk irukka?",
-                        "Idhu area full-ah power cut-aa, illa unga veetla mattum-aa?"
+                        f"Okay, {disp_loc}-la water supply problem irukku-nu purinjukitten. Idhu eppo lendhu irukku?",
+                        f"Okay, {disp_loc}-la water supply problem irukku-nu purinjukitten. Idhu eppo lendhu irukku?"
                     )
                 else:
                     return (
-                        "Is this power failure affecting the entire area or only your house? Are there any exposed wires or sparks?",
-                        "Is this power failure area-wide or for your house only?"
+                        f"Understood, there is a water supply issue in {disp_loc}. How long has this problem existed?",
+                        f"Understood, there is a water supply issue in {disp_loc}. How long has this problem existed?"
                     )
+            elif cat == "Electricity":
+                if lang == "Tamil":
+                    return (
+                        f"சரி, {disp_loc} பகுதியில் மின் தடை ஏற்பட்டுள்ளதை புரிந்து கொண்டேன். இது எப்போது இருந்து உள்ளது?",
+                        f"சரி, {disp_loc} பகுதியில் மின் தடை ஏற்பட்டுள்ளதை புரிந்து கொண்டேன். இது எப்போது இருந்து உள்ளது?"
+                    )
+                elif lang == "Tanglish":
+                    return (
+                        f"Okay, {disp_loc}-la power supply issue irukku-nu purinjukitten. Idhu eppo lendhu irukku?",
+                        f"Okay, {disp_loc}-la power supply issue irukku-nu purinjukitten. Idhu eppo lendhu irukku?"
+                    )
+                else:
+                    return (
+                        f"Understood, there is a power cut in {disp_loc}. How long has this power issue existed?",
+                        f"Understood, there is a power cut in {disp_loc}. How long has this power issue existed?"
+                    )
+            elif cat == "Roads":
+                if lang == "Tamil":
+                    return (
+                        f"சரி, {disp_loc} பகுதியில் சாலை சேதம் உள்ளதை புரிந்து கொண்டேன். இது எத்தனை நாட்களாக உள்ளது?",
+                        f"சரி, {disp_loc} பகுதியில் சாலை சேதம் உள்ளதை புரிந்து கொண்டேன். இது எத்தனை நாட்களாக உள்ளது?"
+                    )
+                elif lang == "Tanglish":
+                    return (
+                        f"Okay, {disp_loc}-la road damage problem irukku-nu note pannitten. Idhu eppo lendhu irukku?",
+                        f"Okay, {disp_loc}-la road damage problem irukku-nu note pannitten. Idhu eppo lendhu irukku?"
+                    )
+                else:
+                    return (
+                        f"Understood, there is road damage in {disp_loc}. How long has this issue existed?",
+                        f"Understood, there is road damage in {disp_loc}. How long has this issue existed?"
+                    )
+            elif cat == "Drainage":
+                if lang == "Tamil":
+                    return (
+                        f"சரி, {disp_loc} பகுதியில் சாக்கடை பிரச்சினை உள்ளதை புரிந்து கொண்டேன். இது எப்போது இருந்து உள்ளது?",
+                        f"சரி, {disp_loc} பகுதியில் சாக்கடை பிரச்சினை உள்ளதை புரிந்து கொண்டேன். இது எப்போது இருந்து உள்ளது?"
+                    )
+                elif lang == "Tanglish":
+                    return (
+                        f"Okay, {disp_loc}-la drainage problem irukku-nu note pannitten. Idhu eppo lendhu irukku?",
+                        f"Okay, {disp_loc}-la drainage problem irukku-nu note pannitten. Idhu eppo lendhu irukku?"
+                    )
+                else:
+                    return (
+                        f"Understood, there is a drainage problem in {disp_loc}. How long has this been happening?",
+                        f"Understood, there is a drainage problem in {disp_loc}. How long has this been happening?"
+                    )
+            elif cat == "Sanitation":
+                if lang == "Tamil":
+                    return (
+                        f"சரி, {disp_loc} பகுதியில் குப்பைகள் தேங்கியுள்ளதை புரிந்து கொண்டேன். இது எத்தனை நாட்களாக உள்ளது?",
+                        f"சரி, {disp_loc} பகுதியில் குப்பைகள் தேங்கியுள்ளதை புரிந்து கொண்டேன். இது எத்தனை நாட்களாக உள்ளது?"
+                    )
+                elif lang == "Tanglish":
+                    return (
+                        f"Okay, {disp_loc}-la garbage problem irukku-nu note pannitten. Idhu eppo lendhu irukku?",
+                        f"Okay, {disp_loc}-la garbage problem irukku-nu note pannitten. Idhu eppo lendhu irukku?"
+                    )
+                else:
+                    return (
+                        f"Understood, there is a sanitation issue in {disp_loc}. How long has this been uncollected?",
+                        f"Understood, there is a sanitation issue in {disp_loc}. How long has this been uncollected?"
+                    )
+            else:
+                if lang == "Tamil":
+                    return (
+                        f"சரி, {disp_loc} பகுதியில் இந்தப் பிரச்சினை எப்போது இருந்து உள்ளது?",
+                        f"இந்தப் பிரச்சினை எப்போது இருந்து உள்ளது?"
+                    )
+                elif lang == "Tanglish":
+                    return (
+                        f"Okay, {disp_loc}-la indha issue eppo lendhu irukku?",
+                        f"Idhu eppo lendhu irukku?"
+                    )
+                else:
+                    return (
+                        f"Okay, how long has this problem existed in {disp_loc}?",
+                        "How long has this problem existed?"
+                    )
+
+        # 3. Category-Specific Depth Questions (Scope & Impact)
+        if cat == "Water" and not ctx.affected_scope:
+            if lang == "Tamil":
+                return (
+                    "சரி. இது பகுதி முழுவதும் உள்ள பிரச்சினையா அல்லது உங்கள் வீட்டில் மட்டுமா?",
+                    "சரி. இது பகுதி முழுவதும் உள்ள பிரச்சினையா அல்லது உங்கள் வீட்டில் மட்டுமா?"
+                )
+            elif lang == "Tanglish":
+                return (
+                    "Seri. Area full-ah problem-aa, illa unga veetla mattum-aa?",
+                    "Seri. Area full-ah problem-aa, illa unga veetla mattum-aa?"
+                )
+            else:
+                return (
+                    "Understood. Is this water supply problem affecting the entire area or only your house?",
+                    "Is this water supply problem affecting the entire area or only your house?"
+                )
+
+        if cat == "Electricity" and not ctx.affected_scope:
+            if lang == "Tamil":
+                return (
+                    "சரி. இது பகுதி முழுவதும் உள்ள மின்வெட்டா அல்லது உங்கள் வீட்டில் மட்டுமா?",
+                    "சரி. இது பகுதி முழுவதும் உள்ள மின்வெட்டா அல்லது உங்கள் வீட்டில் மட்டுமா?"
+                )
+            elif lang == "Tanglish":
+                return (
+                    "Seri. Area full-ah power cut-aa, illa unga veetla mattum-aa?",
+                    "Seri. Area full-ah power cut-aa, illa unga veetla mattum-aa?"
+                )
+            else:
+                return (
+                    "Understood. Is this power cut area-wide or for your house only?",
+                    "Is this power cut area-wide or for your house only?"
+                )
 
         if cat == "Roads" and not ctx.severity:
             if lang == "Tamil":
                 return (
-                    "இந்த சாலை சேதத்தால் போக்குவரத்து பாதிப்பு அல்லது விபத்து அபாயம் ஏதேனும் உள்ளதா?",
+                    "சரி. சாலை சேதத்தால் போக்குவரத்து பாதிப்பு அல்லது விபத்து அபாயம் ஏதேனும் உள்ளதா?",
                     "சாலை சேதத்தால் போக்குவரத்து பாதிப்பு ஏதேனும் உள்ளதா?"
                 )
             elif lang == "Tanglish":
                 return (
-                    "Indha road damage-naala traffic block or accident risk ethavathu irukka?",
+                    "Seri. Indha road damage-naala traffic block or accident risk ethavathu irukka?",
                     "Indha road damage-naala traffic block ethavathu irukka?"
                 )
             else:
                 return (
-                    "Is this road damage causing traffic congestion or accident hazard?",
-                    "Is this road damage affecting traffic or safety?"
+                    "Understood. Is this road damage causing severe traffic obstruction or accident hazard?",
+                    "Is this road damage causing traffic obstruction?"
                 )
 
         if cat == "Drainage" and not ctx.affected_scope:
             if lang == "Tamil":
                 return (
-                    "சாக்கடை நீர் சாலையில் வழிகிறதா அல்லது அடைப்பு மட்டுமா?",
+                    "சரி. சாக்கடை நீர் சாலையில் வழிகிறதா அல்லது அடைப்பு மட்டுமா?",
                     "சாக்கடை நீர் சாலையில் வழிகிறதா?"
                 )
             elif lang == "Tanglish":
                 return (
-                    "Drainage water road-la overflow aagudha, illa adaippu mattum-aa?",
+                    "Seri. Drainage water road-la overflow aagudha, illa adaippu mattum-aa?",
                     "Drainage water road-la overflow aagudha?"
                 )
             else:
                 return (
-                    "Is the sewage overflowing onto the public road or is it a localized blockage?",
+                    "Understood. Is the sewage overflowing onto the public road or is it a pipe blockage?",
                     "Is the sewage overflowing onto the road?"
                 )
 
         if cat == "Sanitation" and not ctx.affected_scope:
             if lang == "Tamil":
                 return (
-                    "குப்பைகள் பொது இடத்தில் அதிகளவில் தேங்கியுள்ளதா? துர்நாற்றம் அல்லது சுகாதார சீர்கேடு உள்ளதா?",
+                    "சரி. குப்பைகள் பொது இடத்தில் அதிகளவில் தேங்கியுள்ளதா?",
                     "குப்பைகள் பொது இடத்தில் அதிகளவில் தேங்கியுள்ளதா?"
                 )
             elif lang == "Tanglish":
                 return (
-                    "Kuppai public area-la romba thengi irukka? Bad smell or health hazard irukka?",
+                    "Seri. Kuppai public area-la romba thengi irukka?",
                     "Kuppai public area-la romba thengi irukka?"
                 )
             else:
                 return (
-                    "Is the uncollected garbage overflowing into public areas or causing foul odor?",
-                    "Is the garbage overflowing into public areas?"
+                    "Understood. Is the uncollected garbage overflowing in the public area?",
+                    "Is the garbage overflowing in the public area?"
                 )
 
         # Everything critical is collected! Transition to confirmation
         ctx.confirmation_required = True
         return self.generate_confirmation_summary(ctx)
+
+    def _build_turn_response(
+        self,
+        ctx: ConversationContext,
+        state: str,
+        ai_text: str,
+        ai_spoken: str,
+        error: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Constructs standardized conversation response matching backend and telephony transports."""
+        if ctx.conversation_complete or state == "COMPLETED":
+            conv_state = "CONFIRMED"
+        elif state == "ERROR":
+            conv_state = "ERROR"
+        elif state == "CANCELLED":
+            conv_state = "CANCELLED"
+        else:
+            conv_state = "WAITING_FOR_CITIZEN"
+
+        lat = None
+        lon = None
+        osm_name = None
+        if ctx.location:
+            try:
+                from app.ai.location_service import extract_location
+                osm_name, lat, lon, _ = extract_location(ctx.location)
+            except Exception:
+                pass
+
+        analysis_dict = {
+            "category": ctx.category or "Other",
+            "location": ctx.location or "",
+            "problem": ctx.problem or "",
+            "duration": ctx.duration or "",
+            "affected_scope": ctx.affected_scope or "",
+            "severity": ctx.severity or "normal",
+            "priority": ctx.priority or "MEDIUM",
+            "department": ctx.department or "Municipal Administration"
+        }
+
+        return {
+            "session_id": ctx.session_id,
+            "transcription": ctx.original_transcription,
+            "original_transcription": ctx.original_transcription,
+            "normalized_transcription": ctx.normalized_transcription,
+            "language": ctx.language,
+            "detected_language": ctx.language,
+            "analysis": analysis_dict,
+            "latitude": lat,
+            "longitude": lon,
+            "osm_location_name": osm_name or ctx.location,
+            "response_text": ai_text,
+            "ai_text": ai_text,
+            "ai_spoken": ai_spoken,
+            "audio_base64": None,
+            "conversation_state": conv_state,
+            "state": state,
+            "should_continue": not ctx.conversation_complete,
+            "complaint_id": ctx.complaint_id,
+            "complaint_number": ctx.complaint_number,
+            "context": ctx.to_dict(),
+            "confirmation_required": ctx.confirmation_required,
+            "conversation_complete": ctx.conversation_complete,
+            "speech_recognition_available": True,
+            "error": error
+        }
 
     def process_turn(
         self,
@@ -542,16 +681,7 @@ class ConversationService:
         # Check for unclear input
         if self.is_unclear_speech(ctx.original_transcription):
             unclear_txt, unclear_spk = self.get_unclear_response(ctx.language)
-            return {
-                "session_id": ctx.session_id,
-                "state": "WAITING_FOR_USER",
-                "ai_text": unclear_txt,
-                "ai_spoken": unclear_spk,
-                "detected_language": ctx.language,
-                "context": ctx.to_dict(),
-                "confirmation_required": ctx.confirmation_required,
-                "conversation_complete": ctx.conversation_complete
-            }
+            return self._build_turn_response(ctx, "WAITING_FOR_USER", unclear_txt, unclear_spk)
 
         # Dynamically detect language from this turn and adapt
         turn_lang, conf = detect_language(ctx.original_transcription)
@@ -582,28 +712,10 @@ class ConversationService:
                 if is_sufficient:
                     ctx.confirmation_required = True
                     sum_txt, sum_spk = self.generate_confirmation_summary(ctx)
-                    return {
-                        "session_id": ctx.session_id,
-                        "state": "CONFIRMING",
-                        "ai_text": f"{ack_reply}\n\n{sum_txt}",
-                        "ai_spoken": f"{ack_spoken} {sum_spk}",
-                        "detected_language": ctx.language,
-                        "context": ctx.to_dict(),
-                        "confirmation_required": True,
-                        "conversation_complete": False
-                    }
+                    return self._build_turn_response(ctx, "CONFIRMING", f"{ack_reply}\n\n{sum_txt}", f"{ack_spoken} {sum_spk}")
                 else:
                     q_txt, q_spk = self.get_category_followup_question(ctx)
-                    return {
-                        "session_id": ctx.session_id,
-                        "state": "WAITING_FOR_USER",
-                        "ai_text": f"{ack_reply} {q_txt}",
-                        "ai_spoken": f"{ack_spoken} {q_spk}",
-                        "detected_language": ctx.language,
-                        "context": ctx.to_dict(),
-                        "confirmation_required": False,
-                        "conversation_complete": False
-                    }
+                    return self._build_turn_response(ctx, "WAITING_FOR_USER", f"{ack_reply} {q_txt}", f"{ack_spoken} {q_spk}")
 
             # Check if citizen provided a replacement / spelled out correction
             cleaned_correction = self.clean_spelled_out_input(ctx.original_transcription)
@@ -619,16 +731,7 @@ class ConversationService:
                     r_txt = "Understood. Please provide the correct name or spelling."
                     r_spk = "Please provide the correct name or spelling."
 
-                return {
-                    "session_id": ctx.session_id,
-                    "state": "WAITING_FOR_USER",
-                    "ai_text": r_txt,
-                    "ai_spoken": r_spk,
-                    "detected_language": ctx.language,
-                    "context": ctx.to_dict(),
-                    "confirmation_required": False,
-                    "conversation_complete": False
-                }
+                return self._build_turn_response(ctx, "WAITING_FOR_USER", r_txt, r_spk)
 
             if cleaned_correction and len(cleaned_correction) >= 2:
                 ctx.location = cleaned_correction
@@ -647,28 +750,10 @@ class ConversationService:
                 if is_sufficient:
                     ctx.confirmation_required = True
                     sum_txt, sum_spk = self.generate_confirmation_summary(ctx)
-                    return {
-                        "session_id": ctx.session_id,
-                        "state": "CONFIRMING",
-                        "ai_text": f"{ack_reply}\n\n{sum_txt}",
-                        "ai_spoken": f"{ack_spoken} {sum_spk}",
-                        "detected_language": ctx.language,
-                        "context": ctx.to_dict(),
-                        "confirmation_required": True,
-                        "conversation_complete": False
-                    }
+                    return self._build_turn_response(ctx, "CONFIRMING", f"{ack_reply}\n\n{sum_txt}", f"{ack_spoken} {sum_spk}")
                 else:
                     q_txt, q_spk = self.get_category_followup_question(ctx)
-                    return {
-                        "session_id": ctx.session_id,
-                        "state": "WAITING_FOR_USER",
-                        "ai_text": f"{ack_reply} {q_txt}",
-                        "ai_spoken": f"{ack_spoken} {q_spk}",
-                        "detected_language": ctx.language,
-                        "context": ctx.to_dict(),
-                        "confirmation_required": False,
-                        "conversation_complete": False
-                    }
+                    return self._build_turn_response(ctx, "WAITING_FOR_USER", f"{ack_reply} {q_txt}", f"{ack_spoken} {q_spk}")
 
         # 0b. Check for explicit slot correction
         explicit_corr = self.detect_explicit_correction(ctx, ctx.original_transcription, ctx.language)
@@ -678,28 +763,10 @@ class ConversationService:
             if is_sufficient:
                 ctx.confirmation_required = True
                 sum_txt, sum_spk = self.generate_confirmation_summary(ctx)
-                return {
-                    "session_id": ctx.session_id,
-                    "state": "CONFIRMING",
-                    "ai_text": f"{ack_r}\n\n{sum_txt}",
-                    "ai_spoken": f"{ack_s} {sum_spk}",
-                    "detected_language": ctx.language,
-                    "context": ctx.to_dict(),
-                    "confirmation_required": True,
-                    "conversation_complete": False
-                }
+                return self._build_turn_response(ctx, "CONFIRMING", f"{ack_r}\n\n{sum_txt}", f"{ack_s} {sum_spk}")
             else:
                 q_txt, q_spk = self.get_category_followup_question(ctx)
-                return {
-                    "session_id": ctx.session_id,
-                    "state": "WAITING_FOR_USER",
-                    "ai_text": f"{ack_r} {q_txt}",
-                    "ai_spoken": f"{ack_s} {q_spk}",
-                    "detected_language": ctx.language,
-                    "context": ctx.to_dict(),
-                    "confirmation_required": False,
-                    "conversation_complete": False
-                }
+                return self._build_turn_response(ctx, "WAITING_FOR_USER", f"{ack_r} {q_txt}", f"{ack_s} {q_spk}")
 
         # Category & Problem classification (ensure category/problem always captured early)
         cat, dept, conf = classify_complaint(ctx.normalized_transcription)
@@ -722,16 +789,7 @@ class ConversationService:
                     "raw_input": ctx.original_transcription
                 }
                 conf_txt, conf_spk = self.get_spelling_or_correction_prompt(cand_name, ctx.language)
-                return {
-                    "session_id": ctx.session_id,
-                    "state": "SLOT_CONFIRMATION_PENDING",
-                    "ai_text": conf_txt,
-                    "ai_spoken": conf_spk,
-                    "detected_language": ctx.language,
-                    "context": ctx.to_dict(),
-                    "confirmation_required": False,
-                    "conversation_complete": False
-                }
+                return self._build_turn_response(ctx, "SLOT_CONFIRMATION_PENDING", conf_txt, conf_spk)
 
         # Check if citizen is in confirmation stage
         if ctx.confirmation_required and not ctx.conversation_complete:
@@ -747,43 +805,29 @@ class ConversationService:
                     if ctx.language == "Tamil":
                         ai_text = (
                             f"நன்றி! உங்கள் புகார் எண் {created_comp.complaint_number} என வெற்றிகரமாக பதிவு செய்யப்பட்டுள்ளது. "
-                            f"இது {ctx.department} துறைக்கு அனுப்பப்பட்டுள்ளது. இந்த எண்ணை பயன்படுத்தி தங்கள் புகாரை கண்காணிக்கலாம்."
+                            f"இது {ctx.department} துறைக்கு அனுப்பப்பட்டுள்ளது."
                         )
                         ai_spoken = (
-                            f"உங்கள் புகார் வெற்றிகரமாக பதிவு செய்யப்பட்டுள்ளது. உங்கள் புகார் எண் {created_comp.complaint_number}. "
-                            "இந்த எண்ணை பயன்படுத்தி உங்கள் புகாரை கண்காணிக்கலாம்."
+                            f"சரி. உங்கள் புகார் வெற்றிகரமாக பதிவு செய்யப்பட்டது. புகார் எண் {created_comp.complaint_number}."
                         )
                     elif ctx.language == "Tanglish":
                         ai_text = (
-                            f"Thank you! Unga complaint #{created_comp.complaint_number} successfully register aaiduchu. "
-                            f"{ctx.department} ku assign panniyaachu. Tracking ID: {created_comp.complaint_number}."
+                            f"Seri. Unga complaint successfully registered. Complaint ID {created_comp.complaint_number}. "
+                            f"{ctx.department} ku forward panniyaachu."
                         )
                         ai_spoken = (
-                            f"Unga complaint successfully register aaiduchu. Unga complaint number {created_comp.complaint_number}. "
-                            "Indha number use panni track pannalaam."
+                            f"Seri. Unga complaint successfully registered. Complaint ID {created_comp.complaint_number}."
                         )
                     else:
                         ai_text = (
-                            f"Thank you! Your complaint #{created_comp.complaint_number} has been successfully registered "
-                            f"and routed to {ctx.department}. You can track your grievance using ID {created_comp.complaint_number}."
+                            f"Thank you. Your complaint has been successfully registered under ID {created_comp.complaint_number} "
+                            f"and routed to {ctx.department}."
                         )
                         ai_spoken = (
-                            f"Your complaint has been successfully registered under ID {created_comp.complaint_number}. "
-                            "You can use this number to track your complaint."
+                            f"Your complaint has been successfully registered. Complaint ID {created_comp.complaint_number}."
                         )
 
-                    return {
-                        "session_id": ctx.session_id,
-                        "state": "COMPLETED",
-                        "ai_text": ai_text,
-                        "ai_spoken": ai_spoken,
-                        "detected_language": ctx.language,
-                        "complaint_number": created_comp.complaint_number,
-                        "complaint_id": created_comp.id,
-                        "context": ctx.to_dict(),
-                        "confirmation_required": False,
-                        "conversation_complete": True
-                    }
+                    return self._build_turn_response(ctx, "COMPLETED", ai_text, ai_spoken)
                 else:
                     # Citizen wants to correct / change details
                     ctx.confirmation_required = False
@@ -797,16 +841,7 @@ class ConversationService:
                         ai_text = "Understood. Please let me know what detail you would like to correct."
                         ai_spoken = "Please let me know what detail you would like to correct."
 
-                    return {
-                        "session_id": ctx.session_id,
-                        "state": "WAITING_FOR_USER",
-                        "ai_text": ai_text,
-                        "ai_spoken": ai_spoken,
-                        "detected_language": ctx.language,
-                        "context": ctx.to_dict(),
-                        "confirmation_required": False,
-                        "conversation_complete": False
-                    }
+                    return self._build_turn_response(ctx, "WAITING_FOR_USER", ai_text, ai_spoken)
 
         # -------------------------------------------------------------
         # Information Extraction from Current Speech
@@ -840,16 +875,7 @@ class ConversationService:
                             "raw_input": ctx.original_transcription
                         }
                         conf_txt, conf_spk = self.get_spelling_or_correction_prompt(cand_name, ctx.language)
-                        return {
-                            "session_id": ctx.session_id,
-                            "state": "SLOT_CONFIRMATION_PENDING",
-                            "ai_text": conf_txt,
-                            "ai_spoken": conf_spk,
-                            "detected_language": ctx.language,
-                            "context": ctx.to_dict(),
-                            "confirmation_required": False,
-                            "conversation_complete": False
-                        }
+                        return self._build_turn_response(ctx, "SLOT_CONFIRMATION_PENDING", conf_txt, conf_spk)
                     else:
                         ctx.location = loc_name
 
@@ -911,16 +937,7 @@ class ConversationService:
             "state": state
         })
 
-        return {
-            "session_id": ctx.session_id,
-            "state": state,
-            "ai_text": ai_text,
-            "ai_spoken": ai_spoken,
-            "detected_language": ctx.language,
-            "context": ctx.to_dict(),
-            "confirmation_required": ctx.confirmation_required,
-            "conversation_complete": ctx.conversation_complete
-        }
+        return self._build_turn_response(ctx, state, ai_text, ai_spoken)
 
     def _create_database_complaint(self, ctx: ConversationContext, db: Optional[Session]) -> Complaint:
         """Saves confirmed grievance to database and triggers notifications."""

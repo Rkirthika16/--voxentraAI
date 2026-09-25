@@ -2,6 +2,57 @@ from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 
 
+class IVRSessionStartRequest(BaseModel):
+    session_id: Optional[str] = None
+    caller_phone: Optional[str] = Field(default="+919843098765", description="Citizen mobile number")
+    language_hint: Optional[str] = Field(default="Auto", description="Preferred language")
+
+
+class IVRSessionMessageRequest(BaseModel):
+    message: str = Field(..., description="Citizen typed text or transcription")
+    caller_phone: Optional[str] = "+919843098765"
+
+
+class IVRSessionConfirmRequest(BaseModel):
+    citizen_name: Optional[str] = "Citizen Caller"
+    caller_phone: Optional[str] = "+919843098765"
+
+
+class IVRAnalysisData(BaseModel):
+    category: str = "Other"
+    location: str = ""
+    problem: str = ""
+    duration: Optional[str] = ""
+    affected_scope: Optional[str] = ""
+    severity: Optional[str] = "normal"
+    priority: Optional[str] = "MEDIUM"
+    department: Optional[str] = "Municipal Administration"
+
+
+class IVRConversationalSessionResponse(BaseModel):
+    session_id: str
+    transcription: str = ""
+    original_transcription: Optional[str] = ""
+    normalized_transcription: Optional[str] = ""
+    language: str = "Tamil"
+    detected_language: Optional[str] = "Tamil"
+    analysis: Optional[Dict[str, Any]] = None
+    response_text: str
+    ai_text: Optional[str] = None
+    ai_spoken: Optional[str] = None
+    audio_base64: Optional[str] = None
+    conversation_state: str = "WAITING_FOR_CITIZEN"
+    state: Optional[str] = "WAITING_FOR_USER"
+    should_continue: bool = True
+    complaint_id: Optional[int] = None
+    complaint_number: Optional[str] = None
+    context: Optional[Dict[str, Any]] = None
+    confirmation_required: Optional[bool] = False
+    conversation_complete: Optional[bool] = False
+    speech_recognition_available: Optional[bool] = True
+    error: Optional[str] = None
+
+
 class IVRCallInitiateRequest(BaseModel):
     caller_phone: str = Field(default="+919843098765", description="Village caller mobile number")
     toll_free_number: str = Field(default="1800-425-1913", description="Toll-free helpline number dialed")

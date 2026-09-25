@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ivrApi } from '../api/ivr';
-import { voiceApi } from '../api/voice';
-import { speech } from '../utils/speech';
+import { useVoiceConversationEngine } from '../utils/useVoiceConversationEngine';
 import { telephonyAudio } from '../utils/telephonyAudio';
 import { IVRStreetMap } from '../components/IVRStreetMap';
+import { VoiceStatus } from '../components/voice/VoiceStatus';
 import { Link } from 'react-router-dom';
 import {
   PhoneCall,
@@ -17,38 +16,21 @@ import {
   CheckCircle2,
   AlertTriangle,
   Send,
-  MessageSquare,
-  Sparkles,
   Radio,
   Globe,
   RotateCcw,
   Check,
-  Headphones,
   Shield,
   Activity,
-  Smartphone,
   Hash,
-  Delete,
-  Clock,
   MessageCircle,
-  FileText,
   HelpCircle,
-  CheckCircle
+  Keyboard
 } from 'lucide-react';
 
-interface ChatMessage {
-  id: string;
-  sender: 'ai' | 'citizen';
-  text: string;
-  language: string;
-  time: string;
-  intent?: string;
-  audioBase64?: string | null;
-}
-
 export const TollFreeHelplinePage: React.FC = () => {
-  // Call States: 'IDLE' | 'DIALING' | 'RINGING' | 'CONNECTED' | 'ENDED'
-  const [callState, setCallState] = useState<'IDLE' | 'DIALING' | 'RINGING' | 'CONNECTED' | 'ENDED'>('IDLE');
+  // Call States: 'IDLE' | 'RINGING' | 'CONNECTED' | 'ENDED'
+  const [callState, setCallState] = useState<'IDLE' | 'RINGING' | 'CONNECTED' | 'ENDED'>('IDLE');
   const [callDuration, setCallDuration] = useState<number>(0);
 
   // Phone & Keypad state
@@ -57,38 +39,45 @@ export const TollFreeHelplinePage: React.FC = () => {
   const [showInCallKeypad, setShowInCallKeypad] = useState<boolean>(false);
   const [speakerEnabled, setSpeakerEnabled] = useState<boolean>(true);
   const [micMuted, setMicMuted] = useState<boolean>(false);
+  const [textFallbackInput, setTextFallbackInput] = useState<string>('');
 
-  // Voice & Conversation State
-  const [detectedLanguage, setDetectedLanguage] = useState<string>('Auto-Detecting...');
-  const [languageConfidence, setLanguageConfidence] = useState<number>(0.98);
-  const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
-  const [spokenText, setSpokenText] = useState<string>('');
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [currentCallSid, setCurrentCallSid] = useState<string>('');
-  const [collectionFields, setCollectionFields] = useState<Record<string, any>>({});
-  const [isConfirmationPending, setIsConfirmationPending] = useState<boolean>(false);
-  const [createdComplaintNumber, setCreatedComplaintNumber] = useState<string | null>(null);
-  const [assignedDepartment, setAssignedDepartment] = useState<string | null>(null);
-  const [smsSentStatus, setSmsSentStatus] = useState<boolean>(false);
-  const [distressLevel, setDistressLevel] = useState<string>('NORMAL');
-  const [urgencyScore, setUrgencyScore] = useState<number>(45);
-
-  // GIS Location Pin
-  const [currentLatitude, setCurrentLatitude] = useState<string | number | null>('11.016844');
-  const [currentLongitude, setCurrentLongitude] = useState<string | number | null>('76.955833');
-  const [osmLocationName, setOsmLocationName] = useState<string | null>('Coimbatore, Tamil Nadu');
-
-  // Audio / Mic Refs
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const callTimerRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const textInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Initialize unified two-way voice conversation engine
+  const {
+    sessionId,
+    voiceState,
+    messages,
+    liveTranscription,
+    detectedLanguage,
+    analysis,
+    latitude,
+    longitude,
+    osmLocationName,
+    isHandsFreeActive,
+    isAiSpeaking,
+    isRecording,
+    error,
+    isPermissionDenied,
+    isSpeechRecognitionAvailable,
+    completedComplaint,
+    startSession,
+    sendTextMessage,
+    toggleRecording,
+    confirmComplaint,
+    cancelConversation,
+    playAiSpeech
+  } = useVoiceConversationEngine({
+    mode: 'ivr',
+    callerPhone: callerPhone
+  });
+
+  // Scroll to bottom of message list on updates
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, callState, isProcessing, isAiSpeaking]);
+  }, [messages, voiceState, liveTranscription, isAiSpeaking]);
 
   // Call Duration Timer
   useEffect(() => {
@@ -107,14 +96,22 @@ export const TollFreeHelplinePage: React.FC = () => {
     };
   }, [callState]);
 
-  // Cleanup on unmount
+  // If complaint completes during call, update call state to ENDED after confirmation
+  useEffect(() => {
+    if (completedComplaint && voiceState === 'CONFIRMED') {
+      // Allow brief moment for citizen to view completed receipt
+      const t = setTimeout(() => {
+        setCallState('ENDED');
+        telephonyAudio.playCallConnected();
+      }, 4000);
+      return () => clearTimeout(t);
+    }
+  }, [completedComplaint, voiceState]);
+
+  // Cleanup audio on unmount
   useEffect(() => {
     return () => {
       telephonyAudio.stopRinging();
-      speech.stop();
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
     };
   }, []);
 
@@ -125,59 +122,22 @@ export const TollFreeHelplinePage: React.FC = () => {
   };
 
   // -------------------------------------------------------------
-  // Telephony Flow: Initiate Inbound Call
+  // Telephony Flow: Initiate Inbound Call to 1913
   // -------------------------------------------------------------
   const handleStartCall = async () => {
-    speech.stop();
     setCallState('RINGING');
     setCallDuration(0);
-    setMessages([]);
-    setCreatedComplaintNumber(null);
-    setCollectionFields({});
-    setIsConfirmationPending(false);
-    setSmsSentStatus(false);
-
     telephonyAudio.startRinging();
 
-    try {
-      // 1. Initiate toll-free call session via API
-      const initRes = await ivrApi.initiateCall(callerPhone, dialedNumber || '1913');
-      const sid = initRes.call_sid;
-      setCurrentCallSid(sid);
-
-      // Simulate 1.8s ringback delay for authentic telephone experience
-      setTimeout(async () => {
-        telephonyAudio.stopRinging();
-        telephonyAudio.playCallConnected();
-        setCallState('CONNECTED');
-
-        // Welcome greeting from Tamil Nadu CM Helpline
-        const welcomeTamil = initRes.greeting_tamil + ' ' + initRes.prompt_tamil;
-        const welcomeEn = initRes.greeting_english + ' ' + initRes.prompt_english;
-
-        const initialMsg: ChatMessage = {
-          id: `ai_${Date.now()}`,
-          sender: 'ai',
-          text: `${initRes.greeting_tamil}\n${initRes.prompt_tamil}\n\n${initRes.greeting_english}`,
-          language: 'Tamil & English',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages([initialMsg]);
-
-        if (speakerEnabled) {
-          playVoice(welcomeTamil, 'Tamil', () => {
-            // Auto-start listening after welcome message so Citizen Speaks First!
-            startRecording(sid);
-          });
-        } else {
-          startRecording(sid);
-        }
-      }, 2000);
-    } catch (err: any) {
+    // Authentic ringback tone delay before AI picks up
+    setTimeout(async () => {
       telephonyAudio.stopRinging();
-      setCallState('IDLE');
-      alert(`Call failed to connect: ${err.message || 'Please check backend server'}`);
-    }
+      telephonyAudio.playCallConnected();
+      setCallState('CONNECTED');
+
+      // Start true two-way conversational voice session
+      await startSession();
+    }, 2000);
   };
 
   // -------------------------------------------------------------
@@ -186,218 +146,26 @@ export const TollFreeHelplinePage: React.FC = () => {
   const handleHangup = () => {
     telephonyAudio.stopRinging();
     telephonyAudio.playHangup();
-    speech.stop();
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch {}
-    }
-    setIsRecording(false);
-    setIsAiSpeaking(false);
+    cancelConversation();
     setCallState('ENDED');
   };
 
   // -------------------------------------------------------------
-  // Audio Speech Synthesis
+  // Send Typed Message Fallback
   // -------------------------------------------------------------
-  const playVoice = (text: string, lang: string, onDone?: () => void) => {
-    if (!speakerEnabled) {
-      if (onDone) onDone();
-      return;
-    }
-    speech.stop();
-    setIsAiSpeaking(true);
-    speech.speak(text, {
-      language: lang,
-      volume: 1.0,
-      rate: 0.94,
-      onStart: () => setIsAiSpeaking(true),
-      onEnd: () => {
-        setIsAiSpeaking(false);
-        if (onDone) onDone();
-      },
-      onError: () => {
-        setIsAiSpeaking(false);
-        if (onDone) onDone();
-      }
-    });
+  const handleSendText = async () => {
+    if (!textFallbackInput.trim()) return;
+    const text = textFallbackInput.trim();
+    setTextFallbackInput('');
+    await sendTextMessage(text);
   };
 
   // -------------------------------------------------------------
-  // Microphone Recording & Turn Processing
+  // Focus on Text Input
   // -------------------------------------------------------------
-  const startRecording = async (sidOverride?: string) => {
-    if (isRecording || micMuted) return;
-    const sid = sidOverride || currentCallSid;
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunksRef.current = [];
-
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorderRef.current = recorder;
-
-      recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        stream.getTracks().forEach((track) => track.stop());
-        if (audioBlob.size > 2000) {
-          await processVoiceAudioTurn(audioBlob, sid);
-        }
-      };
-
-      recorder.start();
-      setIsRecording(true);
-    } catch (e) {
-      console.warn('Microphone access note: Using text input mode or web speech fallback');
-      setIsRecording(false);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-  };
-
-  // Process voice audio through backend speech recognition and IVR understanding
-  const processVoiceAudioTurn = async (audioBlob: Blob, sid: string) => {
-    setIsProcessing(true);
-    try {
-      const audioFile = new File([audioBlob], `ivr_${Date.now()}.webm`, { type: 'audio/webm' });
-      const voiceRes = await voiceApi.sendAudioTurn(sid, audioFile, callerPhone);
-
-      const userText = voiceRes.transcription || 'Voice message sent';
-      const userMsg: ChatMessage = {
-        id: `user_${Date.now()}`,
-        sender: 'citizen',
-        text: userText,
-        language: voiceRes.detected_language || 'Auto',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-
-      const aiText = voiceRes.ai_text || voiceRes.ai_spoken || 'Understood.';
-      const aiMsg: ChatMessage = {
-        id: `ai_${Date.now()}`,
-        sender: 'ai',
-        text: aiText,
-        language: voiceRes.detected_language || 'Tamil',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        audioBase64: voiceRes.audio_base64
-      };
-
-      setMessages((prev) => [...prev, userMsg, aiMsg]);
-      setDetectedLanguage(voiceRes.detected_language || 'Tamil');
-
-      if (voiceRes.context) {
-        setCollectionFields(voiceRes.context);
-        if (voiceRes.context.location) {
-          setOsmLocationName(voiceRes.context.location);
-        }
-      }
-
-      if (voiceRes.state === 'CONFIRMING') {
-        setIsConfirmationPending(true);
-      }
-
-      if (voiceRes.complaint_number) {
-        setCreatedComplaintNumber(voiceRes.complaint_number);
-        setSmsSentStatus(true);
-      }
-
-      // Play audio response
-      const spokenText = voiceRes.ai_spoken || voiceRes.ai_text;
-      if (speakerEnabled) {
-        playVoice(spokenText, voiceRes.detected_language || 'Tamil', () => {
-          if (voiceRes.state !== 'COMPLETED') {
-            startRecording(sid);
-          }
-        });
-      }
-    } catch (err: any) {
-      console.error('Audio processing error:', err);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // -------------------------------------------------------------
-  // Send Text Turn (Fallback for Noisy Environment)
-  // -------------------------------------------------------------
-  const handleSendTextMessage = async () => {
-    if (!spokenText.trim() || isProcessing) return;
-
-    const textToSend = spokenText.trim();
-    setSpokenText('');
-    setIsProcessing(true);
-
-    const userMsg: ChatMessage = {
-      id: `user_${Date.now()}`,
-      sender: 'citizen',
-      text: textToSend,
-      language: detectedLanguage,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    setMessages((prev) => [...prev, userMsg]);
-
-    try {
-      const dialogueRes = await ivrApi.dialogueTurn({
-        call_sid: currentCallSid,
-        dialogue_turn: messages.length + 1,
-        caller_phone: callerPhone,
-        user_speech: textToSend,
-        language_preference: 'Auto'
-      });
-
-      const aiText = dialogueRes.ai_spoken_reply || 'Understood.';
-      const aiMsg: ChatMessage = {
-        id: `ai_${Date.now()}`,
-        sender: 'ai',
-        text: aiText,
-        language: dialogueRes.detected_language || 'Tamil',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-      setDetectedLanguage(dialogueRes.detected_language || 'Tamil');
-      setLanguageConfidence(dialogueRes.language_confidence || 0.98);
-
-      if (dialogueRes.collection_state) {
-        setCollectionFields(dialogueRes.collection_state);
-      }
-
-      if (dialogueRes.is_confirmation_pending) {
-        setIsConfirmationPending(true);
-      }
-
-      if (dialogueRes.complaint_number) {
-        setCreatedComplaintNumber(dialogueRes.complaint_number);
-        setAssignedDepartment(dialogueRes.suggested_department || 'Municipal Administration');
-        setSmsSentStatus(true);
-      }
-
-      if (dialogueRes.latitude && dialogueRes.longitude) {
-        setCurrentLatitude(dialogueRes.latitude);
-        setCurrentLongitude(dialogueRes.longitude);
-        setOsmLocationName(dialogueRes.osm_location_name || 'Tamil Nadu');
-      }
-
-      if (speakerEnabled) {
-        playVoice(aiText, dialogueRes.detected_language || 'Tamil', () => {
-          if (!dialogueRes.is_completed) {
-            startRecording(currentCallSid);
-          }
-        });
-      }
-    } catch (e: any) {
-      console.error('Dialogue error:', e);
-    } finally {
-      setIsProcessing(false);
+  const handleFocusTextInput = () => {
+    if (textInputRef.current) {
+      textInputRef.current.focus();
     }
   };
 
@@ -410,19 +178,16 @@ export const TollFreeHelplinePage: React.FC = () => {
     if (callState === 'IDLE') {
       setDialedNumber((prev) => prev + digit);
     } else if (callState === 'CONNECTED') {
-      // In-call DTMF processing
       if (digit === '1') {
         // Digit 1: Quick Confirm
-        setSpokenText('ஆமாம் சரி (Yes, Confirm)');
+        confirmComplaint();
       } else if (digit === '2') {
-        // Digit 2: Edit / Correct
-        setSpokenText('மாற்ற வேண்டும் (Edit Details)');
+        // Digit 2: Edit
+        sendTextMessage('I want to change details / மாற்ற வேண்டும்');
       } else if (digit === '*') {
-        // Digit *: Repeat last prompt
-        if (messages.length > 0) {
-          const lastAi = [...messages].reverse().find((m) => m.sender === 'ai');
-          if (lastAi) playVoice(lastAi.text, lastAi.language);
-        }
+        // Digit *: Repeat last AI reply
+        const lastAi = [...messages].reverse().find((m) => m.sender === 'ai');
+        if (lastAi) playAiSpeech(lastAi.text, lastAi.language);
       } else if (digit === '#') {
         // Digit #: Hang up
         handleHangup();
@@ -430,8 +195,38 @@ export const TollFreeHelplinePage: React.FC = () => {
     }
   };
 
+  // Determine current live status label and color
+  const getLiveStatusDisplay = () => {
+    switch (voiceState) {
+      case 'AI_SPEAKING':
+        return { label: '🔊 AI SPEAKING', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)' };
+      case 'WAITING_FOR_CITIZEN':
+        return { label: '🎤 Your turn — Listening...', color: '#34d399', bg: 'rgba(52, 211, 153, 0.15)' };
+      case 'CITIZEN_SPEAKING':
+        return { label: '🔴 Listening...', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.18)' };
+      case 'PROCESSING_AUDIO':
+        return { label: '🧠 PROCESSING AUDIO', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.15)' };
+      case 'TRANSCRIBING':
+        return { label: '⏳ TRANSCRIBING', color: '#a78bfa', bg: 'rgba(167, 139, 250, 0.15)' };
+      case 'DETECTING_LANGUAGE':
+        return { label: '🌐 DETECTING LANGUAGE', color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)' };
+      case 'UNDERSTANDING':
+        return { label: '⏳ UNDERSTANDING', color: '#818cf8', bg: 'rgba(129, 140, 248, 0.15)' };
+      case 'GENERATING_RESPONSE':
+        return { label: '🧠 RESPONDING', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)' };
+      case 'CONFIRMED':
+        return { label: '✓ COMPLAINT REGISTERED', color: '#34d399', bg: 'rgba(52, 211, 153, 0.2)' };
+      case 'ERROR':
+        return { label: '⚠️ AUDIO NOTICE', color: '#f87171', bg: 'rgba(248, 113, 113, 0.15)' };
+      default:
+        return { label: '⚡ READY', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.1)' };
+    }
+  };
+
+  const currentStatus = getLiveStatusDisplay();
+
   return (
-    <div className="page-container" style={{ maxWidth: '1400px', padding: '1.25rem' }}>
+    <div className="page-container" style={{ maxWidth: '1440px', padding: '1.25rem' }}>
       {/* Top Banner: Official Telephony Helpline Bar */}
       <div
         style={{
@@ -482,11 +277,11 @@ export const TollFreeHelplinePage: React.FC = () => {
                   gap: '0.35rem'
                 }}
               >
-                <Radio size={12} className="animate-pulse" /> SIP TRUNK ACTIVE
+                <Radio size={12} className="animate-pulse" /> TRUE TWO-WAY VOICE ENGINE
               </span>
             </div>
             <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>
-              Real-time telephone IVR simulation supporting Tamil, Tanglish & English • Exotel / Twilio Virtual PBX
+              Hands-Free Continuous Conversation • Automatic Voice Activity Detection (VAD) • Tamil, Tanglish & English
             </p>
           </div>
         </div>
@@ -494,7 +289,7 @@ export const TollFreeHelplinePage: React.FC = () => {
         {/* Quick Telephony Status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.45rem 0.9rem', borderRadius: '10px', fontSize: '0.8rem' }}>
-            <span style={{ color: '#94a3b8' }}>Caller Phone: </span>
+            <span style={{ color: '#94a3b8' }}>Citizen Phone: </span>
             <span style={{ color: '#38bdf8', fontWeight: 700 }}>{callerPhone}</span>
           </div>
           <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.45rem 0.9rem', borderRadius: '10px', fontSize: '0.8rem' }}>
@@ -505,7 +300,7 @@ export const TollFreeHelplinePage: React.FC = () => {
       </div>
 
       {/* Main 2-Column Telephony Simulator Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(360px, 480px) 1fr', gap: '1.5rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(380px, 490px) 1fr', gap: '1.5rem', alignItems: 'start' }}>
         {/* ========================================================= */}
         {/* COLUMN 1: REALISTIC SMARTPHONE IVR DEVICE FRAME */}
         {/* ========================================================= */}
@@ -559,11 +354,10 @@ export const TollFreeHelplinePage: React.FC = () => {
           </div>
 
           {/* ------------------------------------------------------- */}
-          {/* PHONE SCREEN CONTENT: IDLE / DIALER */}
+          {/* PHONE SCREEN: IDLE / DIALER */}
           {/* ------------------------------------------------------- */}
           {callState === 'IDLE' && (
             <div style={{ padding: '1rem 0.5rem' }}>
-              {/* Caller Display */}
               <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                 <div
                   style={{
@@ -595,7 +389,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                   {dialedNumber || '1913'}
                 </div>
                 <p style={{ margin: '0.35rem 0 0', color: '#64748b', fontSize: '0.75rem' }}>
-                  Citizen Calls Free of Cost • 24x7 AI Assistance
+                  Citizen Calls Free • Hands-Free True Two-Way AI Voice
                 </p>
               </div>
 
@@ -679,7 +473,7 @@ export const TollFreeHelplinePage: React.FC = () => {
           )}
 
           {/* ------------------------------------------------------- */}
-          {/* PHONE SCREEN CONTENT: RINGING */}
+          {/* PHONE SCREEN: RINGING */}
           {/* ------------------------------------------------------- */}
           {callState === 'RINGING' && (
             <div style={{ padding: '3rem 1rem', textAlign: 'center' }}>
@@ -728,68 +522,98 @@ export const TollFreeHelplinePage: React.FC = () => {
           )}
 
           {/* ------------------------------------------------------- */}
-          {/* PHONE SCREEN CONTENT: CONNECTED / ACTIVE CALL */}
+          {/* PHONE SCREEN: CONNECTED / ACTIVE TWO-WAY CALL */}
           {/* ------------------------------------------------------- */}
           {callState === 'CONNECTED' && (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '560px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '580px' }}>
               {/* In-Call Header */}
               <div
                 style={{
                   textAlign: 'center',
-                  padding: '0.6rem 0',
+                  padding: '0.5rem 0',
                   borderBottom: '1px solid rgba(255,255,255,0.06)'
                 }}
               >
-                <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 700, letterSpacing: '1px' }}>
-                  ● CALL IN PROGRESS
+                <div style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700, letterSpacing: '1px' }}>
+                  ● 2-WAY VOICE CALL IN PROGRESS
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc', margin: '0.2rem 0' }}>
+                <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc', margin: '0.15rem 0' }}>
                   TN Grievance Cell (1913)
                 </div>
-                <div style={{ fontSize: '0.9rem', color: '#38bdf8', fontWeight: 700, fontFamily: 'monospace' }}>
+                <div style={{ fontSize: '0.85rem', color: '#38bdf8', fontWeight: 700, fontFamily: 'monospace' }}>
                   {formatTimer(callDuration)}
                 </div>
               </div>
 
-              {/* Live Audio Visualizer Bar */}
+              {/* Real-time Dynamic Status Badge */}
               <div
                 style={{
-                  padding: '0.65rem 1rem',
+                  padding: '0.5rem 0.85rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '4px',
-                  background: 'rgba(15, 23, 42, 0.6)',
+                  gap: '6px',
+                  background: currentStatus.bg,
+                  border: `1px solid ${currentStatus.color}40`,
                   borderRadius: '12px',
-                  margin: '0.65rem 0'
+                  margin: '0.5rem 0 0.25rem'
                 }}
               >
-                <div style={{ fontSize: '0.75rem', color: isRecording ? '#ef4444' : isAiSpeaking ? '#38bdf8' : '#94a3b8', fontWeight: 700, marginRight: '0.5rem' }}>
-                  {isRecording ? '🎙️ LISTENING TO CITIZEN' : isAiSpeaking ? '🔊 AGENT SPEAKING' : '⚡ READY'}
-                </div>
-                {[12, 24, 38, 18, 44, 28, 50, 20, 34, 16, 26, 40].map((h, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      width: '3px',
-                      height: (isRecording || isAiSpeaking) ? `${h}px` : '4px',
-                      background: isRecording ? '#ef4444' : isAiSpeaking ? '#38bdf8' : '#475569',
-                      borderRadius: '2px',
-                      transition: 'height 0.15s ease'
-                    }}
-                  />
-                ))}
+                <span style={{ fontSize: '0.78rem', color: currentStatus.color, fontWeight: 800 }}>
+                  {currentStatus.label}
+                </span>
+                {voiceState === 'CITIZEN_SPEAKING' && (
+                  <span className="animate-ping" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
+                )}
               </div>
+
+              {/* Permission / Unconfigured Engine Warning with Fallback Button */}
+              {(isPermissionDenied || !isSpeechRecognitionAvailable || error) && (
+                <div
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    borderRadius: '10px',
+                    padding: '0.5rem 0.75rem',
+                    margin: '0.35rem 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#f87171', fontSize: '0.75rem' }}>
+                    <AlertTriangle size={14} className="flex-shrink-0" />
+                    <span>{error || (isPermissionDenied ? 'Microphone permission is required for voice conversation.' : 'Speech recognition is not configured.')}</span>
+                  </div>
+                  <button
+                    onClick={handleFocusTextInput}
+                    style={{
+                      background: '#0284c7',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '0.25rem 0.6rem',
+                      color: '#fff',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    TYPE INSTEAD
+                  </button>
+                </div>
+              )}
 
               {/* Real-Time Live Transcript Stream */}
               <div
                 style={{
                   flex: 1,
                   overflowY: 'auto',
-                  padding: '0.5rem 0.25rem',
+                  padding: '0.4rem 0.2rem',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.65rem'
+                  gap: '0.55rem'
                 }}
               >
                 {messages.map((m) => (
@@ -821,51 +645,119 @@ export const TollFreeHelplinePage: React.FC = () => {
                   </div>
                 ))}
 
-                {isProcessing && (
-                  <div style={{ alignSelf: 'flex-start', background: '#1e293b', padding: '0.5rem 0.75rem', borderRadius: '12px', fontSize: '0.75rem', color: '#38bdf8' }}>
-                    <span className="animate-pulse">⏳ AI recognizing speech & updating slots...</span>
+                {/* Live speech preview if citizen currently speaking */}
+                {voiceState === 'CITIZEN_SPEAKING' && liveTranscription && (
+                  <div
+                    style={{
+                      alignSelf: 'flex-end',
+                      background: 'rgba(2, 132, 199, 0.3)',
+                      border: '1px dashed #38bdf8',
+                      borderRadius: '12px',
+                      padding: '0.45rem 0.75rem',
+                      fontSize: '0.78rem',
+                      color: '#bae6fd'
+                    }}
+                  >
+                    <span>🎙️ {liveTranscription}</span>
                   </div>
                 )}
+
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Text Input Fallback (for noisy backgrounds) */}
-              <div style={{ display: 'flex', gap: '0.4rem', margin: '0.4rem 0' }}>
+              {/* Confirmation Action Box (When state is CONFIRMING) */}
+              {(voiceState === 'CONFIRMING' || voiceState === 'WAITING_FOR_CITIZEN') && analysis.category && analysis.location && (
+                <div
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    border: '1px solid rgba(245, 158, 11, 0.35)',
+                    borderRadius: '12px',
+                    padding: '0.5rem 0.75rem',
+                    margin: '0.35rem 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <div style={{ fontSize: '0.72rem', color: '#fef08a' }}>
+                    <span>Say <strong>"Yes / ஆமாம்"</strong> or click to confirm</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.35rem' }}>
+                    <button
+                      onClick={confirmComplaint}
+                      style={{
+                        background: '#10b981',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '0.3rem 0.75rem',
+                        color: '#fff',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      <CheckCircle2 size={12} /> Confirm
+                    </button>
+                    <button
+                      onClick={() => sendTextMessage('No, change details')}
+                      style={{
+                        background: '#334155',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '0.3rem 0.6rem',
+                        color: '#cbd5e1',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Change
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Text Input Fallback */}
+              <div style={{ display: 'flex', gap: '0.4rem', margin: '0.35rem 0' }}>
                 <input
+                  ref={textInputRef}
                   type="text"
-                  value={spokenText}
-                  onChange={(e) => setSpokenText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendTextMessage()}
-                  placeholder="Type complaint if noisy..."
+                  value={textFallbackInput}
+                  onChange={(e) => setTextFallbackInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
+                  placeholder="Type message (Tamil / Tanglish / English)..."
                   style={{
                     flex: 1,
                     background: '#1e293b',
                     border: '1px solid #334155',
                     borderRadius: '20px',
-                    padding: '0.5rem 0.85rem',
+                    padding: '0.45rem 0.85rem',
                     color: '#f8fafc',
                     fontSize: '0.8rem',
                     outline: 'none'
                   }}
                 />
                 <button
-                  onClick={handleSendTextMessage}
-                  disabled={!spokenText.trim() || isProcessing}
+                  onClick={handleSendText}
+                  disabled={!textFallbackInput.trim() || voiceState === 'PROCESSING_AUDIO'}
                   style={{
                     background: '#0284c7',
                     border: 'none',
                     borderRadius: '50%',
-                    width: '36px',
-                    height: '36px',
+                    width: '34px',
+                    height: '34px',
                     color: '#fff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: spokenText.trim() ? 'pointer' : 'default',
-                    opacity: spokenText.trim() ? 1 : 0.4
+                    cursor: textFallbackInput.trim() ? 'pointer' : 'default',
+                    opacity: textFallbackInput.trim() ? 1 : 0.4
                   }}
                 >
-                  <Send size={16} />
+                  <Send size={15} />
                 </button>
               </div>
 
@@ -874,8 +766,8 @@ export const TollFreeHelplinePage: React.FC = () => {
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(5, 1fr)',
-                  gap: '0.4rem',
-                  paddingTop: '0.5rem',
+                  gap: '0.35rem',
+                  paddingTop: '0.45rem',
                   borderTop: '1px solid rgba(255,255,255,0.08)'
                 }}
               >
@@ -885,8 +777,8 @@ export const TollFreeHelplinePage: React.FC = () => {
                   style={{
                     background: micMuted ? '#ef4444' : '#1e293b',
                     border: 'none',
-                    borderRadius: '12px',
-                    padding: '0.5rem',
+                    borderRadius: '10px',
+                    padding: '0.45rem',
                     color: '#fff',
                     display: 'flex',
                     flexDirection: 'column',
@@ -896,7 +788,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                     fontSize: '0.65rem'
                   }}
                 >
-                  {micMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                  {micMuted ? <MicOff size={16} /> : <Mic size={16} />}
                   <span>{micMuted ? 'Muted' : 'Mute'}</span>
                 </button>
 
@@ -906,8 +798,8 @@ export const TollFreeHelplinePage: React.FC = () => {
                   style={{
                     background: speakerEnabled ? '#0284c7' : '#1e293b',
                     border: 'none',
-                    borderRadius: '12px',
-                    padding: '0.5rem',
+                    borderRadius: '10px',
+                    padding: '0.45rem',
                     color: '#fff',
                     display: 'flex',
                     flexDirection: 'column',
@@ -917,18 +809,18 @@ export const TollFreeHelplinePage: React.FC = () => {
                     fontSize: '0.65rem'
                   }}
                 >
-                  {speakerEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                  {speakerEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
                   <span>Speaker</span>
                 </button>
 
-                {/* 3. Speak Push-to-Talk */}
+                {/* 3. Speak Push-to-Talk Manual Override */}
                 <button
-                  onClick={isRecording ? stopRecording : () => startRecording(currentCallSid)}
+                  onClick={toggleRecording}
                   style={{
                     background: isRecording ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #10b981, #059669)',
                     border: 'none',
-                    borderRadius: '12px',
-                    padding: '0.5rem',
+                    borderRadius: '10px',
+                    padding: '0.45rem',
                     color: '#fff',
                     display: 'flex',
                     flexDirection: 'column',
@@ -939,7 +831,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                     boxShadow: isRecording ? '0 0 15px rgba(239, 68, 68, 0.6)' : 'none'
                   }}
                 >
-                  <Mic size={18} />
+                  <Mic size={16} />
                   <span>{isRecording ? 'Stop' : 'Speak'}</span>
                 </button>
 
@@ -949,8 +841,8 @@ export const TollFreeHelplinePage: React.FC = () => {
                   style={{
                     background: showInCallKeypad ? '#f59e0b' : '#1e293b',
                     border: 'none',
-                    borderRadius: '12px',
-                    padding: '0.5rem',
+                    borderRadius: '10px',
+                    padding: '0.45rem',
                     color: '#fff',
                     display: 'flex',
                     flexDirection: 'column',
@@ -960,7 +852,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                     fontSize: '0.65rem'
                   }}
                 >
-                  <Hash size={18} />
+                  <Hash size={16} />
                   <span>Keypad</span>
                 </button>
 
@@ -970,8 +862,8 @@ export const TollFreeHelplinePage: React.FC = () => {
                   style={{
                     background: '#ef4444',
                     border: 'none',
-                    borderRadius: '12px',
-                    padding: '0.5rem',
+                    borderRadius: '10px',
+                    padding: '0.45rem',
                     color: '#fff',
                     display: 'flex',
                     flexDirection: 'column',
@@ -981,7 +873,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                     fontSize: '0.65rem'
                   }}
                 >
-                  <PhoneOff size={18} />
+                  <PhoneOff size={16} />
                   <span>End</span>
                 </button>
               </div>
@@ -992,12 +884,12 @@ export const TollFreeHelplinePage: React.FC = () => {
                   style={{
                     background: '#0f172a',
                     border: '1px solid #334155',
-                    borderRadius: '16px',
-                    padding: '0.75rem',
-                    marginTop: '0.5rem',
+                    borderRadius: '14px',
+                    padding: '0.65rem',
+                    marginTop: '0.4rem',
                     display: 'grid',
                     gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: '0.4rem'
+                    gap: '0.35rem'
                   }}
                 >
                   {[
@@ -1013,9 +905,9 @@ export const TollFreeHelplinePage: React.FC = () => {
                         background: '#1e293b',
                         border: '1px solid #475569',
                         borderRadius: '8px',
-                        padding: '0.4rem',
+                        padding: '0.35rem',
                         color: '#f8fafc',
-                        fontSize: '0.7rem',
+                        fontSize: '0.68rem',
                         fontWeight: 700,
                         cursor: 'pointer'
                       }}
@@ -1029,7 +921,7 @@ export const TollFreeHelplinePage: React.FC = () => {
           )}
 
           {/* ------------------------------------------------------- */}
-          {/* PHONE SCREEN CONTENT: ENDED / SUMMARY */}
+          {/* PHONE SCREEN: ENDED / SUMMARY RECEIPT */}
           {/* ------------------------------------------------------- */}
           {callState === 'ENDED' && (
             <div style={{ padding: '1.5rem 0.5rem', textAlign: 'center' }}>
@@ -1038,24 +930,24 @@ export const TollFreeHelplinePage: React.FC = () => {
                   width: '64px',
                   height: '64px',
                   borderRadius: '50%',
-                  background: createdComplaintNumber ? 'linear-gradient(135deg, #10b981, #059669)' : '#ef4444',
+                  background: completedComplaint?.number ? 'linear-gradient(135deg, #10b981, #059669)' : '#ef4444',
                   margin: '0 auto 1rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}
               >
-                {createdComplaintNumber ? <Check size={32} color="#fff" /> : <PhoneOff size={32} color="#fff" />}
+                {completedComplaint?.number ? <Check size={32} color="#fff" /> : <PhoneOff size={32} color="#fff" />}
               </div>
 
               <h3 style={{ margin: '0 0 0.25rem', color: '#f8fafc', fontSize: '1.25rem', fontWeight: 800 }}>
-                {createdComplaintNumber ? 'Grievance Registered!' : 'Call Completed'}
+                {completedComplaint?.number ? 'Grievance Registered!' : 'Call Completed'}
               </h3>
               <p style={{ margin: '0 0 1rem', color: '#94a3b8', fontSize: '0.8rem' }}>
                 Duration: {formatTimer(callDuration)} • Helpline 1913
               </p>
 
-              {createdComplaintNumber && (
+              {completedComplaint?.number && (
                 <div
                   style={{
                     background: 'rgba(16, 185, 129, 0.12)',
@@ -1066,18 +958,18 @@ export const TollFreeHelplinePage: React.FC = () => {
                     textAlign: 'left'
                   }}
                 >
-                  <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 700 }}>COMPLAINT TRACKING ID</div>
+                  <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 700 }}>OFFICIAL TRACKING ID</div>
                   <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc', fontFamily: 'monospace' }}>
-                    {createdComplaintNumber}
+                    {completedComplaint.number}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
-                    Department: <span style={{ color: '#38bdf8' }}>{assignedDepartment || 'Municipal Administration'}</span>
+                    Department: <span style={{ color: '#38bdf8' }}>{completedComplaint.department || analysis.department || 'Municipal Administration'}</span>
                   </div>
                 </div>
               )}
 
-              {/* Virtual SMS Receipt */}
-              {smsSentStatus && (
+              {/* SMS Dispatch Receipt */}
+              {completedComplaint?.number && (
                 <div
                   style={{
                     background: '#1e293b',
@@ -1089,10 +981,10 @@ export const TollFreeHelplinePage: React.FC = () => {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#38bdf8', fontSize: '0.7rem', fontWeight: 700 }}>
-                    <MessageCircle size={14} /> SMS Notification Delivered
+                    <MessageCircle size={14} /> SMS Notification Dispatched
                   </div>
                   <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#cbd5e1' }}>
-                    "TN Gov Grievance #{createdComplaintNumber} registered. Track status at voxentra.gov.in/track"
+                    "TN Gov Grievance #{completedComplaint.number} registered. Track status at voxentra.gov.in/track"
                   </p>
                 </div>
               )}
@@ -1116,9 +1008,9 @@ export const TollFreeHelplinePage: React.FC = () => {
                 >
                   <RotateCcw size={16} /> New Call
                 </button>
-                {createdComplaintNumber && (
+                {completedComplaint?.number && (
                   <Link
-                    to={`/tracking?id=${createdComplaintNumber}`}
+                    to={`/complaints?search=${completedComplaint.number}`}
                     style={{
                       background: '#10b981',
                       border: 'none',
@@ -1142,10 +1034,10 @@ export const TollFreeHelplinePage: React.FC = () => {
         </div>
 
         {/* ========================================================= */}
-        {/* COLUMN 2: REAL-TIME TELEPHONY INTELLIGENCE HUD */}
+        {/* COLUMN 2: REAL-TIME CONVERSATIONAL INTELLIGENCE HUD */}
         {/* ========================================================= */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Card 1: Live Telephony & Speech Intelligence */}
+          {/* Card 1: Live Voice State & Speech Intelligence */}
           <div
             style={{
               background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95))',
@@ -1159,7 +1051,7 @@ export const TollFreeHelplinePage: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <Activity size={20} color="#38bdf8" />
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
-                  Live Telephony & AI Speech Intelligence
+                  Live Conversational Engine State
                 </h3>
               </div>
               <span
@@ -1172,7 +1064,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                   fontWeight: 700
                 }}
               >
-                G.711 / PCM HD Voice
+                FastAPI Unified Voice Backend
               </span>
             </div>
 
@@ -1182,28 +1074,28 @@ export const TollFreeHelplinePage: React.FC = () => {
                 <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#38bdf8', marginTop: '0.2rem' }}>
                   {detectedLanguage}
                 </div>
-                <div style={{ fontSize: '0.65rem', color: '#10b981' }}>Accuracy: {(languageConfidence * 100).toFixed(0)}%</div>
+                <div style={{ fontSize: '0.65rem', color: '#10b981' }}>Auto-Preserved Per Turn</div>
               </div>
 
               <div style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>SIP Call Session ID</div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f8fafc', marginTop: '0.2rem', fontFamily: 'monospace' }}>
-                  {currentCallSid || 'CA_virtual_sip_trunk'}
+                  {sessionId || 'Awaiting connection...'}
                 </div>
-                <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>PSTN Trunk: Exotel / Twilio</div>
+                <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Universal Transport Engine</div>
               </div>
 
               <div style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Urgency & Distress</div>
-                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: urgencyScore > 70 ? '#ef4444' : '#f59e0b', marginTop: '0.2rem' }}>
-                  {urgencyScore}/100 • {distressLevel}
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Current Priority</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: analysis.priority === 'HIGH' || analysis.priority === 'CRITICAL' ? '#ef4444' : '#f59e0b', marginTop: '0.2rem' }}>
+                  {analysis.priority || 'MEDIUM'}
                 </div>
-                <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Multimodal Acoustic Fusion</div>
+                <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Dynamic Slot Fusion</div>
               </div>
             </div>
           </div>
 
-          {/* Card 2: Extracted 10-Point Slot Checklist */}
+          {/* Card 2: Extracted 10-Point Slot Memory HUD */}
           <div
             style={{
               background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95))',
@@ -1217,21 +1109,20 @@ export const TollFreeHelplinePage: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <Shield size={20} color="#10b981" />
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
-                  10-Point Grievance Information HUD
+                  Extracted Conversation Memory (Slots)
                 </h3>
               </div>
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Zero Hallucination Validation</span>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Dynamic Memory Retention</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.65rem' }}>
               {[
-                { label: 'Category / Problem', val: collectionFields.problem || collectionFields.category || collectionFields.problem_description },
-                { label: 'District & Area', val: collectionFields.location || collectionFields.district_area },
-                { label: 'Street / Road', val: collectionFields.street || collectionFields.street_road_name },
-                { label: 'Landmark', val: collectionFields.landmark },
-                { label: 'Duration', val: collectionFields.duration || collectionFields.date_and_time },
-                { label: 'Affected Scope', val: collectionFields.affected_scope || collectionFields.frequency },
-                { label: 'Assigned Department', val: collectionFields.department || assignedDepartment }
+                { label: 'Category', val: analysis.category },
+                { label: 'Problem Description', val: analysis.problem },
+                { label: 'Location / District / Area', val: analysis.location },
+                { label: 'Duration', val: analysis.duration },
+                { label: 'Affected Scope', val: analysis.affected_scope },
+                { label: 'Department', val: analysis.department }
               ].map((slot, idx) => (
                 <div
                   key={idx}
@@ -1246,7 +1137,7 @@ export const TollFreeHelplinePage: React.FC = () => {
                     {slot.val ? '✓ ' : '○ '} {slot.label}
                   </div>
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: slot.val ? '#f8fafc' : '#475569', marginTop: '0.2rem' }}>
-                    {slot.val || 'Awaiting caller response...'}
+                    {slot.val || 'Awaiting citizen speech...'}
                   </div>
                 </div>
               ))}
@@ -1267,19 +1158,19 @@ export const TollFreeHelplinePage: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <MapPin size={20} color="#f59e0b" />
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
-                  OpenStreetMap GIS Location Pin
+                  OpenStreetMap GIS Geolocation Pin
                 </h3>
               </div>
               <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 700 }}>
-                {osmLocationName || 'Tamil Nadu'}
+                {osmLocationName || analysis.location || 'Tamil Nadu'}
               </span>
             </div>
 
-            <div style={{ height: '220px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #334155' }}>
+            <div style={{ height: '230px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #334155' }}>
               <IVRStreetMap
-                latitude={currentLatitude || '11.016844'}
-                longitude={currentLongitude || '76.955833'}
-                locationName={osmLocationName || 'Tamil Nadu'}
+                latitude={latitude || '11.016844'}
+                longitude={longitude || '76.955833'}
+                locationName={osmLocationName || analysis.location || 'Tamil Nadu'}
               />
             </div>
           </div>
