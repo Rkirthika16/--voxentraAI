@@ -11,14 +11,15 @@ ALLOWED_AUDIO_MIME_TYPES = {
     "audio/mpeg", "audio/mp3",
     "audio/mp4", "audio/x-m4a", "audio/m4a",
     "audio/webm", "video/webm",
-    "audio/ogg", "application/ogg",
-    "audio/aac", "audio/flac"
+    "audio/ogg", "application/ogg", "video/ogg",
+    "audio/aac", "audio/flac", "application/octet-stream"
 }
 
 
 def validate_audio_file(file: UploadFile) -> Tuple[str, str]:
     """
     Validates audio file extension and MIME type.
+    Supports browser MediaRecorder codecs (e.g. audio/webm;codecs=opus).
     Returns: (sanitized_filename, extension)
     """
     if not file.filename:
@@ -30,13 +31,14 @@ def validate_audio_file(file: UploadFile) -> Tuple[str, str]:
             f"Unsupported audio format '{ext}'. Allowed formats: {', '.join(ALLOWED_AUDIO_EXTENSIONS)}"
         )
 
-    # Note: browser MediaRecorder sometimes sends video/webm or audio/webm
-    if file.content_type and file.content_type.lower() not in ALLOWED_AUDIO_MIME_TYPES:
-        # If extension is valid but MIME is generic octet-stream, allow with warning
-        if file.content_type.lower() != "application/octet-stream":
+    # Note: browser MediaRecorder sends headers like 'audio/webm;codecs=opus' or 'video/webm'
+    if file.content_type:
+        base_mime = file.content_type.split(";")[0].strip().lower()
+        if base_mime not in ALLOWED_AUDIO_MIME_TYPES and not base_mime.startswith("audio/"):
             raise BadRequestException(f"Unsupported MIME type '{file.content_type}' for audio file")
 
     return file.filename, ext
+
 
 
 def validate_phone(phone: str) -> bool:
