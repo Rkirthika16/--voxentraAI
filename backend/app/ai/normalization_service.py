@@ -135,9 +135,20 @@ def normalize_text(text: str) -> str:
     for pattern, replacement in PHONETIC_NORMALIZATION.items():
         lowered = re.sub(pattern, replacement, lowered, flags=re.IGNORECASE)
 
-    # Collapse multiple whitespaces
-    lowered = re.sub(r"\s+", " ", lowered)
-
     return lowered.strip()
+
+
+class NormalizationService:
+    @staticmethod
+    def clean_transcription(text: str) -> str:
+        return clean_transcription(text)
+
+    @staticmethod
+    def normalize_text(text: str) -> str:
+        return normalize_text(text)
+
+
+normalization_service = NormalizationService()
+
 
 

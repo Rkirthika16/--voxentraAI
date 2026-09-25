@@ -99,3 +99,17 @@ def detect_language(text: str) -> Tuple[str, float]:
         return "English", 0.95
 
     return "English", 0.85
+
+
+class LanguageService:
+    @staticmethod
+    def detect_language(text: str) -> Tuple[str, float]:
+        return detect_language(text)
+
+    @staticmethod
+    def is_tamil_script(text: str) -> bool:
+        return is_tamil_script(text)
+
+
+language_service = LanguageService()
+
