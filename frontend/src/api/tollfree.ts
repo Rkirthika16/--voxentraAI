@@ -76,10 +76,13 @@ export const tollfreeApi = {
     return res.data;
   },
 
-  sendAudio: async (sessionId: string, audioBlob: Blob): Promise<TollFreeTurnResponse> => {
+  sendAudio: async (sessionId: string, audioBlob: Blob, transcriptionHint?: string): Promise<TollFreeTurnResponse> => {
     const formData = new FormData();
     const extension = audioBlob.type.includes('ogg') ? 'ogg' : audioBlob.type.includes('wav') ? 'wav' : 'webm';
     formData.append('audio', audioBlob, `tollfree_recording_${Date.now()}.${extension}`);
+    if (transcriptionHint) {
+      formData.append('transcription_hint', transcriptionHint);
+    }
 
     const res = await apiClient.post(`/tollfree/session/${sessionId}/audio`, formData, {
       headers: {

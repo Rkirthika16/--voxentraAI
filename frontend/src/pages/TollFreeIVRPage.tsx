@@ -240,14 +240,14 @@ export const TollFreeIVRPage: React.FC = () => {
   };
 
   // Send Audio from VoiceRecorder
-  const handleSendAudio = async (audioBlob: Blob) => {
+  const handleSendAudio = async (audioBlob: Blob, transcriptionHint?: string) => {
     if (!sessionId || !callActive || isProcessing) return;
     try {
       setIsProcessing(true);
       setErrorMessage(null);
 
-      const res = await tollfreeApi.sendAudio(sessionId, audioBlob);
-      handleTurnResult(res, 'Voice Utterance');
+      const res = await tollfreeApi.sendAudio(sessionId, audioBlob, transcriptionHint);
+      handleTurnResult(res, transcriptionHint || 'Voice Utterance');
     } catch (err: any) {
       console.error('Audio processing error:', err);
       const msg = err.response?.data?.detail?.message || err.message || 'Speech processing failed. Please repeat.';

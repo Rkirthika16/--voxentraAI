@@ -29,9 +29,49 @@ MAX_AUDIO_SIZE_BYTES = 25 * 1024 * 1024  # 25MB
 MIN_AUDIO_SIZE_BYTES = 200  # 200 bytes
 
 
+def get_ffmpeg_executable() -> Optional[str]:
+    """Finds ffmpeg executable on PATH or in standard Windows installation directories."""
+    # 1. Check current PATH
+    found = shutil.which("ffmpeg")
+    if found:
+        return found
+
+    # 2. Search common Windows package manager paths
+    user_profile = os.environ.get("USERPROFILE", "")
+    local_app_data = os.environ.get("LOCALAPPDATA", "")
+    program_files = os.environ.get("ProgramFiles", "C:\\Program Files")
+    program_data = os.environ.get("ProgramData", "C:\\ProgramData")
+
+    candidate_patterns = [
+        os.path.join(local_app_data, "Microsoft", "WinGet", "Packages"),
+        os.path.join(program_files, "ffmpeg", "bin"),
+        os.path.join(program_data, "chocolatey", "bin"),
+        os.path.join(user_profile, "scoop", "shims"),
+        "C:\\ffmpeg\\bin",
+        "C:\\tools\\ffmpeg\\bin",
+    ]
+
+    for base in candidate_patterns:
+        if not os.path.exists(base):
+            continue
+        if os.path.isfile(os.path.join(base, "ffmpeg.exe")):
+            ffmpeg_path = os.path.join(base, "ffmpeg.exe")
+            # Prepend directory to PATH
+            os.environ["PATH"] = base + os.pathsep + os.environ.get("PATH", "")
+            return ffmpeg_path
+        # Recursively look in WinGet Packages
+        for root, dirs, files in os.walk(base):
+            if "ffmpeg.exe" in files:
+                ffmpeg_path = os.path.join(root, "ffmpeg.exe")
+                os.environ["PATH"] = root + os.pathsep + os.environ.get("PATH", "")
+                return ffmpeg_path
+
+    return None
+
+
 def check_ffmpeg_available() -> bool:
-    """Checks if ffmpeg executable is available on system PATH."""
-    return shutil.which("ffmpeg") is not None
+    """Checks if ffmpeg executable is available on system PATH or known paths."""
+    return get_ffmpeg_executable() is not None
 
 
 def convert_audio_to_16k_mono_wav(
@@ -61,7 +101,8 @@ def convert_audio_to_16k_mono_wav(
         out_fd, output_path = tempfile.mkstemp(suffix="_16k_mono.wav")
         os.close(out_fd)
 
-    if not check_ffmpeg_available():
+    ffmpeg_bin = get_ffmpeg_executable()
+    if not ffmpeg_bin:
         logger.warning("FFmpeg not found on system PATH. Attempting direct file pass-through if already WAV.")
         if input_path.lower().endswith(".wav"):
             shutil.copyfile(input_path, output_path)
@@ -71,7 +112,7 @@ def convert_audio_to_16k_mono_wav(
     try:
         # ffmpeg -y -i <input> -ac 1 -ar 16000 -c:a pcm_s16le <output>
         cmd = [
-            "ffmpeg",
+            ffmpeg_bin,
             "-y",
             "-i", input_path,
             "-ac", "1",

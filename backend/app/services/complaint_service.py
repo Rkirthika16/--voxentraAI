@@ -104,6 +104,21 @@ class ComplaintService:
         priority = complaint_in.priority or ComplaintPriority.MEDIUM
         due_at = self._calculate_due_date(priority)
 
+        # Auto-match registered citizen by phone number if not explicitly authenticated
+        if not citizen_id and complaint_in.ai_metadata:
+            caller_phone = (
+                complaint_in.ai_metadata.get("caller_phone")
+                or complaint_in.ai_metadata.get("sender_phone")
+                or complaint_in.ai_metadata.get("phone")
+            )
+            if caller_phone:
+                clean_phone = str(caller_phone).replace("+91", "").replace("-", "").strip()
+                if len(clean_phone) >= 7:
+                    from app.models.user import User
+                    matched_user = db.query(User).filter(User.phone.like(f"%{clean_phone}%")).first()
+                    if matched_user:
+                        citizen_id = matched_user.id
+
         # Generate meaningful title if omitted
         title = complaint_in.title
         if not title:

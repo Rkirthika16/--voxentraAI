@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database.session import get_db
-from app.models.complaint import ComplaintPriority, ComplaintSource
+from app.models.complaint import ComplaintPriority, ComplaintSource, Complaint
+from app.models.ivr import IVRSession, IVRMessage, IVRState as DB_IVRState
+from app.models.tollfree import TollFreeCallSession, TollFreeMessage
 from app.schemas.complaint import ComplaintCreate
 from app.schemas.ivr import (
     IVRCallInitiateRequest,
@@ -32,6 +34,7 @@ from app.ai.speech_service import speech_service
 from app.ai.conversation_service import conversation_service, ConversationContext
 from app.ai.tts_service import synthesize_speech
 from app.ai import audio_prediction_service
+from app.ai.audio_converter import convert_audio_to_16k_mono_wav
 from app.integrations.telephony.exotel_adapter import exotel_adapter
 from app.integrations.telephony.twilio_adapter import twilio_adapter
 from app.utils.validators import validate_audio_file
@@ -49,6 +52,81 @@ def dispatch_sms_notification(to_phone: str, message: str) -> bool:
     return exotel_adapter.send_sms(to_phone, message)
 
 
+from datetime import datetime, timezone
+from sqlalchemy import desc
+
+def _sync_ivr_session_to_db(
+    db: Session,
+    session_id: str,
+    caller_phone: str,
+    state: str = "WAITING_FOR_CITIZEN",
+    memory: Optional[Dict[str, Any]] = None,
+    complaint_id: Optional[int] = None,
+    complaint_number: Optional[str] = None,
+    ended: bool = False
+) -> IVRSession:
+    """Helper to persist and synchronize IVRSession in SQLite DB."""
+    try:
+        sess = db.query(IVRSession).filter(IVRSession.session_id == session_id).first()
+        if not sess:
+            sess = IVRSession(
+                session_id=session_id,
+                caller_phone=caller_phone,
+                language="Auto",
+                state=state,
+                structured_memory=memory or {},
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc)
+            )
+            db.add(sess)
+        else:
+            sess.state = state
+            sess.updated_at = datetime.now(timezone.utc)
+            if memory:
+                sess.structured_memory = memory
+                sess.category = memory.get("category")
+                sess.problem = memory.get("problem")
+                sess.location = memory.get("location")
+                sess.duration = memory.get("duration")
+                sess.affected_scope = memory.get("affected_scope")
+                sess.severity = memory.get("severity")
+                sess.priority = memory.get("priority", "MEDIUM")
+                sess.department = memory.get("department")
+                sess.citizen_name = memory.get("citizen_name")
+        if complaint_id:
+            sess.complaint_id = complaint_id
+        if complaint_number:
+            sess.complaint_number = complaint_number
+        if ended:
+            sess.ended_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(sess)
+        return sess
+    except Exception as e:
+        logger.error(f"Error syncing IVR session to DB: {e}")
+        db.rollback()
+        return None
+
+
+def _save_ivr_db_message(db: Session, db_session: Optional[IVRSession], role: str, content: str, lang: Optional[str] = None):
+    """Helper to append an IVRMessage turn to the DB session."""
+    if not db_session or not content:
+        return
+    try:
+        msg = IVRMessage(
+            session_id=db_session.id,
+            role=role,
+            content=content,
+            language=lang,
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(msg)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Error saving IVR message to DB: {e}")
+        db.rollback()
+
+
 # -------------------------------------------------------------
 # Unified Two-Way Conversational Voice IVR Session Endpoints
 # -------------------------------------------------------------
@@ -58,7 +136,8 @@ def dispatch_sms_notification(to_phone: str, message: str) -> bool:
 async def create_ivr_conversational_session(
     request: Request,
     session_id: Optional[str] = Query(None),
-    caller_phone: Optional[str] = Query(None)
+    caller_phone: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
 ):
     """
     Initiates a new two-way conversational voice session for the IVR Toll-Free Helpline.
@@ -88,6 +167,9 @@ async def create_ivr_conversational_session(
     ivr_sess = ivr_session_service.get_or_create_session(sid, phone, provider="ivr_helpline")
     ivr_sess.transition_to(IVRState.WAITING_FOR_CITIZEN)
 
+    # Persist session to SQLite DB
+    db_sess = _sync_ivr_session_to_db(db, sid, phone, state="WAITING_FOR_CITIZEN")
+
     # Log incoming call attempt in telephony tracker
     exotel_adapter.handle_incoming_call({
         "CallSid": sid,
@@ -97,6 +179,7 @@ async def create_ivr_conversational_session(
 
     welcome_text = "வணக்கம்! VoxentraAI citizen complaint service-ku welcome. Ungaloda complaint-a sollunga."
     welcome_spoken = ""
+    _save_ivr_db_message(db, db_sess, "ai", welcome_text, "Tamil")
 
     return {
         "session_id": sid,
@@ -135,7 +218,8 @@ async def process_ivr_session_audio(
     db: Session = Depends(get_db)
 ):
     """
-    Receives caller's microphone voice recording, runs Whisper transcription,
+    Receives caller's microphone voice recording, converts audio to 16kHz mono WAV,
+    runs Whisper transcription (with browser speech recognition fallback),
     processes conversational logic, and returns structured analysis and synthesized response voice.
     """
     temp_dir = os.path.join(settings.UPLOAD_DIR, "temp_ivr")
@@ -147,19 +231,31 @@ async def process_ivr_session_audio(
             content = await file.read()
             await f.write(content)
 
-        # 1. Transcribe speech honestly with Whisper
-        stt_result = speech_service.transcribe(temp_path)
+        # Convert audio to 16 kHz Mono WAV using FFmpeg if possible
+        conv_ok, wav_path, _ = convert_audio_to_16k_mono_wav(temp_path)
+        audio_target = wav_path if conv_ok else temp_path
+
+        # 1. Transcribe speech with Whisper / fallback
+        stt_result = speech_service.transcribe(
+            audio_target,
+            transcription_hint=transcription_hint
+        )
         transcription = (stt_result.get("transcription") or "").strip()
 
         # Seamless fallback to browser real-time speech recognition if audio buffer was silent/unclear
         if not transcription and transcription_hint and transcription_hint.strip():
             transcription = transcription_hint.strip()
 
+        ctx = conversation_service.get_or_create_context(session_id, caller_phone)
+
         if not transcription:
-            ctx = conversation_service.get_or_create_context(session_id, caller_phone)
             lang = ctx.language or "Tamil"
             unclear_txt, unclear_spk = conversation_service.get_unclear_response(lang)
             unclear_audio = synthesize_speech(unclear_spk, lang)
+
+            db_sess = _sync_ivr_session_to_db(db, session_id, caller_phone or "+919843098765", state="WAITING_FOR_CITIZEN", memory=ctx.to_dict())
+            _save_ivr_db_message(db, db_sess, "ai", unclear_txt, lang)
+
             return {
                 "session_id": session_id,
                 "transcription": "",
@@ -193,7 +289,18 @@ async def process_ivr_session_audio(
         audio_bytes = synthesize_speech(spoken_text, tts_lang)
         turn_res["audio_base64"] = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
 
-        # Update session service state
+        # Persist dialogue turn to DB
+        db_sess = _sync_ivr_session_to_db(
+            db,
+            session_id,
+            caller_phone or "+919843098765",
+            state=turn_res.get("state", "WAITING_FOR_CITIZEN"),
+            memory=ctx.to_dict()
+        )
+        _save_ivr_db_message(db, db_sess, "citizen", transcription, ctx.language)
+        _save_ivr_db_message(db, db_sess, "ai", spoken_text, ctx.language)
+
+        # Update in-memory session service state
         ivr_sess = ivr_session_service.get_session(session_id)
         if ivr_sess:
             ivr_sess.add_turn(speaker="citizen", text=transcription)
@@ -258,6 +365,18 @@ async def process_ivr_session_message(
     tts_lang = turn_res.get("language") or "Tamil"
     audio_bytes = synthesize_speech(spoken_text, tts_lang)
     turn_res["audio_base64"] = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
+
+    # Persist message turn in DB
+    ctx = conversation_service.get_or_create_context(session_id, phone)
+    db_sess = _sync_ivr_session_to_db(
+        db,
+        session_id,
+        phone,
+        state=turn_res.get("state", "WAITING_FOR_CITIZEN"),
+        memory=ctx.to_dict()
+    )
+    _save_ivr_db_message(db, db_sess, "citizen", raw_message, ctx.language)
+    _save_ivr_db_message(db, db_sess, "ai", spoken_text, ctx.language)
 
     # Update session service state
     ivr_sess = ivr_session_service.get_session(session_id)
@@ -334,6 +453,18 @@ async def confirm_ivr_session(
     ctx.complaint_id = created_comp.id
     ctx.complaint_number = created_comp.complaint_number
 
+    # Sync to DB
+    _sync_ivr_session_to_db(
+        db,
+        session_id,
+        phone,
+        state="COMPLETED",
+        memory=ctx.to_dict(),
+        complaint_id=created_comp.id,
+        complaint_number=created_comp.complaint_number,
+        ended=True
+    )
+
     if ctx.language == "Tamil":
         ai_text = f"உங்கள் புகார் எண் {created_comp.complaint_number} என வெற்றிகரமாக பதிவு செய்யப்பட்டது. நன்றி!"
     elif ctx.language == "Tanglish":
@@ -378,11 +509,12 @@ async def confirm_ivr_session(
 
 
 @router.post("/ivr/session/{session_id}/cancel")
-def cancel_ivr_session(session_id: str):
+def cancel_ivr_session(session_id: str, db: Session = Depends(get_db)):
     """
     Cancels active conversational voice session and clears memory.
     """
     conversation_service.reset_session(session_id)
+    _sync_ivr_session_to_db(db, session_id, "+919843098765", state="CANCELLED", ended=True)
     ivr_sess = ivr_session_service.get_session(session_id)
     if ivr_sess:
         ivr_sess.end_call(IVRState.CANCELLED)
@@ -1117,14 +1249,85 @@ def send_manual_sms(req: ManualSMSRequest):
 
 
 @router.get("/ivr/telephony-logs", response_model=TelephonyLogsResponse)
-def get_telephony_logs(limit: int = Query(50, ge=1, le=100)):
+def get_telephony_logs(
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
     """
-    Returns the real-time ring buffer of recent incoming calls, voice recordings, and SMS dispatches.
+    Returns real-time and persistent call records directly from the database and telephony logs.
     """
-    logs = exotel_adapter.get_logs(limit=limit)
+    db_ivr = db.query(IVRSession).order_by(desc(IVRSession.created_at)).limit(limit).all()
+    db_tf = db.query(TollFreeCallSession).order_by(desc(TollFreeCallSession.created_at)).limit(limit).all()
+    mem_logs = exotel_adapter.get_logs(limit=limit)
+
+    merged_logs: List[TelephonyLogItem] = []
+    seen_ids = set()
+
+    # Memory buffer items
+    for item in mem_logs:
+        log_id = str(item.get("id"))
+        seen_ids.add(log_id)
+        merged_logs.append(TelephonyLogItem(**item))
+
+    # Real DB TollFree Call Sessions
+    for s in db_tf:
+        sid = f"tf_{s.id}"
+        if sid in seen_ids:
+            continue
+        seen_ids.add(sid)
+        mem = s.structured_memory or {}
+        merged_logs.append(
+            TelephonyLogItem(
+                id=sid,
+                timestamp=s.created_at.isoformat() if s.created_at else datetime.now(timezone.utc).isoformat(),
+                event_type="CALL_INBOUND" if not s.complaint_number else "COMPLAINT_REGISTERED",
+                direction="INBOUND",
+                phone=s.caller_phone or "+919843098765",
+                status="COMPLETED" if s.state in ["COMPLETED", "CONFIRMATION"] else s.state,
+                details={
+                    "session_id": s.call_session_id,
+                    "language": s.language,
+                    "category": s.category or mem.get("category") or "Civic",
+                    "problem": s.problem or mem.get("problem") or "Phone Inquiry",
+                    "location": s.location or mem.get("location") or "Tamil Nadu",
+                    "complaint_number": s.complaint_number or "In-Progress",
+                    "state": s.state,
+                    "toll_free_number": s.toll_free_number
+                }
+            )
+        )
+
+    # Real DB IVR Sessions
+    for s in db_ivr:
+        sid = f"ivr_{s.id}"
+        if sid in seen_ids:
+            continue
+        seen_ids.add(sid)
+        mem = s.structured_memory or {}
+        merged_logs.append(
+            TelephonyLogItem(
+                id=sid,
+                timestamp=s.created_at.isoformat() if s.created_at else datetime.now(timezone.utc).isoformat(),
+                event_type="CALL_INBOUND" if not s.complaint_number else "COMPLAINT_REGISTERED",
+                direction="INBOUND",
+                phone=s.caller_phone or "+919843098765",
+                status="COMPLETED" if s.state in ["COMPLETED", "CONFIRMED"] else s.state,
+                details={
+                    "session_id": s.session_id,
+                    "language": s.language,
+                    "category": s.category or mem.get("category") or "Civic",
+                    "problem": s.problem or mem.get("problem") or "Voice Inquiry",
+                    "location": s.location or mem.get("location") or "Tamil Nadu",
+                    "complaint_number": s.complaint_number or "In-Progress",
+                    "state": s.state
+                }
+            )
+        )
+
+    merged_logs.sort(key=lambda x: x.timestamp, reverse=True)
     return TelephonyLogsResponse(
-        total=len(logs),
-        logs=[TelephonyLogItem(**item) for item in logs]
+        total=len(merged_logs[:limit]),
+        logs=merged_logs[:limit]
     )
 
 

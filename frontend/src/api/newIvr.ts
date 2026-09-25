@@ -55,6 +55,7 @@ export interface NewIVRTurnResponse {
   department?: string;
   sms_sent?: boolean;
   unclear?: boolean;
+  transcription?: string;
   error_code?: string;
   message?: string;
 }
@@ -73,10 +74,13 @@ export const newIvrApi = {
     return res.data;
   },
 
-  sendAudio: async (sessionId: string, audioBlob: Blob): Promise<NewIVRTurnResponse> => {
+  sendAudio: async (sessionId: string, audioBlob: Blob, transcriptionHint?: string): Promise<NewIVRTurnResponse> => {
     const formData = new FormData();
     const extension = audioBlob.type.includes('ogg') ? 'ogg' : audioBlob.type.includes('wav') ? 'wav' : 'webm';
     formData.append('audio', audioBlob, `mic_recording_${Date.now()}.${extension}`);
+    if (transcriptionHint) {
+      formData.append('transcription_hint', transcriptionHint);
+    }
 
     const res = await apiClient.post(`/new-ivr/session/${sessionId}/audio`, formData, {
       headers: {

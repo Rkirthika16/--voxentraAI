@@ -50,6 +50,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [ttsMuted, setTtsMuted] = useState<boolean>(false);
   const [textInput, setTextInput] = useState<string>('');
+  const [liveTranscript, setLiveTranscript] = useState<string>('');
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -66,11 +67,13 @@ export const LiveTwoWayIVRPage: React.FC = () => {
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const transcriptRef = useRef<string>('');
 
   // Auto-scroll chat
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isProcessing, isAiSpeaking]);
+  }, [messages, isProcessing, isAiSpeaking, liveTranscript]);
 
   // Call duration timer
   useEffect(() => {
@@ -101,45 +104,51 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       return;
     }
 
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
 
-    // Pick appropriate voice
-    const voices = window.speechSynthesis.getVoices();
-    const tamilVoice = voices.find((v) => v.lang.includes('ta') || v.name.toLowerCase().includes('tamil'));
-    const indianEnglishVoice = voices.find((v) => v.lang.includes('en-IN') || v.name.toLowerCase().includes('india'));
-    const englishVoice = voices.find((v) => v.lang.startsWith('en'));
+      // Pick appropriate voice
+      const voices = window.speechSynthesis.getVoices();
+      const tamilVoice = voices.find((v) => v.lang.includes('ta') || v.name.toLowerCase().includes('tamil'));
+      const indianEnglishVoice = voices.find((v) => v.lang.includes('en-IN') || v.name.toLowerCase().includes('india'));
+      const englishVoice = voices.find((v) => v.lang.startsWith('en'));
 
-    if (lang === 'Tamil' && tamilVoice) {
-      utterance.voice = tamilVoice;
-      utterance.lang = 'ta-IN';
-    } else if (indianEnglishVoice) {
-      utterance.voice = indianEnglishVoice;
-      utterance.lang = 'en-IN';
-    } else if (englishVoice) {
-      utterance.voice = englishVoice;
-      utterance.lang = 'en-US';
+      if (lang === 'Tamil' && tamilVoice) {
+        utterance.voice = tamilVoice;
+        utterance.lang = 'ta-IN';
+      } else if (indianEnglishVoice) {
+        utterance.voice = indianEnglishVoice;
+        utterance.lang = 'en-IN';
+      } else if (englishVoice) {
+        utterance.voice = englishVoice;
+        utterance.lang = 'en-US';
+      }
+
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      setIsAiSpeaking(true);
+      setIvrState('AI_SPEAKING');
+
+      utterance.onend = () => {
+        setIsAiSpeaking(false);
+        setIvrState('WAITING_FOR_CITIZEN');
+        if (onFinish) onFinish();
+      };
+
+      utterance.onerror = () => {
+        setIsAiSpeaking(false);
+        setIvrState('WAITING_FOR_CITIZEN');
+        if (onFinish) onFinish();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      setIsAiSpeaking(false);
+      setIvrState('WAITING_FOR_CITIZEN');
+      if (onFinish) onFinish();
     }
-
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    setIsAiSpeaking(true);
-    setIvrState('AI_SPEAKING');
-
-    utterance.onend = () => {
-      setIsAiSpeaking(false);
-      setIvrState('WAITING_FOR_CITIZEN');
-      if (onFinish) onFinish();
-    };
-
-    utterance.onerror = () => {
-      setIsAiSpeaking(false);
-      setIvrState('WAITING_FOR_CITIZEN');
-      if (onFinish) onFinish();
-    };
-
-    window.speechSynthesis.speak(utterance);
   };
 
   // Start Call Flow
@@ -149,6 +158,8 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       setErrorMessage(null);
       setIsProcessing(true);
       setRegisteredComplaint(null);
+      setLiveTranscript('');
+      transcriptRef.current = '';
 
       const res = await newIvrApi.createSession('+919843098765', 'Auto');
       setSessionId(res.session_id);
@@ -167,8 +178,10 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       setMessages([systemMsg]);
       setIsProcessing(false);
 
-      // Microphone opens immediately for citizen to speak first
-      startRecording();
+      // Microphone activates for citizen to speak
+      setTimeout(() => {
+        startRecording();
+      }, 300);
     } catch (err: any) {
       setIsProcessing(false);
       setErrorCode('BACKEND_UNAVAILABLE');
@@ -193,13 +206,42 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     setIvrState('COMPLETED');
   };
 
-  // Microphone Recording
+  // Microphone Recording with Web Speech Recognition
   const startRecording = async () => {
     if (isRecording || isAiSpeaking) return;
 
     try {
       setErrorCode(null);
       setErrorMessage(null);
+      transcriptRef.current = '';
+      setLiveTranscript('');
+
+      // Initialize Web Speech Recognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = detectedLanguage === 'Tamil' ? 'ta-IN' : detectedLanguage === 'English' ? 'en-IN' : 'ta-IN';
+          recognition.onresult = (e: any) => {
+            let current = '';
+            for (let i = 0; i < e.results.length; i++) {
+              current += e.results[i][0].transcript + ' ';
+            }
+            const trimmed = current.trim();
+            transcriptRef.current = trimmed;
+            setLiveTranscript(trimmed);
+          };
+          recognition.onerror = (e: any) => {
+            console.debug('Speech recognition error/warning:', e);
+          };
+          recognition.start();
+          recognitionRef.current = recognition;
+        } catch (e) {
+          console.debug('Speech recognition start failed:', e);
+        }
+      }
 
       // Supported mime type
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
@@ -228,8 +270,10 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       mediaRecorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        if (audioBlob.size > 200) {
-          submitAudio(audioBlob);
+        const capturedTranscript = transcriptRef.current;
+        setLiveTranscript('');
+        if (audioBlob.size > 100 || capturedTranscript) {
+          submitAudio(audioBlob, capturedTranscript || undefined);
         }
       };
 
@@ -240,11 +284,17 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     } catch (err: any) {
       setIsRecording(false);
       setErrorCode('MICROPHONE_DENIED');
-      setErrorMessage('Microphone access was denied or is unsupported in this browser. Please use text response fallback below.');
+      setErrorMessage('Microphone access was denied or unsupported. You can also use the text input below to interact.');
     }
   };
 
   const stopRecording = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+      recognitionRef.current = null;
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
@@ -252,14 +302,14 @@ export const LiveTwoWayIVRPage: React.FC = () => {
   };
 
   // Submit recorded audio to backend
-  const submitAudio = async (audioBlob: Blob) => {
+  const submitAudio = async (audioBlob: Blob, transcriptionHint?: string) => {
     if (!sessionId) return;
 
     setIsProcessing(true);
     setIvrState('TRANSCRIBING');
 
     try {
-      const res = await newIvrApi.sendAudio(sessionId, audioBlob);
+      const res = await newIvrApi.sendAudio(sessionId, audioBlob, transcriptionHint);
       setIsProcessing(false);
 
       if (!res.success && res.error_code) {
@@ -267,6 +317,17 @@ export const LiveTwoWayIVRPage: React.FC = () => {
         setErrorMessage(res.message || 'Audio processing encountered an issue.');
         return;
       }
+
+      // Add citizen spoken utterance to UI transcript
+      const citizenSpeech = res.transcription || transcriptionHint || 'Voice Utterance';
+      const userMsg: NewIVRMessage = {
+        id: Date.now(),
+        role: 'citizen',
+        content: citizenSpeech,
+        language: res.detected_language || detectedLanguage,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, userMsg]);
 
       handleTurnResponse(res);
     } catch (err: any) {
@@ -276,12 +337,12 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     }
   };
 
-  // Submit typed text fallback
-  const handleSendText = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!textInput.trim() || !sessionId || isProcessing) return;
+  // Submit typed text
+  const handleSendText = async (e?: React.FormEvent, directText?: string) => {
+    if (e) e.preventDefault();
+    const userText = (directText || textInput).trim();
+    if (!userText || !sessionId || isProcessing) return;
 
-    const userText = textInput.trim();
     setTextInput('');
     setIsProcessing(true);
     setIvrState('UNDERSTANDING');
@@ -548,6 +609,14 @@ export const LiveTwoWayIVRPage: React.FC = () => {
               </button>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* Live Speech Recognition Indicator */}
+                {isRecording && (
+                  <div style={{ background: '#fef3c7', border: '1px dashed #f59e0b', borderRadius: '0.65rem', padding: '0.5rem 0.75rem', color: '#92400e', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Mic size={16} className="animate-pulse" style={{ color: '#dc2626' }} />
+                    <span style={{ fontWeight: 600 }}>{liveTranscript ? `Hearing: "${liveTranscript}"` : 'Listening to your microphone... Speak your complaint now.'}</span>
+                  </div>
+                )}
+
                 {/* Voice Action Row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                   {isRecording ? (
@@ -617,8 +686,37 @@ export const LiveTwoWayIVRPage: React.FC = () => {
                   </button>
                 </div>
 
+                {/* Quick Simulation Chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b', marginRight: '0.2rem' }}>Quick test:</span>
+                  {[
+                    { label: '💧 குடிநீர் வரவில்லை', text: 'எங்கள் தெருவில் 3 நாட்களாக குடிநீர் விநியோகம் இல்லை, அண்ணா நகர்' },
+                    { label: '💡 Streetlight Issue', text: 'Street lights are not working on 5th cross street' },
+                    { label: '🗑️ குப்பை தேக்கம்', text: 'குப்பை அள்ளப்படாமல் ரோட்டில் தேங்கியுள்ளது' },
+                    { label: '✅ உறுதி செய்க (Confirm)', text: 'ஆம், என் புகாரை பதிவு செய்யுங்கள்' }
+                  ].map((item, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      disabled={isProcessing}
+                      onClick={() => handleSendText(undefined, item.text)}
+                      style={{
+                        background: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '9999px',
+                        padding: '0.2rem 0.55rem',
+                        fontSize: '0.72rem',
+                        color: '#334155',
+                        cursor: isProcessing ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
                 {/* Text Fallback Row */}
-                <form onSubmit={handleSendText} style={{ display: 'flex', gap: '0.5rem' }}>
+                <form onSubmit={(e) => handleSendText(e)} style={{ display: 'flex', gap: '0.5rem' }}>
                   <input
                     type="text"
                     value={textInput}

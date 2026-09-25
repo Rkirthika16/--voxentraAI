@@ -121,6 +121,7 @@ def get_tollfree_session(
 async def process_tollfree_audio(
     session_id: str,
     audio: UploadFile = File(...),
+    transcription_hint: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     """
@@ -136,6 +137,8 @@ async def process_tollfree_audio(
     try:
         sanitized_name, ext = validate_audio_file(audio)
     except BadRequestException as e:
+        if transcription_hint and transcription_hint.strip():
+            return tollfree_service.process_dialogue_turn(db, session_id, speech_text=transcription_hint.strip())
         return {
             "success": False,
             "error_code": "INVALID_AUDIO",
@@ -151,6 +154,8 @@ async def process_tollfree_audio(
         async with aiofiles.open(input_audio_path, 'wb') as out_f:
             content = await audio.read()
             if len(content) < 200:
+                if transcription_hint and transcription_hint.strip():
+                    return tollfree_service.process_dialogue_turn(db, session_id, speech_text=transcription_hint.strip())
                 return {
                     "success": False,
                     "error_code": EMPTY_AUDIO,
@@ -160,6 +165,8 @@ async def process_tollfree_audio(
             await out_f.write(content)
     except Exception as e:
         logger.error(f"Error saving audio file: {e}")
+        if transcription_hint and transcription_hint.strip():
+            return tollfree_service.process_dialogue_turn(db, session_id, speech_text=transcription_hint.strip())
         return {
             "success": False,
             "error_code": "UPLOAD_FAILED",
@@ -169,41 +176,17 @@ async def process_tollfree_audio(
 
     # Convert audio to 16 kHz Mono WAV using FFmpeg
     conv_ok, wav_path, conv_err = convert_audio_to_16k_mono_wav(input_audio_path)
-    if not conv_ok:
-        if conv_err == FFMPEG_NOT_FOUND:
-            return {
-                "success": False,
-                "error_code": FFMPEG_NOT_FOUND,
-                "message": "FFmpeg is not installed on system PATH. Please use text response fallback.",
-                "state": session.state
-            }
-        return {
-            "success": False,
-            "error_code": conv_err or "AUDIO_CONVERSION_FAILED",
-            "message": "Audio conversion failed. Please try speaking again.",
-            "state": session.state
-        }
+    audio_for_transcription = wav_path if conv_ok else input_audio_path
 
-    # Speech recognition via Whisper
-    avail = speech_service.check_availability()
-    if not avail["available"]:
-        return {
-            "success": False,
-            "error_code": WHISPER_UNAVAILABLE,
-            "message": "Whisper speech engine is not configured locally. Please use text fallback.",
-            "state": session.state
-        }
-
-    transcription_result = speech_service.transcribe(wav_path)
-    if not transcription_result.get("success"):
-        return {
-            "success": False,
-            "error_code": TRANSCRIPTION_FAILED,
-            "message": transcription_result.get("message", "Speech transcription failed. Please try again."),
-            "state": session.state
-        }
+    transcription_result = speech_service.transcribe(
+        audio_for_transcription,
+        transcription_hint=transcription_hint
+    )
 
     transcribed_text = transcription_result.get("transcription", "").strip()
+    if not transcribed_text and transcription_hint and transcription_hint.strip():
+        transcribed_text = transcription_hint.strip()
+
     if not transcribed_text:
         return tollfree_service.process_dialogue_turn(db, session_id, speech_text="")
 

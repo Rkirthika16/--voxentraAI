@@ -224,76 +224,95 @@ class NewIVRService:
 
     def _extract_and_update_memory(self, raw_text: str, cleaned: str, memory: Dict[str, Any]) -> None:
         """
-        Extracts civic entities and updates memory without overwriting existing details
-        unless an explicit correction was stated.
+        Extracts civic entities and updates memory across all 38 Tamil Nadu districts.
         """
         lowered = raw_text.lower()
 
         # 1. Problem & Category Detection
         if not memory.get("problem"):
             cat, dept, cat_conf = classify_complaint(cleaned)
-            if cat != "Other" or any(w in lowered for w in ["water", "thanni", "power", "current", "road", "garbage", "drainage", "light", "குடிநீர்", "மின்சாரம்", "குப்பை", "சாலை", "சாக்கடை"]):
+            if cat != "Other" or any(w in lowered for w in ["water", "thanni", "power", "current", "road", "garbage", "drainage", "light", "குடிநீர்", "மின்சாரம்", "குப்பை", "சாலை", "சாக்கடை", "விளக்கு"]):
                 memory["problem"] = raw_text
                 memory["category"] = cat
                 memory["department"] = CATEGORY_TO_DEPARTMENT.get(cat, dept)
 
-        # 2. Location Detection
+        # 2. Location & Coordinates Detection (across 38 TN Districts)
         loc_name, lat, lon, conf = extract_location(raw_text)
         if loc_name and loc_name != "Tamil Nadu":
             if not memory.get("location"):
                 memory["location"] = loc_name
             elif loc_name.lower() not in memory.get("location", "").lower():
                 memory["location"] = f"{loc_name}, {memory['location']}"
+            if lat and lon:
+                memory["latitude"] = lat
+                memory["longitude"] = lon
+            # Extract district name
+            if "district" in loc_name.lower():
+                m_dist = re.search(r'([A-Za-z\s]+)\s+District', loc_name, re.IGNORECASE)
+                if m_dist:
+                    memory["district"] = m_dist.group(1).strip()
+            elif not memory.get("district"):
+                memory["district"] = loc_name.split(",")[-1].strip()
 
         # Check explicit location patterns (e.g. Gandhipuram, Anna Nagar, Cross Cut Road)
-        street_match = re.search(r'\b([A-Za-z0-9\s]+(?:street|road|salai|theru|cross|avenue|nagar|colony))\b', raw_text, re.IGNORECASE)
+        street_match = re.search(r'\b([A-Za-z0-9\s]+(?:street|road|salai|theru|cross|avenue|nagar|colony|ward|layout))\b', raw_text, re.IGNORECASE)
         if street_match and not memory.get("location"):
             memory["location"] = street_match.group(1).strip()
 
-        # 3. Duration Detection (e.g. "two days", "3 days", "since yesterday", "today morning")
+        # 3. Specific Landmark Detection (e.g. near Bus Stand, opposite Temple, near GH Hospital)
+        landmark_match = re.search(r'(?:near|opposite|behind|next to|beside|அருகே|அருகில்|பக்கத்தில்|எதிரில்|கிட்ட)\s+([A-Za-z0-9\u0B80-\u0BFF\s]{3,35})', raw_text, re.IGNORECASE)
+        if landmark_match and not memory.get("landmark"):
+            cand_landmark = landmark_match.group(1).strip()
+            if len(cand_landmark) >= 3 and cand_landmark.lower() not in ["area", "street", "road", "problem", "thanni"]:
+                memory["landmark"] = cand_landmark
+
+        # 4. Duration Detection (e.g. "two days", "3 days", "since yesterday", "today morning")
         dur_patterns = [
             r'\b(\d+\s*(?:days?|hours?|weeks?|months?)(?:-ah)?)\b',
             r'\b((?:two|three|four|five|six|seven|one)\s*(?:days?|hours?|weeks?)(?:-ah)?)\b',
             r'\b(since\s*(?:yesterday|morning|last\s*week|\d+\s*days?))\b',
             r'\b(yesterday|today\s*morning|last\s*night|netru|inniku|kaalai)\b',
-            r'\b(\d+\s*(?:நாட்களாக|நாளாக|நாளா|வாரமாக))\b',
-            r'\b((?:ரெண்டு|மூணு|நாலு|அஞ்சு|இரண்டு|மூன்று)\s*(?:நாட்களாக|நாளாக|நாளா))\b'
+            r'\b(\d+\s*(?:நாட்களாக|நாளாக|நாளா|வாரமாக|மணி நேரமாக))\b',
+            r'\b((?:ரெண்டு|மூணு|நாலு|அஞ்சு|இரண்டு|மூன்று|ஒரு வாரம்)\s*(?:நாட்களாக|நாளாக|நாளா))\b'
         ]
         for pat in dur_patterns:
             m = re.search(pat, lowered)
-            if m:
+            if m and not memory.get("duration"):
                 memory["duration"] = m.group(0).strip()
                 break
 
-        # 4. Scope / Affected Area (e.g. "whole area", "entire street", "my house only", "full-ah")
-        if any(w in lowered for w in ["full", "full-ah", "fulla", "entire", "whole", "area full", "street full", "எல்லா", "முழுவதும்"]):
-            memory["affected_scope"] = "Entire Area / Street Affected"
+        # 5. Scope / Affected Area (e.g. "whole area", "entire street", "my house only", "full-ah")
+        if any(w in lowered for w in ["full", "full-ah", "fulla", "entire", "whole", "area full", "street full", "எல்லா", "முழுவதும்", "முழு தெரு"]):
+            memory["affected_scope"] = "Entire Locality / Street"
         elif any(w in lowered for w in ["only my house", "veedu mattum", "single house", "எங்கள் வீடு மட்டும்"]):
-            memory["affected_scope"] = "Single House Affected"
+            memory["affected_scope"] = "Single Building / House"
 
-        # 5. Frequency
-        if any(w in lowered for w in ["daily", "every day", "dinamum", "thinamum", "தினமும்"]):
-            memory["frequency"] = "Daily Recurring"
-        elif any(w in lowered for w in ["first time", "mudhal murai", "முதல் முறை"]):
-            memory["frequency"] = "First Time"
+        # 6. Severity & Safety Hazards
+        hazard_keywords = ["danger", "hazard", "sparking", "live wire", "open wire", "pit", "hole", "fire", "smoke", "accident", "emergency", "flood", "stagnant", "smell", "mosquito", "கசிவு", "ஆபத்து", "விபத்து", "தீ", "துர்நாற்றம்", "கொசு"]
+        if any(w in lowered for w in hazard_keywords):
+            if not memory.get("severity"):
+                memory["severity"] = "High Public Safety Concern"
+                memory["priority"] = "HIGH"
 
-        # 6. Citizen Name / Contact
-        phone_match = re.search(r'\b[6-9]\d{9}\b', raw_text)
-        name_match = re.search(r'(?:name\s*is|i\s*am|பெயர்|naan|peyar)\s*([A-Za-z\u0B80-\u0BFF\s]+)', raw_text, re.IGNORECASE)
-        if name_match:
+        # 7. Citizen Name / Identity
+        name_match = re.search(r'(?:name\s*is|i\s*am|my\s*name\s*is|பெயர்|naan|peyar|en\s*peru)\s*([A-Za-z\u0B80-\u0BFF\s]{2,25})', raw_text, re.IGNORECASE)
+        if name_match and not memory.get("citizen_name"):
             cand = name_match.group(1).strip()
-            if cand.lower() not in ["seri", "ok", "problem", "thanni", "water"]:
-                memory["citizen_name"] = cand
+            if cand.lower() not in ["seri", "ok", "problem", "thanni", "water", "anna", "tamil", "english"]:
+                memory["citizen_name"] = cand.title() if cand.isascii() else cand
 
-        # 7. Priority Assessment
+        # 8. Priority Assessment
         if memory.get("problem"):
             prio, _ = assess_priority(memory["problem"], memory.get("category", "General"))
-            memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
+            if memory.get("severity") == "High Public Safety Concern":
+                memory["priority"] = "HIGH"
+            else:
+                memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
 
     def _get_next_missing_slot(self, memory: Dict[str, Any]) -> Optional[str]:
         """
         Determines the next missing information slot to prompt.
-        Ensures AI asks ONE question at a time and avoids re-asking collected info.
+        Ensures AI asks ONE question at a time and gathers rich evidence.
         """
         if not memory.get("problem"):
             return "problem"
@@ -320,20 +339,32 @@ class NewIVRService:
                 text = "Vanakkam! Ungalukku enna civic problem irukku nu describe pannunga."
                 spoken = "Ungaloda problem enna nu sollunga."
             else:
-                text = "Welcome. Could you please describe the civic problem you are facing?"
+                text = "Welcome to VoxentraAI Grievance Helpline. Could you please describe the civic problem you are facing?"
                 spoken = "Please describe the problem you would like to report."
             return text, spoken
 
         if slot == "location":
             if lang == "Tamil":
-                text = "சரி. இந்த பிரச்சினை எந்த பகுதியில் அல்லது தெருவில் உள்ளது?"
-                spoken = "இந்த பிரச்சினை எந்த பகுதியில் அல்லது தெருவில் உள்ளது?"
+                text = "சரி. இந்த பிரச்சினை தமிழ்நாட்டில் எந்த மாவட்டம், தாலுகா அல்லது குறிப்பிட்ட பகுதியில் உள்ளது?"
+                spoken = "இந்த பிரச்சினை எந்த மாவட்டம் அல்லது பகுதியில் உள்ளது?"
             elif lang == "Tanglish":
-                text = f"Okay, indha {cat} problem endha area or street-la irukku?"
+                text = f"Okay, indha {cat} problem Tamil Nadu-la endha district, area or street-la irukku?"
                 spoken = f"Indha problem endha area-la irukku?"
             else:
-                text = f"In which area, street, or locality is this {cat} issue located?"
-                spoken = "In which area or street is this problem located?"
+                text = f"In which District, Taluk, or Locality in Tamil Nadu is this {cat} issue located?"
+                spoken = "In which District or area is this problem located?"
+            return text, spoken
+
+        if slot == "landmark":
+            if lang == "Tamil":
+                text = f"சரி, **{loc}** பகுதியில் அருகிலுள்ள குறிப்பிட்ட அடையாளம் (Landmark), பேருந்து நிறுத்தம், பள்ளி அல்லது கோவில் ஏதேனும் உள்ளதா?"
+                spoken = "அருகிலுள்ள லேண்ட்மார்க் அல்லது அடையாளத்தைக் கூறவும்."
+            elif lang == "Tanglish":
+                text = f"Seri, **{loc}**-la nearby landmark (e.g. Bus stand, School, Temple or Cross street) edhavadhu irukka?"
+                spoken = "Kitta edhavadhu landmark irukka?"
+            else:
+                text = f"Could you provide a specific landmark, nearby building, school, or cross street in **{loc}**?"
+                spoken = "Could you mention a nearby landmark or cross street?"
             return text, spoken
 
         if slot == "duration":
@@ -360,6 +391,30 @@ class NewIVRService:
                 spoken = "Is the entire area affected?"
             return text, spoken
 
+        if slot == "severity":
+            if lang == "Tamil":
+                text = f"இந்தப் பிரச்சினையால் விபத்து அபாயம், சுகாதாரக் கேடு அல்லது உடனடி ஆபத்து ஏதேனும் உள்ளதா?"
+                spoken = "உடனடி ஆபத்து அல்லது விபத்து அபாயம் ஏதேனும் உள்ளதா?"
+            elif lang == "Tanglish":
+                text = f"Indha problem-naala edhavadhu urgent danger, health risk or safety hazard irukka?"
+                spoken = "Edhavadhu urgent danger or hazard irukka?"
+            else:
+                text = f"Is there any urgent public safety hazard, health risk, or danger associated with this issue?"
+                spoken = "Is there any safety hazard or danger involved?"
+            return text, spoken
+
+        if slot == "citizen_name":
+            if lang == "Tamil":
+                text = f"நன்றி. உங்கள் புகார் பதிவிற்காகவும், எஸ்.எம்.எஸ் (SMS) தகவலுக்காகவும் உங்கள் பெயரை கூற முடியுமா?"
+                spoken = "புகார் பதிவிற்காக உங்கள் பெயரைக் கூறவும்."
+            elif lang == "Tanglish":
+                text = f"Romba nandri. Unga complaint registration and SMS update-kaaga unga name sollunga?"
+                spoken = "Unga name enna nu sollunga."
+            else:
+                text = f"Thank you. May I please have your name for official registration and SMS status updates?"
+                spoken = "May I please have your name for official registration?"
+            return text, spoken
+
         return "Could you please provide more details?", "Please provide more details."
 
     def _build_confirmation_summary(self, memory: Dict[str, Any], lang: str) -> Tuple[str, str]:
@@ -370,18 +425,25 @@ class NewIVRService:
         category = memory.get("category", "General")
         dept = memory.get("department") or CATEGORY_TO_DEPARTMENT.get(category, "Municipal Administration")
         location = memory.get("location", "Tamil Nadu")
+        landmark = memory.get("landmark", "Not Specified")
+        district = memory.get("district", "Tamil Nadu")
         duration = memory.get("duration", "Active")
         scope = memory.get("affected_scope", "Affected Locality")
+        severity = memory.get("severity", "Standard Civic Priority")
+        name = memory.get("citizen_name", "Citizen")
 
         if lang == "Tamil":
             text = (
-                f"உங்கள் புகார் விவரங்களை உறுதிப்படுத்துகிறேன்.\n\n"
-                f"பிரச்சினை: {problem}\n"
-                f"துறை: {dept}\n"
-                f"இடம்: {location}\n"
-                f"கால அளவு: {duration}\n"
-                f"பாதிக்கப்பட்ட அளவு: {scope}\n\n"
-                f"இந்த புகாரை பதிவு செய்யலாமா?"
+                f"உங்கள் புகார் விவரங்களை முழுமையாக உறுதிப்படுத்துகிறேன்:\n\n"
+                f"👤 பெயர்: {name}\n"
+                f"⚠️ பிரச்சினை: {problem}\n"
+                f"🏛️ துறை: {dept}\n"
+                f"📍 இடம் & மாவட்டம்: {location}\n"
+                f"🏢 அடையாளம் (Landmark): {landmark}\n"
+                f"⏱️ கால அளவு: {duration}\n"
+                f"🏘️ பரப்பளவு: {scope}\n"
+                f"🚨 அவசர நிலை: {severity}\n\n"
+                f"இந்த புகாரை அதிகாரப்பூர்வமாக பதிவு செய்யலாமா?"
             )
             spoken = (
                 f"உங்கள் புகார் விவரங்களை உறுதிப்படுத்துகிறேன். "
@@ -390,30 +452,36 @@ class NewIVRService:
             )
         elif lang == "Tanglish":
             text = (
-                f"Unga complaint details ah confirm panren.\n\n"
-                f"Problem: {problem}\n"
-                f"Department: {dept}\n"
-                f"Location: {location}\n"
-                f"Duration: {duration}\n"
-                f"Scope: {scope}\n\n"
+                f"Unga complaint details ah confirm panren:\n\n"
+                f"👤 Name: {name}\n"
+                f"⚠️ Problem: {problem}\n"
+                f"🏛️ Department: {dept}\n"
+                f"📍 Location: {location}\n"
+                f"🏢 Landmark: {landmark}\n"
+                f"⏱️ Duration: {duration}\n"
+                f"🏘️ Scope: {scope}\n"
+                f"🚨 Severity: {severity}\n\n"
                 f"Indha details correct-ah irukka? Complaint-ah register pannalaama?"
             )
             spoken = (
                 f"Okay, {location}-la {duration} {problem}. "
-                f"{scope}. Indha complaint-a register pannava?"
+                f"Landmark {landmark}. Indha complaint-a register pannava?"
             )
         else:
             text = (
-                f"Let me confirm your complaint details.\n\n"
-                f"Issue: {problem}\n"
-                f"Department: {dept}\n"
-                f"Location: {location}\n"
-                f"Duration: {duration}\n"
-                f"Scope: {scope}\n\n"
-                f"Shall I register this complaint now?"
+                f"Please confirm your complete complaint summary:\n\n"
+                f"👤 Reporter: {name}\n"
+                f"⚠️ Issue: {problem}\n"
+                f"🏛️ Department: {dept}\n"
+                f"📍 Location & District: {location}\n"
+                f"🏢 Landmark: {landmark}\n"
+                f"⏱️ Duration: {duration}\n"
+                f"🏘️ Scope: {scope}\n"
+                f"🚨 Severity: {severity}\n\n"
+                f"Shall I register this complaint in the state portal now?"
             )
             spoken = (
-                f"Let me confirm: {problem} at {location} for {duration}. "
+                f"Let me confirm: {problem} at {location} near {landmark} for {duration}. "
                 f"Shall I register this complaint now?"
             )
         return text, spoken

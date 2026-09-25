@@ -5,7 +5,7 @@ interface VoiceRecorderProps {
   isAiSpeaking: boolean;
   isProcessing: boolean;
   isCallActive: boolean;
-  onSendAudio: (audioBlob: Blob) => void;
+  onSendAudio: (audioBlob: Blob, transcriptionHint?: string) => void;
   onSendText: (text: string) => void;
   ttsMuted: boolean;
   onToggleMute: () => void;
@@ -30,6 +30,8 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const durationTimerRef = useRef<number | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const transcriptRef = useRef<string>('');
 
   // Stop recording if AI starts speaking or call ends
   useEffect(() => {
@@ -48,6 +50,29 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     if (!isCallActive || isAiSpeaking || isProcessing) return;
     setMicPermissionError(null);
     audioChunksRef.current = [];
+    transcriptRef.current = '';
+
+    // Initialize parallel Web Speech Recognition if supported
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'ta-IN';
+        recognition.onresult = (e: any) => {
+          let current = '';
+          for (let i = 0; i < e.results.length; i++) {
+            current += e.results[i][0].transcript + ' ';
+          }
+          transcriptRef.current = current.trim();
+        };
+        recognition.start();
+        recognitionRef.current = recognition;
+      } catch (e) {
+        // Non-fatal if speech recognition is unavailable
+      }
+    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -83,8 +108,8 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         audioChunksRef.current = [];
         stream.getTracks().forEach((track) => track.stop());
 
-        if (audioBlob.size > 500) {
-          onSendAudio(audioBlob);
+        if (audioBlob.size > 300) {
+          onSendAudio(audioBlob, transcriptRef.current || undefined);
         }
       };
 
@@ -102,6 +127,12 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   };
 
   const stopRecording = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+      recognitionRef.current = null;
+    }
     if (mediaRecorderRef.current && isRecording) {
       if (mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();

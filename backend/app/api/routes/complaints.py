@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, desc
+from sqlalchemy import or_, desc, cast, String
 
 from app.database.session import get_db
 from app.core.dependencies import get_current_user, get_optional_current_user, require_role
@@ -100,7 +100,12 @@ def list_complaints(
 
     # Role-based access partition
     if current_user.role == UserRole.CITIZEN:
-        query = query.filter(Complaint.citizen_id == current_user.id)
+        conditions = [Complaint.citizen_id == current_user.id]
+        if current_user.phone:
+            clean_phone = current_user.phone.replace("+91", "").replace("-", "").strip()
+            if len(clean_phone) >= 7:
+                conditions.append(cast(Complaint.ai_metadata, String).like(f"%{clean_phone}%"))
+        query = query.filter(or_(*conditions))
     elif current_user.role == UserRole.OFFICER:
         if current_user.department_id:
             query = query.filter(
