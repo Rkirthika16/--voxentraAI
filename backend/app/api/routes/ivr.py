@@ -103,6 +103,7 @@ async def process_ivr_session_audio(
     session_id: str,
     file: UploadFile = File(...),
     caller_phone: Optional[str] = Form("+919843098765"),
+    transcription_hint: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     """
@@ -122,41 +123,19 @@ async def process_ivr_session_audio(
         stt_result = speech_service.transcribe(temp_path)
         transcription = (stt_result.get("transcription") or "").strip()
 
-        if not transcription:
-            if not stt_result.get("success") and stt_result.get("status") in ["speech_engine_not_configured", "engine_unavailable"]:
-                ctx = conversation_service.get_or_create_context(session_id, caller_phone)
-                return {
-                    "session_id": session_id,
-                    "transcription": "",
-                    "language": ctx.language,
-                    "analysis": {
-                        "category": ctx.category or "Other",
-                        "location": ctx.location or "",
-                        "problem": ctx.problem or "",
-                        "duration": ctx.duration or "",
-                        "affected_scope": ctx.affected_scope or "",
-                        "severity": ctx.severity or "normal",
-                        "priority": ctx.priority or "MEDIUM",
-                        "department": ctx.department or "Municipal Administration"
-                    },
-                    "response_text": "Speech recognition is not configured. Please type your complaint.",
-                    "ai_spoken": "Speech recognition is not configured. Please type your complaint.",
-                    "audio_base64": None,
-                    "conversation_state": "WAITING_FOR_CITIZEN",
-                    "state": "WAITING_FOR_USER",
-                    "should_continue": True,
-                    "speech_recognition_available": False,
-                    "error": "Speech recognition is not configured."
-                }
+        # Seamless fallback to browser real-time speech recognition if audio buffer was silent/unclear
+        if not transcription and transcription_hint and transcription_hint.strip():
+            transcription = transcription_hint.strip()
 
-            # Unclear speech response
-            unclear_txt, unclear_spk = conversation_service.get_unclear_response("Tamil")
-            unclear_audio = synthesize_speech(unclear_spk, "Tamil")
+        if not transcription:
             ctx = conversation_service.get_or_create_context(session_id, caller_phone)
+            lang = ctx.language or "Tamil"
+            unclear_txt, unclear_spk = conversation_service.get_unclear_response(lang)
+            unclear_audio = synthesize_speech(unclear_spk, lang)
             return {
                 "session_id": session_id,
                 "transcription": "",
-                "language": ctx.language,
+                "language": lang,
                 "analysis": {
                     "category": ctx.category or "Other",
                     "location": ctx.location or "",

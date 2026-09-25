@@ -119,10 +119,13 @@ export const ivrApi = {
   /**
    * Sends caller microphone audio turn to unified conversational engine.
    */
-  sendAudioTurn: async (sessionId: string, audioBlob: Blob, callerPhone = '+919843098765'): Promise<any> => {
+  sendAudioTurn: async (sessionId: string, audioBlob: Blob, callerPhone = '+919843098765', transcriptionHint?: string): Promise<any> => {
     const formData = new FormData();
     formData.append('file', audioBlob, 'turn_audio.wav');
     formData.append('caller_phone', callerPhone);
+    if (transcriptionHint) {
+      formData.append('transcription_hint', transcriptionHint);
+    }
 
     const res = await apiClient.post(`/ivr/session/${sessionId}/audio`, formData, {
       headers: {

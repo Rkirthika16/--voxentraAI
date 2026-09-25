@@ -67,6 +67,7 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
   const isAiSpeakingRef = useRef<boolean>(false);
   const isHandsFreeActiveRef = useRef<boolean>(false);
   const sessionIdRef = useRef<string>('');
+  const liveTranscriptionRef = useRef<string>('');
 
   // Keep refs in sync
   useEffect(() => {
@@ -128,6 +129,7 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
     setIsPermissionDenied(false);
     setMessages([]);
     setLiveTranscription('');
+    liveTranscriptionRef.current = '';
     setNormalizedTranscription('');
     setCompletedComplaint(null);
     setVoiceState('PROCESSING');
@@ -261,6 +263,7 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
 
     setError(null);
     setLiveTranscription('');
+    liveTranscriptionRef.current = '';
     setVoiceState('WAITING_FOR_CITIZEN');
 
     try {
@@ -309,14 +312,16 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
       mediaRecorder.start(200);
       setIsRecording(true);
 
-      // 4. Set up Web Speech Recognition for live visual feedback
+      // 4. Set up Web Speech Recognition for live visual feedback & fallback transcription
       if (speech.isSTTSupported()) {
         try {
+          const sttLang = detectedLanguage === 'English' ? 'en-IN' : (detectedLanguage === 'Hindi' ? 'hi-IN' : 'ta-IN');
           const rec = speech.createRecognition(
-            'en-IN' as any,
+            sttLang as any,
             (transcript, isFinal) => {
               if (!isAiSpeakingRef.current) {
                 setLiveTranscription(transcript);
+                liveTranscriptionRef.current = transcript;
                 if (transcript && !isSpeakingRef.current) {
                   isSpeakingRef.current = true;
                   setVoiceState('CITIZEN_SPEAKING');
@@ -444,7 +449,7 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
       const audioBlob = audioChunksRef.current.length > 0
         ? new Blob(audioChunksRef.current, { type: 'audio/wav' })
         : null;
-      const textFallback = liveTranscription.trim();
+      const textFallback = (liveTranscriptionRef.current || liveTranscription || '').trim();
 
       const currentSid = sessionIdRef.current;
       if (!currentSid) {
@@ -452,9 +457,9 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
         return;
       }
 
-      // Add citizen turn message bubble to live chat
+      const turnCitId = `cit_${Date.now()}`;
       const citizenMsg: MessageItem = {
-        id: `cit_${Date.now()}`,
+        id: turnCitId,
         sender: 'citizen',
         text: textFallback || '🎤 [Spoken Voice Turn]',
         language: detectedLanguage,
@@ -468,8 +473,8 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
 
         if (audioBlob && audioBlob.size > 800) {
           res = mode === 'ivr'
-            ? await ivrApi.sendAudioTurn(currentSid, audioBlob, callerPhone)
-            : await voiceApi.sendAudioTurn(currentSid, audioBlob, callerPhone);
+            ? await ivrApi.sendAudioTurn(currentSid, audioBlob, callerPhone, textFallback)
+            : await voiceApi.sendAudioTurn(currentSid, audioBlob, callerPhone, textFallback);
         } else if (textFallback) {
           res = mode === 'ivr'
             ? await ivrApi.sendMessageTurn(currentSid, textFallback, callerPhone)
@@ -479,6 +484,17 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
           setVoiceState('WAITING_FOR_CITIZEN');
           armCitizenMicrophone();
           return;
+        }
+
+        // Update citizen message bubble text with exact transcription from backend
+        if (res.transcription && res.transcription.trim()) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === turnCitId
+                ? { ...m, text: res.transcription, language: res.language || res.detected_language || m.language }
+                : m
+            )
+          );
         }
 
         setVoiceState('UNDERSTANDING');

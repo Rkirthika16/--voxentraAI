@@ -39,11 +39,15 @@ export const voiceApi = {
   sendAudioTurn: async (
     sessionId: string,
     audioBlob: Blob,
-    callerPhone = '+919843098765'
+    callerPhone = '+919843098765',
+    transcriptionHint?: string
   ): Promise<VoiceSessionResponse> => {
     const formData = new FormData();
     formData.append('file', audioBlob, 'turn_audio.wav');
     formData.append('caller_phone', callerPhone);
+    if (transcriptionHint) {
+      formData.append('transcription_hint', transcriptionHint);
+    }
 
     const res = await apiClient.post<VoiceSessionResponse>(`/voice/session/${sessionId}/audio`, formData, {
       headers: {
