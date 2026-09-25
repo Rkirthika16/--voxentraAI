@@ -684,7 +684,7 @@ class ConversationService:
             return self._build_turn_response(ctx, "WAITING_FOR_USER", unclear_txt, unclear_spk)
 
         # Dynamically detect language from this turn and adapt
-        turn_lang, conf = detect_language(ctx.original_transcription)
+        turn_lang, conf = detect_language(ctx.original_transcription, current_session_lang=ctx.language)
         ctx.language = turn_lang
 
         # 0. Check if session has a pending slot confirmation (e.g. confirming misheard word or location candidate)

@@ -309,7 +309,7 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
       // 4. Set up Web Speech Recognition for live visual feedback & fallback transcription
       if (speech.isSTTSupported()) {
         try {
-          const sttLang = detectedLanguage === 'English' ? 'en-IN' : (detectedLanguage === 'Hindi' ? 'hi-IN' : 'ta-IN');
+          const sttLang = detectedLanguage === 'Tamil' ? 'ta-IN' : (detectedLanguage === 'Hindi' ? 'hi-IN' : 'en-IN');
           const rec = speech.createRecognition(
             sttLang as any,
             (transcript, isFinal) => {
