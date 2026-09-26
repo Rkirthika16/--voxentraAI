@@ -65,6 +65,14 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     smsSent?: boolean;
   } | null>(null);
 
+  // Dynamic Suggestion & Clarification Options
+  const [currentOptions, setCurrentOptions] = useState<Array<{ label: string; text: string }>>([
+    { label: '💧 குடிநீர் வரவில்லை', text: 'எங்கள் பகுதியில் குடிநீர் விநியோகம் தடைப்பட்டுள்ளது' },
+    { label: '⚡ மின் தடை & தீப்பொறி', text: 'மின்சாரம் தடைப்பட்டுள்ளது, கம்பத்தில் தீப்பொறி' },
+    { label: '🛣️ சாலை பள்ளங்கள்', text: 'சாலையில் பெரிய பள்ளங்கள் உள்ளன' },
+    { label: '🗑️ குப்பை தேக்கம்', text: 'குப்பை அள்ளப்படாமல் ரோட்டில் தேங்கியுள்ளது' },
+  ]);
+
   // References
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -369,6 +377,9 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     }
     if (res.max_questions !== undefined) {
       setMaxQuestions(res.max_questions);
+    }
+    if (res.options && Array.isArray(res.options) && res.options.length > 0) {
+      setCurrentOptions(res.options);
     }
 
     // Append AI Response
@@ -705,34 +716,104 @@ export const LiveTwoWayIVRPage: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Quick Simulation Chips */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b', marginRight: '0.2rem' }}>Quick test:</span>
-                  {[
-                    { label: '💧 குடிநீர் வரவில்லை', text: 'எங்கள் தெருவில் 3 நாட்களாக குடிநீர் விநியோகம் இல்லை, அண்ணா நகர்' },
-                    { label: '💡 Streetlight Issue', text: 'Street lights are not working on 5th cross street' },
-                    { label: '🗑️ குப்பை தேக்கம்', text: 'குப்பை அள்ளப்படாமல் ரோட்டில் தேங்கியுள்ளது' },
-                    { label: '✅ உறுதி செய்க (Confirm)', text: 'ஆம், என் புகாரை பதிவு செய்யுங்கள்' }
-                  ].map((item, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      disabled={isProcessing}
-                      onClick={() => handleSendText(undefined, item.text)}
-                      style={{
-                        background: '#f8fafc',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '9999px',
-                        padding: '0.2rem 0.55rem',
-                        fontSize: '0.72rem',
-                        color: '#334155',
-                        cursor: isProcessing ? 'not-allowed' : 'pointer',
-                      }}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
+                {/* Confirmation Action Banner when in CONFIRMATION state */}
+                {(ivrState === 'CONFIRMATION' || ivrState === 'CONFIRMING') && (
+                  <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '0.75rem', padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#166534', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <CheckCircle2 size={16} color="#16a34a" /> Please Confirm Your Grievance Details
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        disabled={isProcessing}
+                        onClick={handleConfirm}
+                        style={{
+                          flex: 1,
+                          minWidth: '160px',
+                          padding: '0.65rem 1rem',
+                          background: '#16a34a',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '0.5rem',
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          cursor: isProcessing ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.4rem',
+                          boxShadow: '0 2px 4px rgba(22,163,74,0.2)',
+                        }}
+                      >
+                        <CheckCircle2 size={16} /> ✅ ஆம், பதிவு செய் (Confirm)
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isProcessing}
+                        onClick={handleCancel}
+                        style={{
+                          flex: 1,
+                          minWidth: '140px',
+                          padding: '0.65rem 1rem',
+                          background: '#f8fafc',
+                          color: '#b91c1c',
+                          border: '1px solid #fca5a5',
+                          borderRadius: '0.5rem',
+                          fontWeight: 600,
+                          fontSize: '0.85rem',
+                          cursor: isProcessing ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.4rem',
+                        }}
+                      >
+                        ✏️ விவரங்களை மாற்று (Edit)
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Dynamic Contextual Clarification & Suggestion Chips */}
+                {currentOptions.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Sparkles size={12} color="#2563eb" /> Clarify / Quick Options:
+                    </span>
+                    {currentOptions.map((item, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        disabled={isProcessing}
+                        onClick={() => handleSendText(undefined, item.text)}
+                        style={{
+                          background: '#f8fafc',
+                          border: '1px solid #bfdbfe',
+                          borderRadius: '9999px',
+                          padding: '0.25rem 0.65rem',
+                          fontSize: '0.75rem',
+                          color: '#1e40af',
+                          fontWeight: 500,
+                          cursor: isProcessing ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.15s ease',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#dbeafe';
+                          e.currentTarget.style.borderColor = '#93c5fd';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#f8fafc';
+                          e.currentTarget.style.borderColor = '#bfdbfe';
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Text Fallback Row */}
                 <form onSubmit={(e) => handleSendText(e)} style={{ display: 'flex', gap: '0.5rem' }}>

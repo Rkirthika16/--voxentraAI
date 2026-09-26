@@ -56,8 +56,8 @@ export interface NewIVRTurnResponse {
   complaint_number?: string;
   department?: string;
   sms_sent?: boolean;
-  unclear?: boolean;
   transcription?: string;
+  options?: Array<{ label: string; text: string }>;
   error_code?: string;
   message?: string;
 }

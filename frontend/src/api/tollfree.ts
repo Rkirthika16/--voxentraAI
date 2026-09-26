@@ -58,6 +58,7 @@ export interface TollFreeTurnResponse {
   department?: string;
   sms_sent?: boolean;
   unclear?: boolean;
+  options?: Array<{ label: string; text: string }>;
   error_code?: string;
   message?: string;
 }
