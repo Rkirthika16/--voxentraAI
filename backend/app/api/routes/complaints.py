@@ -172,6 +172,7 @@ def create_complaint(
     return _to_complaint_response(complaint)
 
 
+@router.get("/track/{complaint_identifier}", response_model=ComplaintDetailResponse)
 @router.get("/{complaint_identifier}", response_model=ComplaintDetailResponse)
 def get_complaint_details(
     complaint_identifier: str,

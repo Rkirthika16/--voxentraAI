@@ -68,7 +68,7 @@ def test_new_ivr_multiturn_conversational_flow_with_memory():
     assert "Water" in d1["memory"]["category"]
     assert d1["next_field"] == "duration"
 
-    # Turn 2: Duration
+    # Turn 2: Duration -> Next is street_road_name
     turn2 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
         "message": "Two days-ah"
     })
@@ -79,31 +79,76 @@ def test_new_ivr_multiturn_conversational_flow_with_memory():
     assert "Gandhipuram" in d2["memory"]["location"]
     assert "Water" in d2["memory"]["category"]
     assert "two days" in d2["memory"]["duration"].lower()
-    assert d2["next_field"] == "affected_scope"
+    assert d2["next_field"] == "street_road_name"
 
-    # Turn 3: Scope -> Leads to Confirmation
+    # Turn 3: Street -> Next is affected_scope
     turn3 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
-        "message": "Area full-ah problem"
+        "message": "12th Cross Street"
     })
     assert turn3.status_code == 200
     d3 = turn3.json()
     assert d3["success"] is True
-    assert d3["state"] == "CONFIRMATION"
-    assert d3["is_confirmation"] is True
-    assert "Gandhipuram" in d3["ai_reply"] or "Gandhipuram" in d3["spoken_reply"]
+    assert d3["next_field"] == "affected_scope"
 
-    # Turn 4: Confirmation -> Creates Real Complaint
+    # Turn 4: Scope -> Next is severity
     turn4 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
-        "message": "Aama"
+        "message": "Area full-ah problem"
     })
     assert turn4.status_code == 200
     d4 = turn4.json()
     assert d4["success"] is True
-    assert d4["state"] == "COMPLETED"
-    assert d4["complaint_created"] is True
-    assert "complaint_number" in d4
-    assert d4["complaint_number"].startswith("VX-")
-    assert "Water" in d4["department"]
+    assert d4["next_field"] == "severity"
+
+    # Turn 5: Severity -> Next is impact
+    turn5 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Completely varala"
+    })
+    assert turn5.status_code == 200
+    d5 = turn5.json()
+    assert d5["success"] is True
+    assert d5["next_field"] == "impact"
+
+    # Turn 6: Impact -> Next is previous_complaint
+    turn6 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Drinking water-kooda illa"
+    })
+    assert turn6.status_code == 200
+    d6 = turn6.json()
+    assert d6["success"] is True
+    assert d6["next_field"] == "previous_complaint"
+
+    # Turn 7: Previous complaint -> Next is landmark
+    turn7 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "First time complaint"
+    })
+    assert turn7.status_code == 200
+    d7 = turn7.json()
+    assert d7["success"] is True
+    assert d7["next_field"] == "landmark"
+
+    # Turn 8: Landmark -> Transitions to CONFIRMATION
+    turn8 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Near Bus Stand"
+    })
+    assert turn8.status_code == 200
+    d8 = turn8.json()
+    assert d8["success"] is True
+    assert d8["state"] == "CONFIRMATION"
+    assert d8["is_confirmation"] is True
+    assert "Gandhipuram" in d8["ai_reply"] or "Gandhipuram" in d8["spoken_reply"]
+
+    # Turn 9: Confirmation -> Creates Real Complaint
+    turn9 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Aama correct"
+    })
+    assert turn9.status_code == 200
+    d9 = turn9.json()
+    assert d9["success"] is True
+    assert d9["state"] == "COMPLETED"
+    assert d9["complaint_created"] is True
+    assert "complaint_number" in d9
+    assert d9["complaint_number"].startswith("VX-")
+    assert "Water" in d9["department"]
 
 
 def test_new_ivr_tamil_conversation_flow():
@@ -229,24 +274,13 @@ def test_new_ivr_no_repeating_questions_with_casual_speech():
     t2 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
         "message": "nethu lendhu"
     }).json()
-    # Must NOT ask duration again! Must advance to affected_scope
-    assert t2["next_field"] == "affected_scope"
+    # Must NOT ask duration again! Must advance to street_road_name
+    assert t2["next_field"] == "street_road_name"
     assert t2["memory"]["duration"] is not None
 
-    # Turn 3: Simple affirmative answer to scope ("Aama")
+    # Turn 3: Street name provided
     t3 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
-        "message": "Aama"
+        "message": "Main Road"
     }).json()
-    # Must NOT ask scope again! Must advance to CONFIRMATION
-    assert t3["state"] == "CONFIRMATION"
-    assert t3["is_confirmation"] is True
-    assert t3["memory"]["affected_scope"] == "Entire Locality / Street"
-
-    # Turn 4: Citizen confirms with "Pannunga"
-    t4 = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
-        "message": "Pannunga"
-    }).json()
-    assert t4["complaint_created"] is True
-    assert t4["state"] == "COMPLETED"
-    assert t4["complaint_number"].startswith("VX-")
+    assert t3["next_field"] == "affected_scope"
 

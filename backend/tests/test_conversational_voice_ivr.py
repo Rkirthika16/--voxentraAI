@@ -54,33 +54,71 @@ def test_conversational_ivr_e2e_tanglish_water_flow(client: TestClient, db_sessi
     assert "Gandhipuram" in t2["memory"]["location"]
     assert "Water" in t2["memory"]["category"]
     assert "2 days" in t2["memory"]["duration"].lower() or "two days" in t2["memory"]["duration"].lower()
-    assert t2["next_field"] == "affected_scope"
+    assert t2["next_field"] == "street_road_name"
 
-    # 4. Turn 3: Citizen provides affected scope -> triggers confirmation summary
+    # 4. Turn 3: Street
     turn3_res = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
-        "message": "Area full-ah problem."
+        "message": "12th Cross Street"
     })
     assert turn3_res.status_code == 200
     t3 = turn3_res.json()
-    assert t3["success"] is True
-    assert t3["state"] == "CONFIRMATION"
-    assert t3["is_confirmation"] is True
-    assert "Gandhipuram" in t3["ai_reply"] or "Gandhipuram" in t3["spoken_reply"]
-    assert "water" in t3["ai_reply"].lower() or "தண்ணீர்" in t3["ai_reply"] or "complaint" in t3["ai_reply"].lower() or "புகார்" in t3["ai_reply"]
+    assert t3["next_field"] == "affected_scope"
 
-    # 5. Turn 4: Citizen confirms registration
+    # 5. Turn 4: Scope
     turn4_res = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
-        "message": "Aama correct, register pannunga."
+        "message": "Area full-ah problem."
     })
     assert turn4_res.status_code == 200
     t4 = turn4_res.json()
-    assert t4["success"] is True
-    assert t4["state"] == "COMPLETED"
-    assert t4["complaint_created"] is True
-    assert "complaint_number" in t4
-    complaint_no = t4["complaint_number"]
+    assert t4["next_field"] == "severity"
+
+    # 6. Turn 5: Severity
+    turn5_res = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Completely varala"
+    })
+    assert turn5_res.status_code == 200
+    t5 = turn5_res.json()
+    assert t5["next_field"] == "impact"
+
+    # 7. Turn 6: Impact
+    turn6_res = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Drinking water-kooda illa"
+    })
+    assert turn6_res.status_code == 200
+    t6 = turn6_res.json()
+    assert t6["next_field"] == "previous_complaint"
+
+    # 8. Turn 7: Previous complaint
+    turn7_res = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "First time complaint"
+    })
+    assert turn7_res.status_code == 200
+    t7 = turn7_res.json()
+    assert t7["next_field"] == "landmark"
+
+    # 9. Turn 8: Landmark -> triggers confirmation summary
+    turn8_res = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Near Bus Stand"
+    })
+    assert turn8_res.status_code == 200
+    t8 = turn8_res.json()
+    assert t8["state"] == "CONFIRMATION"
+    assert t8["is_confirmation"] is True
+    assert "Gandhipuram" in t8["ai_reply"] or "Gandhipuram" in t8["spoken_reply"]
+
+    # 10. Turn 9: Citizen confirms registration
+    turn9_res = client.post(f"/api/v1/new-ivr/session/{session_id}/message", json={
+        "message": "Aama correct, register pannunga."
+    })
+    assert turn9_res.status_code == 200
+    t9 = turn9_res.json()
+    assert t9["success"] is True
+    assert t9["state"] == "COMPLETED"
+    assert t9["complaint_created"] is True
+    assert "complaint_number" in t9
+    complaint_no = t9["complaint_number"]
     assert complaint_no.startswith("VX-")
-    assert "Water" in t4["department"]
+    assert "Water" in t9["department"]
 
     # 6. Verify real persistence in DB
     complaint = db_session.query(Complaint).filter(Complaint.complaint_number == complaint_no).first()
