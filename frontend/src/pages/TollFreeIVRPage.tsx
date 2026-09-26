@@ -126,11 +126,8 @@ export const TollFreeIVRPage: React.FC = () => {
     }
   };
 
-  // Selected AI Language Preference (Default: Tamil)
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('Tamil');
-
-  // Start Call Session
-  const handleStartCall = async (langChoice?: string) => {
+  // Start Call Session (Auto Language Detection - Citizen speaks first)
+  const handleStartCall = async () => {
     try {
       setErrorMessage(null);
       setIsProcessing(true);
@@ -149,18 +146,17 @@ export const TollFreeIVRPage: React.FC = () => {
         citizen_name: null,
       });
 
-      const chosenLang = langChoice || selectedLanguage || 'Tamil';
-      const data = await tollfreeApi.createSession(callerPhone, tollFreeNumber, chosenLang);
+      const data = await tollfreeApi.createSession(callerPhone, tollFreeNumber, 'Auto');
       setSessionId(data.session_id);
       setIvrState(data.state || 'WAITING_FOR_CITIZEN');
-      setDetectedLanguage(data.language || chosenLang);
+      setDetectedLanguage('Auto-Detecting...');
       setCallActive(true);
 
       const systemBannerMsg: TollFreeMessage = {
         id: Date.now(),
         role: 'system',
-        content: `📞 Call Connected. Language: ${chosenLang}. Citizen speaks first — please describe your complaint in Tamil, Tanglish, or English.`,
-        language: chosenLang,
+        content: `📞 Toll-Free Call Connected. Citizen speaks first — please speak your grievance in Tamil (தமிழ்), Tanglish, or English. AI will automatically detect your language and respond.`,
+        language: 'Auto',
         created_at: new Date().toISOString(),
       };
       setMessages([systemBannerMsg]);
@@ -303,41 +299,25 @@ export const TollFreeIVRPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      {/* Language Preference Control Bar */}
-      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.85rem', padding: '0.75rem 1.25rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '1.1rem' }}>🗣️</span>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>Select AI Voice Language:</span>
+      {/* Dynamic Auto-Language Detection Indicator */}
+      <div style={{ background: 'linear-gradient(90deg, #eff6ff 0%, #f0fdf4 100%)', border: '1px solid #bfdbfe', borderRadius: '0.85rem', padding: '0.75rem 1.25rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div style={{ background: '#2563eb', color: '#ffffff', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span>🌐</span>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#1e293b' }}>
+              Dynamic AI Language Recognition
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              Citizen speaks first in <strong>தமிழ் (Tamil)</strong>, <strong>Tanglish</strong>, or <strong>English</strong> • AI auto-detects language and conducts 10-point grievance intake.
+            </div>
+          </div>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
-          {[
-            { id: 'Tamil', label: '🇮🇳 தமிழ் (Tamil - Default)' },
-            { id: 'Tanglish', label: '🗣️ Tanglish' },
-            { id: 'English', label: '🌐 English' },
-            { id: 'Auto', label: '✨ Auto Detect' },
-          ].map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                setSelectedLanguage(item.id);
-                setDetectedLanguage(item.id);
-              }}
-              style={{
-                padding: '0.35rem 0.75rem',
-                borderRadius: '0.55rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                border: selectedLanguage === item.id ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                background: selectedLanguage === item.id ? '#eff6ff' : '#f8fafc',
-                color: selectedLanguage === item.id ? '#1d4ed8' : '#475569',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0369a1', background: '#e0f2fe', padding: '0.25rem 0.65rem', borderRadius: '9999px', border: '1px solid #bae6fd' }}>
+            {callActive ? `Active Voice: ${detectedLanguage}` : 'Auto-Detection Ready'}
+          </span>
         </div>
       </div>
 

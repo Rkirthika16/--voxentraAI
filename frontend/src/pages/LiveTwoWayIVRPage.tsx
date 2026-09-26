@@ -198,11 +198,8 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     }
   };
 
-  // Language Selection Preference (Default: Tamil)
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('Tamil');
-
-  // Start Call Flow
-  const handleStartCall = async (langChoice?: string) => {
+  // Start Call Flow (Automatic Language Detection - Citizen speaks first)
+  const handleStartCall = async () => {
     try {
       setErrorCode(null);
       setErrorMessage(null);
@@ -212,19 +209,18 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       transcriptRef.current = '';
       setQuestionCount(0);
 
-      const chosenLang = langChoice || selectedLanguage || 'Tamil';
-      const res = await newIvrApi.createSession('+919843098765', chosenLang);
+      const res = await newIvrApi.createSession('+919843098765', 'Auto');
       setSessionId(res.session_id);
       setCallActive(true);
       setIvrState('WAITING_FOR_CITIZEN');
-      setDetectedLanguage(res.language || chosenLang);
+      setDetectedLanguage('Auto-Detecting...');
       setMemory(res.structured_memory);
 
       const systemMsg: NewIVRMessage = {
         id: 1,
         role: 'system',
-        content: `📞 Call Connected. Language: ${chosenLang}. Citizen speaks first — please describe your civic issue in Tamil, Tanglish, or English.`,
-        language: chosenLang,
+        content: `📞 Call Connected. Citizen speaks first — please speak your civic problem in Tamil (தமிழ்), Tanglish, or English. AI will automatically detect your language and respond.`,
+        language: 'Auto',
         created_at: new Date().toISOString(),
       };
       setMessages([systemMsg]);
@@ -232,7 +228,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
 
       // Microphone activates for citizen to speak
       setTimeout(() => {
-        startRecording(chosenLang);
+        startRecording();
       }, 300);
     } catch (err: any) {
       setIsProcessing(false);
@@ -268,7 +264,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       transcriptRef.current = '';
       setLiveTranscript('');
 
-      const activeLang = overrideLang || detectedLanguage || selectedLanguage || 'Tamil';
+      const activeLang = overrideLang || (detectedLanguage && detectedLanguage !== 'Auto' && detectedLanguage !== 'Auto-Detecting...' ? detectedLanguage : 'Tamil');
 
       // Initialize Web Speech Recognition
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -525,41 +521,25 @@ export const LiveTwoWayIVRPage: React.FC = () => {
         </div>
       )}
 
-      {/* Language Preference Control Bar */}
-      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.85rem', padding: '0.75rem 1.25rem', marginBottom: '1.25rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Languages size={18} style={{ color: '#2563eb' }} />
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>Select AI Voice Language:</span>
+      {/* Dynamic Auto-Language Detection Indicator */}
+      <div style={{ background: 'linear-gradient(90deg, #eff6ff 0%, #f0fdf4 100%)', border: '1px solid #bfdbfe', borderRadius: '0.85rem', padding: '0.75rem 1.25rem', marginBottom: '1.25rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div style={{ background: '#2563eb', color: '#ffffff', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Sparkles size={16} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#1e293b' }}>
+              Automatic Multilingual AI Detection Active
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              Citizen talks first in <strong>தமிழ் (Tamil)</strong>, <strong>Tanglish</strong>, or <strong>English</strong> • AI auto-detects language instantly, speaks back, and collects grievance details (max 10 questions).
+            </div>
+          </div>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
-          {[
-            { id: 'Tamil', label: '🇮🇳 தமிழ் (Tamil - Recommended)', sub: 'Primary Tamil Nadu Helpline Voice' },
-            { id: 'Tanglish', label: '🗣️ Tanglish (Tamil + English)', sub: 'Tamil in English text' },
-            { id: 'English', label: '🌐 English', sub: 'Standard English' },
-            { id: 'Auto', label: '✨ Auto Detect', sub: 'Adaptive' },
-          ].map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                setSelectedLanguage(item.id);
-                setDetectedLanguage(item.id);
-              }}
-              style={{
-                padding: '0.35rem 0.75rem',
-                borderRadius: '0.55rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                border: selectedLanguage === item.id ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                background: selectedLanguage === item.id ? '#eff6ff' : '#f8fafc',
-                color: selectedLanguage === item.id ? '#1d4ed8' : '#475569',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0369a1', background: '#e0f2fe', padding: '0.25rem 0.65rem', borderRadius: '9999px', border: '1px solid #bae6fd' }}>
+            {callActive ? `AI Voice Language: ${detectedLanguage}` : 'Ready for Tamil / Tanglish / English'}
+          </span>
         </div>
       </div>
 
