@@ -341,7 +341,7 @@ export const TollFreeIVRPage: React.FC = () => {
                   smsSent={registeredComplaint.smsSent}
                   onNewCall={handleStartCall}
                 />
-              ) : ivrState === 'CONFIRMING' ? (
+              ) : (ivrState === 'CONFIRMATION' || ivrState === 'CONFIRMING') ? (
                 <>
                   <ConfirmationPanel
                     memory={memory}
