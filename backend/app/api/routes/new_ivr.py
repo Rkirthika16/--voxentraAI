@@ -192,6 +192,7 @@ async def process_ivr_audio(
     )
     turn_response["original_transcription"] = transcription_result.get("raw_transcription", transcribed_text)
     turn_response["cleaned_transcription"] = transcribed_text
+    turn_response["transcription"] = transcribed_text
     return turn_response
 
 
