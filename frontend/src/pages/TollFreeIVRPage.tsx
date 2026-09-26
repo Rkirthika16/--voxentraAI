@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { tollfreeApi, TollFreeMemory, TollFreeMessage } from '../api/tollfree';
+import { speech } from '../utils/speech';
 import { CallScreen } from '../components/tollfree/CallScreen';
 import { ConversationStatus } from '../components/tollfree/ConversationStatus';
 import { LiveTranscript } from '../components/tollfree/LiveTranscript';
@@ -66,69 +67,35 @@ export const TollFreeIVRPage: React.FC = () => {
     };
   }, [callActive]);
 
-  // Browser Text-to-Speech (TTS) with Turn-Taking Management
+  // High Quality Text-to-Speech (TTS) with unified Speech Controller
   const speakText = (text: string, lang = 'Tanglish', onFinish?: () => void) => {
-    if (ttsMuted || !window.speechSynthesis) {
+    if (ttsMuted) {
       if (onFinish) onFinish();
       return;
     }
 
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
-
-      const voices = window.speechSynthesis.getVoices();
-      const lowerLang = (lang || '').toLowerCase();
-
-      if (lowerLang.includes('tamil') || lowerLang === 'ta') {
-        const taVoice = voices.find(
-          (v) => v.lang.toLowerCase().includes('ta') || v.name.toLowerCase().includes('tamil')
-        );
-        if (taVoice) utterance.voice = taVoice;
-        utterance.lang = 'ta-IN';
-      } else if (lowerLang.includes('tanglish')) {
-        const inVoice = voices.find(
-          (v) =>
-            v.lang.toLowerCase().includes('en-in') ||
-            v.lang.toLowerCase().includes('ta') ||
-            v.name.toLowerCase().includes('india')
-        );
-        if (inVoice) utterance.voice = inVoice;
-        utterance.lang = 'en-IN';
-      } else {
-        const enVoice = voices.find((v) => v.lang.toLowerCase().includes('en'));
-        if (enVoice) utterance.voice = enVoice;
-        utterance.lang = 'en-US';
-      }
-
-      utterance.onstart = () => {
+    setIsAiSpeaking(true);
+    speech.speak(text, {
+      language: lang,
+      onStart: () => {
         setIsAiSpeaking(true);
-      };
-
-      utterance.onend = () => {
+      },
+      onEnd: () => {
         setIsAiSpeaking(false);
         if (onFinish) onFinish();
-      };
-
-      utterance.onerror = (e) => {
-        console.warn('SpeechSynthesis error:', e);
+      },
+      onError: (err) => {
+        console.warn('Speech playback notice:', err);
         setIsAiSpeaking(false);
         if (onFinish) onFinish();
-      };
-
-      window.speechSynthesis.speak(utterance);
-    } catch (err) {
-      console.warn('TTS execution error:', err);
-      setIsAiSpeaking(false);
-      if (onFinish) onFinish();
-    }
+      },
+    });
   };
 
   // Start Call Session (Auto Language Detection - Citizen speaks first)
   const handleStartCall = async () => {
     try {
+      speech.unlock();
       setErrorMessage(null);
       setIsProcessing(true);
       setRegisteredComplaint(null);
@@ -171,9 +138,7 @@ export const TollFreeIVRPage: React.FC = () => {
 
   // End / Hang up Call
   const handleEndCall = async () => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
+    speech.stop();
     setIsAiSpeaking(false);
     setIsRecording(false);
 

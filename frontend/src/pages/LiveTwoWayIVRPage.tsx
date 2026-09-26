@@ -20,6 +20,7 @@ import {
   Languages
 } from 'lucide-react';
 import { newIvrApi, NewIVRMemory, NewIVRMessage } from '../api/newIvr';
+import { speech } from '../utils/speech';
 
 export const LiveTwoWayIVRPage: React.FC = () => {
   // Call & Session State
@@ -100,107 +101,42 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // High Quality Text-to-Speech (TTS) with server audio and browser fallback
+  // High Quality Text-to-Speech (TTS) with unified Speech Controller
   const speakText = (text: string, lang = 'Tanglish', onFinish?: () => void) => {
     if (ttsMuted) {
       if (onFinish) onFinish();
       return;
     }
 
-    const langCode = lang.toLowerCase().includes('ta') || lang === 'Tamil' ? 'ta' : 'en';
+    setIsAiSpeaking(true);
+    setIvrState('AI_SPEAKING');
 
-    // 1. Try server-side crystal clear TTS audio stream
-    try {
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-        audioPlayerRef.current.src = '';
-      }
-
-      const ttsUrl = `/api/v1/new-ivr/tts?text=${encodeURIComponent(text)}&lang=${langCode}`;
-      const audio = new Audio(ttsUrl);
-      audioPlayerRef.current = audio;
-
-      setIsAiSpeaking(true);
-      setIvrState('AI_SPEAKING');
-
-      audio.onended = () => {
+    speech.speak(text, {
+      language: lang,
+      onStart: () => {
+        setIsAiSpeaking(true);
+        setIvrState('AI_SPEAKING');
+      },
+      onEnd: () => {
         setIsAiSpeaking(false);
         setIvrState('WAITING_FOR_CITIZEN');
         if (onFinish) onFinish();
-      };
-
-      audio.onerror = () => {
-        // Fallback to browser Web Speech API
-        playBrowserSpeechFallback(text, lang, onFinish);
-      };
-
-      audio.play().catch(() => {
-        // Fallback to browser Web Speech API if autoplay restricted
-        playBrowserSpeechFallback(text, lang, onFinish);
-      });
-      return;
-    } catch (e) {
-      playBrowserSpeechFallback(text, lang, onFinish);
-    }
-  };
-
-  const playBrowserSpeechFallback = (text: string, lang: string, onFinish?: () => void) => {
-    if (!window.speechSynthesis) {
-      setIsAiSpeaking(false);
-      setIvrState('WAITING_FOR_CITIZEN');
-      if (onFinish) onFinish();
-      return;
-    }
-
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-
-      const voices = window.speechSynthesis.getVoices();
-      const tamilVoice = voices.find((v) => v.lang.includes('ta') || v.name.toLowerCase().includes('tamil'));
-      const indianEnglishVoice = voices.find((v) => v.lang.includes('en-IN') || v.name.toLowerCase().includes('india'));
-      const englishVoice = voices.find((v) => v.lang.startsWith('en'));
-
-      if (lang === 'Tamil' && tamilVoice) {
-        utterance.voice = tamilVoice;
-        utterance.lang = 'ta-IN';
-      } else if (indianEnglishVoice) {
-        utterance.voice = indianEnglishVoice;
-        utterance.lang = 'en-IN';
-      } else if (englishVoice) {
-        utterance.voice = englishVoice;
-        utterance.lang = 'en-US';
-      }
-
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-
-      setIsAiSpeaking(true);
-      setIvrState('AI_SPEAKING');
-
-      utterance.onend = () => {
+      },
+      onError: (err) => {
+        console.warn('Speech playback notification:', err);
         setIsAiSpeaking(false);
         setIvrState('WAITING_FOR_CITIZEN');
         if (onFinish) onFinish();
-      };
-
-      utterance.onerror = () => {
-        setIsAiSpeaking(false);
-        setIvrState('WAITING_FOR_CITIZEN');
-        if (onFinish) onFinish();
-      };
-
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      setIsAiSpeaking(false);
-      setIvrState('WAITING_FOR_CITIZEN');
-      if (onFinish) onFinish();
-    }
+      },
+    });
   };
 
   // Start Call Flow (Automatic Language Detection - Citizen speaks first)
   const handleStartCall = async () => {
     try {
+      // Unlock audio pipeline on user click gesture
+      speech.unlock();
+
       setErrorCode(null);
       setErrorMessage(null);
       setIsProcessing(true);
@@ -240,7 +176,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
   // End Call Flow
   const handleEndCall = async () => {
     stopRecording();
-    window.speechSynthesis?.cancel();
+    speech.stop();
     setIsAiSpeaking(false);
 
     if (sessionId) {

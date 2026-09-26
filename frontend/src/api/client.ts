@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const getApiBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
   if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
     return `${envUrl}/api/v1`;

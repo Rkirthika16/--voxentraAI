@@ -299,5 +299,13 @@ def get_new_ivr_tts_audio(
     from app.ai.tts_service import synthesize_speech
     from fastapi import Response
     audio_bytes = synthesize_speech(text, lang=lang)
-    return Response(content=audio_bytes, media_type="audio/mpeg")
+    return Response(
+        content=audio_bytes,
+        media_type="audio/mpeg",
+        headers={
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(len(audio_bytes)),
+            "Cache-Control": "public, max-age=86400"
+        }
+    )
 

@@ -6,6 +6,8 @@
  * - Real-time High Accuracy Speech Recognition (Tamil & English)
  */
 
+import { getApiBaseUrl } from '../api/client';
+
 export interface TTSOptions {
   language?: 'Tamil' | 'Hindi' | 'English' | 'Tanglish' | 'ta-IN' | 'hi-IN' | 'en-IN' | string;
   rate?: number;     // 0.8 to 1.2
@@ -212,8 +214,8 @@ class SpeechController {
 
     // Primary High-Fidelity Streaming Engine (Produces crystal clear natural human voice)
     try {
-      const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
-      const ttsUrl = `${apiBase}/api/v1/assistant/tts?text=${encodeURIComponent(textToSpeak)}&lang=${encodeURIComponent(langCode)}`;
+      const apiBase = getApiBaseUrl();
+      const ttsUrl = `${apiBase}/new-ivr/tts?text=${encodeURIComponent(textToSpeak)}&lang=${encodeURIComponent(langCode)}`;
 
       const audio = new Audio(ttsUrl);
       this.currentAudio = audio;
