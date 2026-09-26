@@ -50,6 +50,7 @@ export const TollFreeIVRPage: React.FC = () => {
     smsSent?: boolean;
   } | null>(null);
 
+  const [currentOptions, setCurrentOptions] = useState<Array<{ label: string; text: string }>>([]);
   const timerRef = useRef<number | null>(null);
 
   // Call duration counter
@@ -187,6 +188,9 @@ export const TollFreeIVRPage: React.FC = () => {
     }
     if (res.memory) {
       setMemory(res.memory);
+    }
+    if (res.options && Array.isArray(res.options)) {
+      setCurrentOptions(res.options);
     }
 
     // Check if complaint was created
@@ -329,6 +333,7 @@ export const TollFreeIVRPage: React.FC = () => {
                 ttsMuted={ttsMuted}
                 onToggleMute={() => setTtsMuted(!ttsMuted)}
                 errorMessage={errorMessage}
+                options={currentOptions}
               />
             </div>
 

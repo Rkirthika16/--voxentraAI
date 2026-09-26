@@ -208,6 +208,17 @@ class TollFreeService:
             summary_text, spoken_summary = self._build_confirmation_summary(memory, detected_lang)
             self._save_ai_message(db, session, summary_text, spoken_summary, detected_lang)
 
+            confirmation_options = [
+                {"label": "✅ ஆம், பதிவு செய்க (Confirm)", "text": "ஆம், புகாரை பதிவு செய்யுங்கள்"},
+                {"label": "✏️ விவரங்களை மாற்று (Edit)", "text": "விவரங்களை மாற்ற வேண்டும்"}
+            ] if detected_lang == "Tamil" else [
+                {"label": "✅ Aama, Correct", "text": "Aama, complaint-a register pannunga"},
+                {"label": "✏️ Details Maathanum", "text": "Details maathanum"}
+            ] if detected_lang == "Tanglish" else [
+                {"label": "✅ Yes, Register Complaint", "text": "Yes, please register the complaint"},
+                {"label": "✏️ Modify Details", "text": "I want to change the details"}
+            ]
+
             return {
                 "success": True,
                 "session_id": session.call_session_id,
@@ -218,7 +229,8 @@ class TollFreeService:
                 "spoken_reply": spoken_summary,
                 "memory": memory,
                 "is_confirmation": True,
-                "complaint_created": False
+                "complaint_created": False,
+                "options": confirmation_options
             }
         else:
             # Ask the next missing relevant question
@@ -227,6 +239,7 @@ class TollFreeService:
             db.commit()
 
             ai_reply, spoken_reply = self._generate_slot_question(next_missing, memory, detected_lang)
+            options = self._generate_slot_options(next_missing, memory, detected_lang)
             self._save_ai_message(db, session, ai_reply, spoken_reply, detected_lang)
 
             return {
@@ -240,7 +253,8 @@ class TollFreeService:
                 "memory": memory,
                 "next_field": next_missing,
                 "is_confirmation": False,
-                "complaint_created": False
+                "complaint_created": False,
+                "options": options
             }
 
     def _extract_and_update_memory(self, raw_text: str, cleaned: str, memory: Dict[str, Any], prompted_slot: Optional[str] = None) -> None:
@@ -420,6 +434,83 @@ class TollFreeService:
             return text, spoken
 
         return "Could you please provide more details?", "Please provide more details."
+
+    def _generate_slot_options(self, slot: str, memory: Dict[str, Any], lang: str) -> List[Dict[str, str]]:
+        """
+        Generates context-aware clarification & quick test option chips.
+        """
+        if slot == "problem":
+            if lang == "Tamil":
+                return [
+                    {"label": "💧 குடிநீர் விநியோகம்", "text": "குடிநீர் விநியோகம் தடைப்பட்டுள்ளது"},
+                    {"label": "⚡ மின் தடை", "text": "மின்சாரம் தடை மற்றும் கம்பத்தில் தீப்பொறி"},
+                    {"label": "🛣️ சாலை பள்ளம்", "text": "சாலையில் பெரிய பள்ளங்கள் உள்ளன"},
+                    {"label": "🗑️ குப்பை தேக்கம்", "text": "குப்பை அள்ளப்படாமல் தேங்கியுள்ளது"}
+                ]
+            elif lang == "Tanglish":
+                return [
+                    {"label": "💧 Water Supply Issue", "text": "Water supply varala"},
+                    {"label": "⚡ Power Cut / Hazard", "text": "Power cut aaiduchu and electric pole sparking"},
+                    {"label": "🛣️ Road Potholes", "text": "Road-la periya gundu kuli irukku"},
+                    {"label": "🗑️ Garbage Pile", "text": "Garbage collect pannala street-la irukku"}
+                ]
+            else:
+                return [
+                    {"label": "💧 Water Disruption", "text": "Water supply disrupted in our area"},
+                    {"label": "⚡ Power Outage", "text": "Power outage and sparking electric pole"},
+                    {"label": "🛣️ Road Potholes", "text": "Dangerous potholes on the road"},
+                    {"label": "🗑️ Uncollected Garbage", "text": "Garbage not collected and overflowing"}
+                ]
+
+        if slot == "location":
+            if lang == "Tamil":
+                return [
+                    {"label": "📍 கோயம்புத்தூர்", "text": "கோயம்புத்தூர் காந்திபுரம்"},
+                    {"label": "📍 சென்னை", "text": "சென்னை அண்ணா நகர்"},
+                    {"label": "📍 மதுரை", "text": "மதுரை கே.கே.நகர்"},
+                    {"label": "📍 திருச்சி", "text": "திருச்சி தில்லை நகர்"}
+                ]
+            elif lang == "Tanglish":
+                return [
+                    {"label": "📍 Coimbatore", "text": "Coimbatore Gandhipuram area"},
+                    {"label": "📍 Chennai", "text": "Chennai Anna Nagar area"},
+                    {"label": "📍 Madurai", "text": "Madurai KK Nagar area"},
+                    {"label": "📍 Trichy", "text": "Trichy Thillai Nagar area"}
+                ]
+            else:
+                return [
+                    {"label": "📍 Coimbatore", "text": "Gandhipuram, Coimbatore"},
+                    {"label": "📍 Chennai", "text": "Anna Nagar, Chennai"},
+                    {"label": "📍 Madurai", "text": "KK Nagar, Madurai"}
+                ]
+
+        if slot == "duration":
+            if lang == "Tamil":
+                return [
+                    {"label": "⏱️ 2 நாட்களாக", "text": "2 நாட்களாக நீடிக்கிறது"},
+                    {"label": "⏱️ இன்று காலை முதல்", "text": "இன்று காலை முதல்"},
+                    {"label": "⏱️ 3 நாட்களாக", "text": "3 நாட்களாக பிரச்சினை உள்ளது"}
+                ]
+            else:
+                return [
+                    {"label": "⏱️ 2 days", "text": "2 days-ah irukku"},
+                    {"label": "⏱️ Today morning", "text": "Today morning lendhu"},
+                    {"label": "⏱️ 3 days", "text": "3 days-ah problem irukku"}
+                ]
+
+        if slot == "affected_scope":
+            if lang == "Tamil":
+                return [
+                    {"label": "🏘️ தெரு முழுவதும்", "text": "தெருவில் உள்ள எல்லா வீடுகளுக்கும்"},
+                    {"label": "🏠 எங்கள் வீடு மட்டும்", "text": "எங்கள் வீட்டிற்கு மட்டும்"}
+                ]
+            else:
+                return [
+                    {"label": "🏘️ Full street", "text": "Full street-la irukura ella veetukume"},
+                    {"label": "🏠 Only my house", "text": "Enga veetukku mattum dhaan"}
+                ]
+
+        return []
 
     def _build_confirmation_summary(self, memory: Dict[str, Any], lang: str) -> Tuple[str, str]:
         """
