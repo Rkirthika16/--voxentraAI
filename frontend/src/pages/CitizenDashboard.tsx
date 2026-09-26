@@ -62,15 +62,28 @@ export const CitizenDashboard: React.FC = () => {
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <Link
-            to="/assistant"
+            to="/new-ivr"
             className="btn btn-primary btn-sm"
             style={{
-              background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
-              boxShadow: '0 0 15px rgba(124, 58, 237, 0.4)',
+              background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+              boxShadow: '0 0 15px rgba(37, 99, 235, 0.4)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
+              fontWeight: 700,
             }}
           >
-            <Sparkles size={16} /> AI Voice Assistant
+            <Sparkles size={16} /> 🎙️ Live Two-Way IVR
+          </Link>
+          <Link
+            to="/assistant"
+            className="btn btn-secondary btn-sm"
+            style={{
+              background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(109, 40, 217, 0.3))',
+              borderColor: 'rgba(139, 92, 246, 0.4)',
+              color: '#c084fc',
+              fontWeight: 600,
+            }}
+          >
+            <Sparkles size={16} /> AI Companion
           </Link>
           <Link to="/voice-complaint" className="btn btn-secondary btn-sm">
             <Mic size={16} /> Voice Report

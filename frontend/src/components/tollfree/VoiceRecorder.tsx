@@ -299,6 +299,40 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         </p>
       </div>
 
+      {/* Quick Simulation Chips */}
+      {isCallActive && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center', marginTop: '0.25rem' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Quick test:</span>
+          {[
+            { label: '💧 குடிநீர் வரவில்லை', text: 'எங்கள் தெருவில் 3 நாட்களாக குடிநீர் விநியோகம் இல்லை, அண்ணா நகர்' },
+            { label: '💡 Streetlight Issue', text: 'Street lights are not working on 5th cross street' },
+            { label: '🗑️ குப்பை தேக்கம்', text: 'குப்பை அள்ளப்படாமல் ரோட்டில் தேங்கியுள்ளது' },
+            { label: '⚡ Power Cut Hazard', text: 'Power cut since morning and live wire sparking near temple' },
+            { label: '🛣️ Road Damage', text: 'Dangerous potholes and road damage on main road' },
+            { label: '✅ உறுதி செய்க (Confirm)', text: 'ஆம், என் புகாரை பதிவு செய்யுங்கள்' },
+          ].map((item, i) => (
+            <button
+              key={i}
+              type="button"
+              disabled={!isCallActive || isAiSpeaking || isProcessing}
+              onClick={() => onSendText(item.text)}
+              style={{
+                background: '#F8FAFC',
+                border: '1px solid #CBD5E1',
+                borderRadius: '9999px',
+                padding: '0.25rem 0.65rem',
+                fontSize: '0.73rem',
+                color: '#334155',
+                cursor: !isCallActive || isAiSpeaking || isProcessing ? 'not-allowed' : 'pointer',
+                fontWeight: 500,
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Direct Text Fallback */}
       <form onSubmit={handleTextSubmit} style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
         <input
