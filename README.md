@@ -8,17 +8,16 @@ Citizens can report civic issues naturally in **Tamil**, **English**, or **Tangl
 
 ## 🌟 Key Features
 
-- 🎙️ **Live Two-Way Conversational AI IVR (`/tollfree-ivr`, `/new-ivr` & `/api/v1/tollfree`)**:
-  - Real hands-free two-way conversational turn taking (AI greeting ➔ AI stops speaking ➔ Citizen speaks first ➔ STT ➔ Language Detection ➔ Contextual Slot Extraction ➔ AI follow-up ➔ Confirmation ➔ Real Complaint Creation with Unique ID ➔ Department Routing).
+- 🎙️ **Live Two-Way Conversational AI IVR (`/tollfree-ivr`, `/new-ivr` & `/api/v1/complaints/ivr/turn`)**:
+  - Real hands-free two-way conversational turn taking: Citizen speaks first ➔ Whisper STT ➔ Automatic Language Detection (Tamil, Tanglish, English) ➔ Multi-turn Contextual Slot Extraction (6-10 context-aware questions) ➔ Edge-TTS Tamil/English audio streaming ➔ Automated Grievance Registration with Tracking ID (`VX-YYYYMMDD-XXXX`) ➔ GIS & Department Routing.
   - Browser MediaRecorder audio stream processing (WebM/Opus, Ogg, WAV) with automatic 16kHz mono PCM conversion via FFmpeg.
   - Speech-To-Text via Whisper (faster-whisper / openai-whisper) with clear, deterministic offline fallback when unavailable.
-  - Provider-agnostic Telephony Provider Interface (`TelephonyProvider`) for Exotel, Twilio, and future toll-free telco webhooks (`/api/v1/tollfree/webhook/incoming`, `/webhook/audio`, `/webhook/events`, `/webhook/status`).
+  - Provider-agnostic Telephony Provider Interface (`TelephonyProvider`) for Exotel, Twilio, and toll-free telco webhooks.
 - 🌐 **True Multilingual Intelligence**: Native dynamic adaptation across Tamil script, English, and Tanglish (*e.g., "Gandhipuram-la thanni varala"*).
 - 🧠 **Context-Aware Structured Dialogue Memory**:
   - Retains Category, Problem, Location, Duration, Scope, Frequency, Severity across all turns.
   - Asks category-specific questions **one question at a time**, never re-asking already gathered information.
 - 🛡️ **Role-Based Access Control**:
-
   - **Citizen**: Submit complaints, live IVR simulator, track step-by-step progress, view audit history, receive notifications.
   - **Officer**: Manage departmental queues (Water, Electricity, Roads, Sanitation, Drainage, Streetlights, Public Safety), update status with notes, track SLAs.
   - **Admin**: Monitor live municipal analytics, manage departments, manage officers, inspect escalations.
@@ -35,6 +34,7 @@ VOXENTRAAI/
 ├── PROJECT_AUDIT.md
 ├── .gitignore
 ├── .env.example
+├── render.yaml                         # Production Render Blueprint
 ├── backend/
 │   ├── requirements.txt
 │   ├── pytest.ini
@@ -48,12 +48,12 @@ VOXENTRAAI/
 │   │   ├── db/                         # Database module forwarder
 │   │   ├── models/                     # User, Department, Complaint, IVR models
 │   │   ├── schemas/                    # Pydantic validation schemas
-│   │   ├── services/                   # Auth, Complaint, Speech, Conversation services
+│   │   ├── services/                   # Auth, Complaint, Speech, Conversational IVR
 │   │   ├── ai/                         # Whisper STT, TTS, NLP, and collectors
 │   │   ├── integrations/               # Telephony adapters (Exotel, Twilio)
 │   │   ├── telephony/                  # Telephony forwarder package
 │   │   └── utils/                      # Audio conversion, FFmpeg & validators
-│   └── tests/                          # 92+ automated unit & integration tests
+│   └── tests/                          # 125+ automated unit & integration tests
 └── frontend/
     ├── package.json
     ├── tsconfig.json
