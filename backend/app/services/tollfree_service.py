@@ -45,18 +45,8 @@ DEPARTMENT_MASTER = {
 ORDERED_QUESTION_SLOTS = [
     "problem_description",
     "district_area",
-    "street_road_name",
-    "exact_location",
-    "landmark",
-    "start_time",
     "duration",
-    "affected_scope",
-    "frequency",
-    "previous_complaint",
-    "previous_complaint_number",
-    "severity",
-    "safety_hazard",
-    "additional_details"
+    "affected_scope"
 ]
 
 
@@ -301,13 +291,14 @@ class TollFreeService:
         lowered = cleaned.lower().strip()
 
         # Handle explicit corrections
-        if any(w in lowered for w in ["change area", "location is", "area is", "இடம்", "பகுதி மாற்று", "maathunga"]):
-            loc_match = re.search(r'(?:area|location|place|பகுதி|இடம்)\s+(?:is|to|:)?\s*([A-Za-z0-9\u0B80-\u0BFF\s]+)', raw_text, re.IGNORECASE)
+        if any(w in lowered for w in ["change area", "location is", "area is", "peelamedu", "gandhipuram", "இடம்", "பகுதி மாற்று", "maathunga"]):
+            loc_match = re.search(r'(?:area|location|place|actually|பகுதி|இடம்)\s+(?:is|to|:)?\s*([A-Za-z0-9\u0B80-\u0BFF\s]+)', raw_text, re.IGNORECASE)
             if loc_match:
                 cand = loc_match.group(1).strip()
                 if len(cand) >= 3 and cand.lower() not in ["is", "to", "the"]:
                     memory["district_area"] = cand
                     memory["area"] = cand
+                    memory["location"] = cand
 
         if any(w in lowered for w in ["change street", "street is", "street name", "தெரு"]):
             st_match = re.search(r'(?:street|road|தெரு|சாலை)\s*(?:is|to|:)?\s*([A-Za-z0-9\u0B80-\u0BFF\s]+)', raw_text, re.IGNORECASE)
@@ -336,10 +327,11 @@ class TollFreeService:
             existing_district=memory.get("district")
         )
 
-        if loc_struct.get("area") and not memory.get("district_area"):
+        if loc_struct.get("area"):
             memory["district_area"] = loc_struct["area"]
             memory["area"] = loc_struct["area"]
-        if loc_struct.get("street") and not memory.get("street_road_name"):
+            memory["location"] = loc_struct["area"]
+        if loc_struct.get("street"):
             memory["street_road_name"] = loc_struct["street"]
             memory["street"] = loc_struct["street"]
         if loc_struct.get("landmark") and not memory.get("landmark"):
@@ -354,10 +346,16 @@ class TollFreeService:
         if prompted_slot == "district_area" and not memory.get("district_area"):
             memory["district_area"] = raw_text.strip()
             memory["area"] = raw_text.strip()
+            memory["location"] = raw_text.strip()
         if prompted_slot == "street_road_name" and not memory.get("street_road_name"):
             memory["street_road_name"] = raw_text.strip()
             memory["street"] = raw_text.strip()
         if prompted_slot == "exact_location" and not memory.get("exact_location"):
+            memory["exact_location"] = raw_text.strip()
+
+        # Ensure memory['location'] is always present if area is known
+        if memory.get("area") and not memory.get("location"):
+            memory["location"] = memory["area"]
             memory["exact_location"] = raw_text.strip()
         if prompted_slot == "landmark" and not memory.get("landmark"):
             memory["landmark"] = raw_text.strip()

@@ -8,6 +8,20 @@ from app.models.notification import Notification
 from app.models.escalation import Escalation, EscalationStatus
 from app.models.ivr import IVRSession, IVRMessage, IVRState
 from app.models.tollfree import TollFreeCallSession, TollFreeMessage, TollFreeState
+from app.models.location import (
+    AdministrativeDivision,
+    Taluk,
+    Firka,
+    RevenueVillage,
+    CorporationZone,
+    CorporationWard,
+    Area,
+    Street,
+    Landmark,
+    LocationAlias,
+    LocationSource,
+    LocationRelationship
+)
 
 __all__ = [
     "Base",
@@ -28,7 +42,19 @@ __all__ = [
     "IVRState",
     "TollFreeCallSession",
     "TollFreeMessage",
-    "TollFreeState"
+    "TollFreeState",
+    "AdministrativeDivision",
+    "Taluk",
+    "Firka",
+    "RevenueVillage",
+    "CorporationZone",
+    "CorporationWard",
+    "Area",
+    "Street",
+    "Landmark",
+    "LocationAlias",
+    "LocationSource",
+    "LocationRelationship"
 ]
 
 

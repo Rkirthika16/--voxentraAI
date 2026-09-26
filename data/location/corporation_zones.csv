@@ -1,0 +1,6 @@
+id,name,name_ta,office_address,source,confidence
+1,North Zone,வடக்கு மண்டலம்,"CCMC North Zone Office, Balasundaram Road / Ganapathy, Coimbatore",Coimbatore City Municipal Corporation (CCMC),1.0
+2,East Zone,கிழக்கு மண்டலம்,"CCMC East Zone Office, Singanallur, Trichy Road, Coimbatore",Coimbatore City Municipal Corporation (CCMC),1.0
+3,Central Zone,மத்திய மண்டலம்,"CCMC Central Zone Office, Victoria Town Hall / Race Course, Coimbatore",Coimbatore City Municipal Corporation (CCMC),1.0
+4,South Zone,தெற்கு மண்டலம்,"CCMC South Zone Office, Kuniyamuthur / Palakkad Main Road, Coimbatore",Coimbatore City Municipal Corporation (CCMC),1.0
+5,West Zone,மேற்கு மண்டலம்,"CCMC West Zone Office, RS Puram, DB Road / Thiruvenkatasamy Road, Coimbatore",Coimbatore City Municipal Corporation (CCMC),1.0

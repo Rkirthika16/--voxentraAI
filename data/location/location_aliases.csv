@@ -1,0 +1,605 @@
+id,entity_type,entity_id,alias,normalized_value,language,alias_type,confidence
+1,taluk,1,Coimbatore North,coimbatorenorth,English,canonical,1.0
+2,taluk,1,Kovai North,kovainorth,English,canonical,1.0
+3,taluk,1,Coimbatore Vada,coimbatorevada,English,canonical,1.0
+4,taluk,1,கோயம்புத்தூர் வடக்கு,கோயம்புத்தூர்வடக்கு,Tamil,canonical,1.0
+5,taluk,2,Coimbatore South,coimbatoresouth,English,canonical,1.0
+6,taluk,2,Kovai South,kovaisouth,English,canonical,1.0
+7,taluk,2,Coimbatore Therku,coimbatoretherku,English,canonical,1.0
+8,taluk,2,கோயம்புத்தூர் தெற்கு,கோயம்புத்தூர்தெற்கு,Tamil,canonical,1.0
+9,taluk,3,Annur,annur,English,canonical,1.0
+10,taluk,3,Annoor,annoor,English,canonical,1.0
+11,taluk,3,அன்னூர்,அன்னூர்,Tamil,canonical,1.0
+12,taluk,4,Mettupalayam,mettupalayam,English,canonical,1.0
+13,taluk,4,Mtp,mtp,English,canonical,1.0
+14,taluk,4,Mettupalaiyam,mettupalaiyam,English,canonical,1.0
+15,taluk,4,மேட்டுப்பாளையம்,மேட்டுப்பாளையம்,Tamil,canonical,1.0
+16,taluk,5,Sulur,sulur,English,canonical,1.0
+17,taluk,5,Suloor,suloor,English,canonical,1.0
+18,taluk,5,சூலூர்,சூலூர்,Tamil,canonical,1.0
+19,taluk,6,Pollachi,pollachi,English,canonical,1.0
+20,taluk,6,Pollachi Taluk,pollachitaluk,English,canonical,1.0
+21,taluk,6,பொள்ளாச்சி,பொள்ளாச்சி,Tamil,canonical,1.0
+22,taluk,7,Kinathukadavu,kinathukadavu,English,canonical,1.0
+23,taluk,7,Kinathukadavoo,kinathukadavoo,English,canonical,1.0
+24,taluk,7,கிணத்துக்கடவு,கிணத்துக்கடவு,Tamil,canonical,1.0
+25,taluk,8,Valparai,valparai,English,canonical,1.0
+26,taluk,8,Valpaarai,valpaarai,English,canonical,1.0
+27,taluk,8,வால்பாறை,வால்பாறை,Tamil,canonical,1.0
+28,taluk,9,Madukkarai,madukkarai,English,canonical,1.0
+29,taluk,9,Mathukkarai,mathukkarai,English,canonical,1.0
+30,taluk,9,மதுக்கரை,மதுக்கரை,Tamil,canonical,1.0
+31,taluk,10,Perur,perur,English,canonical,1.0
+32,taluk,10,Peroor,peroor,English,canonical,1.0
+33,taluk,10,பேரூர்,பேரூர்,Tamil,canonical,1.0
+34,taluk,11,Anaimalai,anaimalai,English,canonical,1.0
+35,taluk,11,Anamalai,anamalai,English,canonical,1.0
+36,taluk,11,ஆனைமலை,ஆனைமலை,Tamil,canonical,1.0
+37,area,1,Gandhipuram,gandhipuram,Tanglish,phonetic,0.95
+38,area,1,Gandhi puram,gandhipuram,Tanglish,phonetic,0.95
+39,area,1,காந்திபுரம்,காந்திபுரம்,Tamil,phonetic,0.95
+40,area,1,kaandhipuram,kaandhipuram,Tanglish,phonetic,0.95
+41,area,1,ganthipuram,ganthipuram,Tanglish,phonetic,0.95
+42,area,1,gandhipuram area,gandhipuramarea,Tanglish,phonetic,0.95
+43,area,2,RS Puram,rspuram,Tanglish,phonetic,0.95
+44,area,2,R.S. Puram,r.s.puram,Tanglish,phonetic,0.95
+45,area,2,Rathinasinghpuram,rathinasinghpuram,Tanglish,phonetic,0.95
+46,area,2,ஆர்.எஸ். புரம்,ஆர்.எஸ்.புரம்,Tamil,phonetic,0.95
+47,area,2,rspuram,rspuram,Tanglish,phonetic,0.95
+48,area,3,Peelamedu,peelamedu,Tanglish,phonetic,0.95
+49,area,3,Pelamedu,pelamedu,Tanglish,phonetic,0.95
+50,area,3,பீளமேடு,பீளமேடு,Tamil,phonetic,0.95
+51,area,3,peelamedu area,peelameduarea,Tanglish,phonetic,0.95
+52,area,3,pilamedu,pilamedu,Tanglish,phonetic,0.95
+53,area,4,Saibaba Colony,saibabacolony,Tanglish,phonetic,0.95
+54,area,4,Sai Baba Colony,saibabacolony,Tanglish,phonetic,0.95
+55,area,4,சாயிபாபா காலனி,சாயிபாபாகாலனி,Tamil,phonetic,0.95
+56,area,4,saibaba colony area,saibabacolonyarea,Tanglish,phonetic,0.95
+57,area,5,Saravanampatti,saravanampatti,Tanglish,phonetic,0.95
+58,area,5,Saravanampatty,saravanampatty,Tanglish,phonetic,0.95
+59,area,5,சரவணம்பட்டி,சரவணம்பட்டி,Tamil,phonetic,0.95
+60,area,5,saravanampatti area,saravanampattiarea,Tanglish,phonetic,0.95
+61,area,6,Ganapathy,ganapathy,Tanglish,phonetic,0.95
+62,area,6,Ganapathi,ganapathi,Tanglish,phonetic,0.95
+63,area,6,கணபதி,கணபதி,Tamil,phonetic,0.95
+64,area,6,ganapathy area,ganapathyarea,Tanglish,phonetic,0.95
+65,area,7,Singanallur,singanallur,Tanglish,phonetic,0.95
+66,area,7,Singanalloor,singanalloor,Tanglish,phonetic,0.95
+67,area,7,சிங்காநல்லூர்,சிங்காநல்லூர்,Tamil,phonetic,0.95
+68,area,7,singanallur bus stand area,singanallurbusstandarea,Tanglish,phonetic,0.95
+69,area,8,Ramanathapuram,ramanathapuram,Tanglish,phonetic,0.95
+70,area,8,Ramnagar Coimbatore,ramnagarcoimbatore,Tanglish,phonetic,0.95
+71,area,8,இராமநாதபுரம்,இராமநாதபுரம்,Tamil,phonetic,0.95
+72,area,9,Ukkadam,ukkadam,Tanglish,phonetic,0.95
+73,area,9,Ukkadam bus stand,ukkadambusstand,Tanglish,phonetic,0.95
+74,area,9,உக்கடம்,உக்கடம்,Tamil,phonetic,0.95
+75,area,10,Town Hall,townhall,Tanglish,phonetic,0.95
+76,area,10,Townhall,townhall,Tanglish,phonetic,0.95
+77,area,10,டவுன் ஹால்,டவுன்ஹால்,Tamil,phonetic,0.95
+78,area,11,Race Course,racecourse,Tanglish,phonetic,0.95
+79,area,11,Racecourse,racecourse,Tanglish,phonetic,0.95
+80,area,11,ரேஸ் கோர்ஸ்,ரேஸ்கோர்ஸ்,Tamil,phonetic,0.95
+81,area,12,Tatabad,tatabad,Tanglish,phonetic,0.95
+82,area,12,Thathabad,thathabad,Tanglish,phonetic,0.95
+83,area,12,டாடாபாத்,டாடாபாத்,Tamil,phonetic,0.95
+84,area,13,Ram Nagar,ramnagar,Tanglish,phonetic,0.95
+85,area,13,Ramnagar,ramnagar,Tanglish,phonetic,0.95
+86,area,13,ராம் நகர்,ராம்நகர்,Tamil,phonetic,0.95
+87,area,14,Vadavalli,vadavalli,Tanglish,phonetic,0.95
+88,area,14,Vadavali,vadavali,Tanglish,phonetic,0.95
+89,area,14,வடவள்ளி,வடவள்ளி,Tamil,phonetic,0.95
+90,area,15,Thondamuthur,thondamuthur,Tanglish,phonetic,0.95
+91,area,15,Thondamuthoor,thondamuthoor,Tanglish,phonetic,0.95
+92,area,15,தொண்டாமுத்தூர்,தொண்டாமுத்தூர்,Tamil,phonetic,0.95
+93,area,16,Kuniyamuthur,kuniyamuthur,Tanglish,phonetic,0.95
+94,area,16,Kuniyamuthoor,kuniyamuthoor,Tanglish,phonetic,0.95
+95,area,16,குனியமுத்தூர்,குனியமுத்தூர்,Tamil,phonetic,0.95
+96,area,17,Kovaipudur,kovaipudur,Tanglish,phonetic,0.95
+97,area,17,Kovai Pudur,kovaipudur,Tanglish,phonetic,0.95
+98,area,17,கோவைப்புதூர்,கோவைப்புதூர்,Tamil,phonetic,0.95
+99,area,18,Kurichi,kurichi,Tanglish,phonetic,0.95
+100,area,18,குறிச்சி,குறிச்சி,Tamil,phonetic,0.95
+101,area,19,Sundarapuram,sundarapuram,Tanglish,phonetic,0.95
+102,area,19,Sundarapuram area,sundarapuramarea,Tanglish,phonetic,0.95
+103,area,19,சுந்தராபுரம்,சுந்தராபுரம்,Tamil,phonetic,0.95
+104,area,20,Ondipudur,ondipudur,Tanglish,phonetic,0.95
+105,area,20,Ondipudoor,ondipudoor,Tanglish,phonetic,0.95
+106,area,20,ஒண்டிப்புதூர்,ஒண்டிப்புதூர்,Tamil,phonetic,0.95
+107,area,21,Eachanari,eachanari,Tanglish,phonetic,0.95
+108,area,21,Echanari,echanari,Tanglish,phonetic,0.95
+109,area,21,ஈச்சனாரி,ஈச்சனாரி,Tamil,phonetic,0.95
+110,area,22,Irugur,irugur,Tanglish,phonetic,0.95
+111,area,22,Irugoor,irugoor,Tanglish,phonetic,0.95
+112,area,22,இருவூர்,இருவூர்,Tamil,phonetic,0.95
+113,area,23,Kalapatti,kalapatti,Tanglish,phonetic,0.95
+114,area,23,Kaalapatti,kaalapatti,Tanglish,phonetic,0.95
+115,area,23,காளப்பட்டி,காளப்பட்டி,Tamil,phonetic,0.95
+116,area,24,Chinnavedampatti,chinnavedampatti,Tanglish,phonetic,0.95
+117,area,24,Chinnavedampatty,chinnavedampatty,Tanglish,phonetic,0.95
+118,area,24,சின்னவேடம்பட்டி,சின்னவேடம்பட்டி,Tamil,phonetic,0.95
+119,area,25,Vilankurichi,vilankurichi,Tanglish,phonetic,0.95
+120,area,25,Vilankurichi Road,vilankurichiroad,Tanglish,phonetic,0.95
+121,area,25,விளாங்குறிச்சி,விளாங்குறிச்சி,Tamil,phonetic,0.95
+122,area,26,Thudiyalur,thudiyalur,Tanglish,phonetic,0.95
+123,area,26,Thudiyaloor,thudiyaloor,Tanglish,phonetic,0.95
+124,area,26,துடியலூர்,துடியலூர்,Tamil,phonetic,0.95
+125,area,27,Kavundampalayam,kavundampalayam,Tanglish,phonetic,0.95
+126,area,27,Goundampalayam,goundampalayam,Tanglish,phonetic,0.95
+127,area,27,கவுண்டம்பாளையம்,கவுண்டம்பாளையம்,Tamil,phonetic,0.95
+128,area,28,Periyanaickenpalayam,periyanaickenpalayam,Tanglish,phonetic,0.95
+129,area,28,பெரியநாயக்கன்பாளையம்,பெரியநாயக்கன்பாளையம்,Tamil,phonetic,0.95
+130,area,29,Sulur,sulur,Tanglish,phonetic,0.95
+131,area,29,Suloor,suloor,Tanglish,phonetic,0.95
+132,area,29,சூலூர்,சூலூர்,Tamil,phonetic,0.95
+133,area,30,Mettupalayam,mettupalayam,Tanglish,phonetic,0.95
+134,area,30,Mtp,mtp,Tanglish,phonetic,0.95
+135,area,30,மேட்டுப்பாளையம்,மேட்டுப்பாளையம்,Tamil,phonetic,0.95
+136,area,31,Pollachi,pollachi,Tanglish,phonetic,0.95
+137,area,31,Pollachi town,pollachitown,Tanglish,phonetic,0.95
+138,area,31,பொள்ளாச்சி,பொள்ளாச்சி,Tamil,phonetic,0.95
+139,area,32,Madukkarai,madukkarai,Tanglish,phonetic,0.95
+140,area,32,மதுக்கரை,மதுக்கரை,Tamil,phonetic,0.95
+141,area,33,Perur,perur,Tanglish,phonetic,0.95
+142,area,33,பேரூர்,பேரூர்,Tamil,phonetic,0.95
+143,area,34,Annur,annur,Tanglish,phonetic,0.95
+144,area,34,Annoor,annoor,Tanglish,phonetic,0.95
+145,area,34,அன்னூர்,அன்னூர்,Tamil,phonetic,0.95
+146,area,35,Kinathukadavu,kinathukadavu,Tanglish,phonetic,0.95
+147,area,35,கிணத்துக்கடவு,கிணத்துக்கடவு,Tamil,phonetic,0.95
+148,area,36,Valparai,valparai,Tanglish,phonetic,0.95
+149,area,36,வால்பாறை,வால்பாறை,Tamil,phonetic,0.95
+150,area,37,Anaimalai,anaimalai,Tanglish,phonetic,0.95
+151,area,37,ஆனைமலை,ஆனைமலை,Tamil,phonetic,0.95
+152,area,38,Selvapuram,selvapuram,Tanglish,phonetic,0.95
+153,area,38,செல்வபுரம்,செல்வபுரம்,Tamil,phonetic,0.95
+154,area,39,Sowripalayam,sowripalayam,Tanglish,phonetic,0.95
+155,area,39,சௌரிபாளையம்,சௌரிபாளையம்,Tamil,phonetic,0.95
+156,area,40,Hope College,hopecollege,Tanglish,phonetic,0.95
+157,area,40,Hopes,hopes,Tanglish,phonetic,0.95
+158,area,40,ஹோப் காலேஜ்,ஹோப்காலேஜ்,Tamil,phonetic,0.95
+159,area,41,SITRA,sitra,Tanglish,phonetic,0.95
+160,area,41,Sitra Airport,sitraairport,Tanglish,phonetic,0.95
+161,area,41,சித்ரா,சித்ரா,Tamil,phonetic,0.95
+162,area,42,Karamadai,karamadai,Tanglish,phonetic,0.95
+163,area,42,காரமடை,காரமடை,Tamil,phonetic,0.95
+164,area,43,Sirumugai,sirumugai,Tanglish,phonetic,0.95
+165,area,43,சிறுமுகை,சிறுமுகை,Tamil,phonetic,0.95
+166,area,44,Neelambur,neelambur,Tanglish,phonetic,0.95
+167,area,44,நீலம்பூர்,நீலம்பூர்,Tamil,phonetic,0.95
+168,area,45,Podanur,podanur,Tanglish,phonetic,0.95
+169,area,45,Pothanur,pothanur,Tanglish,phonetic,0.95
+170,area,45,போத்தனூர்,போத்தனூர்,Tamil,phonetic,0.95
+171,street,1,Avinashi Road,avinashiroad,Tanglish,phonetic,0.9
+172,street,1,Avinashi Salai,avinashisalai,Tanglish,phonetic,0.9
+173,street,1,அவினாசி சாலை,அவினாசிசாலை,Tamil,phonetic,0.9
+174,street,1,avinasi road,avinasiroad,Tanglish,phonetic,0.9
+175,street,1,avinashi main road,avinashimainroad,Tanglish,phonetic,0.9
+176,street,2,Trichy Road,trichyroad,Tanglish,phonetic,0.9
+177,street,2,Trichy Salai,trichysalai,Tanglish,phonetic,0.9
+178,street,2,திருச்சி சாலை,திருச்சிசாலை,Tamil,phonetic,0.9
+179,street,2,trichy road coimbatore,trichyroadcoimbatore,Tanglish,phonetic,0.9
+180,street,3,Mettupalayam Road,mettupalayamroad,Tanglish,phonetic,0.9
+181,street,3,MTP Road,mtproad,Tanglish,phonetic,0.9
+182,street,3,மேட்டுப்பாளையம் சாலை,மேட்டுப்பாளையம்சாலை,Tamil,phonetic,0.9
+183,street,3,mtp road,mtproad,Tanglish,phonetic,0.9
+184,street,4,Sathy Road,sathyroad,Tanglish,phonetic,0.9
+185,street,4,Sathyamangalam Road,sathyamangalamroad,Tanglish,phonetic,0.9
+186,street,4,சத்தி சாலை,சத்திசாலை,Tamil,phonetic,0.9
+187,street,4,sathy road,sathyroad,Tanglish,phonetic,0.9
+188,street,5,Pollachi Road,pollachiroad,Tanglish,phonetic,0.9
+189,street,5,Pollachi Main Road,pollachimainroad,Tanglish,phonetic,0.9
+190,street,5,பொள்ளாச்சி சாலை,பொள்ளாச்சிசாலை,Tamil,phonetic,0.9
+191,street,5,pollachi road,pollachiroad,Tanglish,phonetic,0.9
+192,street,6,Palakkad Road,palakkadroad,Tanglish,phonetic,0.9
+193,street,6,Palghat Road,palghatroad,Tanglish,phonetic,0.9
+194,street,6,பாலக்காடு சாலை,பாலக்காடுசாலை,Tamil,phonetic,0.9
+195,street,6,palakkad main road,palakkadmainroad,Tanglish,phonetic,0.9
+196,street,7,Thadagam Road,thadagamroad,Tanglish,phonetic,0.9
+197,street,7,Thadagam Salai,thadagamsalai,Tanglish,phonetic,0.9
+198,street,7,தடாகம் சாலை,தடாகம்சாலை,Tamil,phonetic,0.9
+199,street,8,Marudamalai Road,marudamalairoad,Tanglish,phonetic,0.9
+200,street,8,Marudamalai Salai,marudamalaisalai,Tanglish,phonetic,0.9
+201,street,8,மருதமலை சாலை,மருதமலைசாலை,Tamil,phonetic,0.9
+202,street,8,marudamalai main road,marudamalaimainroad,Tanglish,phonetic,0.9
+203,street,9,Cross Cut Road,crosscutroad,Tanglish,phonetic,0.9
+204,street,9,Crosscut Road,crosscutroad,Tanglish,phonetic,0.9
+205,street,9,கிராஸ் கட் ரோடு,கிராஸ்கட்ரோடு,Tamil,phonetic,0.9
+206,street,9,cross cut salai,crosscutsalai,Tanglish,phonetic,0.9
+207,street,9,cross cut road gandhipuram,crosscutroadgandhipuram,Tanglish,phonetic,0.9
+208,street,10,100 Feet Road,100feetroad,Tanglish,phonetic,0.9
+209,street,10,Hundred Feet Road,hundredfeetroad,Tanglish,phonetic,0.9
+210,street,10,100 அடி ரோடு,100அடிரோடு,Tamil,phonetic,0.9
+211,street,10,100 feet road gandhipuram,100feetroadgandhipuram,Tanglish,phonetic,0.9
+212,street,11,DB Road,dbroad,Tanglish,phonetic,0.9
+213,street,11,D.B. Road,d.b.road,Tanglish,phonetic,0.9
+214,street,11,Diwan Bahadur Road,diwanbahadurroad,Tanglish,phonetic,0.9
+215,street,11,டி.பி. ரோடு,டி.பி.ரோடு,Tamil,phonetic,0.9
+216,street,11,db road rs puram,dbroadrspuram,Tanglish,phonetic,0.9
+217,street,12,TV Swamy Road,tvswamyroad,Tanglish,phonetic,0.9
+218,street,12,T.V. Swamy Road,t.v.swamyroad,Tanglish,phonetic,0.9
+219,street,12,Thiruvenkatasamy Road,thiruvenkatasamyroad,Tanglish,phonetic,0.9
+220,street,12,டி.வி. சாமி ரோடு,டி.வி.சாமிரோடு,Tamil,phonetic,0.9
+221,street,13,NSR Road,nsrroad,Tanglish,phonetic,0.9
+222,street,13,N.S.R. Road,n.s.r.road,Tanglish,phonetic,0.9
+223,street,13,Narayanasamy Road,narayanasamyroad,Tanglish,phonetic,0.9
+224,street,13,என்.எஸ்.ஆர் ரோடு,என்.எஸ்.ஆர்ரோடு,Tamil,phonetic,0.9
+225,street,14,Bharathiar Road,bharathiarroad,Tanglish,phonetic,0.9
+226,street,14,Bharathiyar Road,bharathiyarroad,Tanglish,phonetic,0.9
+227,street,14,பாரதியார் ரோடு,பாரதியார்ரோடு,Tamil,phonetic,0.9
+228,street,15,Race Course Road,racecourseroad,Tanglish,phonetic,0.9
+229,street,15,Racecourse Promenade,racecoursepromenade,Tanglish,phonetic,0.9
+230,street,15,ரேஸ் கோர்ஸ் ரோடு,ரேஸ்கோர்ஸ்ரோடு,Tamil,phonetic,0.9
+231,street,16,Oppanakara Street,oppanakarastreet,Tanglish,phonetic,0.9
+232,street,16,Oppanakkara Street,oppanakkarastreet,Tanglish,phonetic,0.9
+233,street,16,ஒப்பணக்கார வீதி,ஒப்பணக்காரவீதி,Tamil,phonetic,0.9
+234,street,16,oppanakara theru,oppanakaratheru,Tanglish,phonetic,0.9
+235,street,17,Big Bazaar Street,bigbazaarstreet,Tanglish,phonetic,0.9
+236,street,17,Periya Kadai Veedhi,periyakadaiveedhi,Tanglish,phonetic,0.9
+237,street,17,பெரிய கடை வீதி,பெரியகடைவீதி,Tamil,phonetic,0.9
+238,street,18,Raja Street,rajastreet,Tanglish,phonetic,0.9
+239,street,18,Raja Veedhi,rajaveedhi,Tanglish,phonetic,0.9
+240,street,18,ராஜா வீதி,ராஜாவீதி,Tamil,phonetic,0.9
+241,street,19,Sukrawarpet Street,sukrawarpetstreet,Tanglish,phonetic,0.9
+242,street,19,Sukrawarpettai,sukrawarpettai,Tanglish,phonetic,0.9
+243,street,19,சுக்கிரவார்பேட்டை,சுக்கிரவார்பேட்டை,Tamil,phonetic,0.9
+244,street,20,Kamarajar Road,kamarajarroad,Tanglish,phonetic,0.9
+245,street,20,Kamaraj Road Singanallur,kamarajroadsinganallur,Tanglish,phonetic,0.9
+246,street,20,காமராஜர் ரோடு,காமராஜர்ரோடு,Tamil,phonetic,0.9
+247,street,21,1st Street,1ststreet,Tanglish,phonetic,0.9
+248,street,21,1th street,1thstreet,Tanglish,phonetic,0.9
+249,street,21,Gandhipuram 1th street,gandhipuram1thstreet,Tanglish,phonetic,0.9
+250,street,21,1th street gandhipuram,1thstreetgandhipuram,Tanglish,phonetic,0.9
+251,street,21,1வது தெரு,1வதுதெரு,Tamil,phonetic,0.9
+252,street,21,1th street,1thstreet,Tanglish,phonetic,0.9
+253,street,21,1வது தெரு காந்திபுரம்,1வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+254,street,22,2nd Street,2ndstreet,Tanglish,phonetic,0.9
+255,street,22,2th street,2thstreet,Tanglish,phonetic,0.9
+256,street,22,Gandhipuram 2th street,gandhipuram2thstreet,Tanglish,phonetic,0.9
+257,street,22,2th street gandhipuram,2thstreetgandhipuram,Tanglish,phonetic,0.9
+258,street,22,2வது தெரு,2வதுதெரு,Tamil,phonetic,0.9
+259,street,22,2th street,2thstreet,Tanglish,phonetic,0.9
+260,street,22,2வது தெரு காந்திபுரம்,2வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+261,street,23,3rd Street,3rdstreet,Tanglish,phonetic,0.9
+262,street,23,3th street,3thstreet,Tanglish,phonetic,0.9
+263,street,23,Gandhipuram 3th street,gandhipuram3thstreet,Tanglish,phonetic,0.9
+264,street,23,3th street gandhipuram,3thstreetgandhipuram,Tanglish,phonetic,0.9
+265,street,23,3வது தெரு,3வதுதெரு,Tamil,phonetic,0.9
+266,street,23,3th street,3thstreet,Tanglish,phonetic,0.9
+267,street,23,3வது தெரு காந்திபுரம்,3வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+268,street,24,4th Street,4thstreet,Tanglish,phonetic,0.9
+269,street,24,4th street,4thstreet,Tanglish,phonetic,0.9
+270,street,24,Gandhipuram 4th street,gandhipuram4thstreet,Tanglish,phonetic,0.9
+271,street,24,4th street gandhipuram,4thstreetgandhipuram,Tanglish,phonetic,0.9
+272,street,24,4வது தெரு,4வதுதெரு,Tamil,phonetic,0.9
+273,street,24,4th street,4thstreet,Tanglish,phonetic,0.9
+274,street,24,4வது தெரு காந்திபுரம்,4வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+275,street,25,5th Street,5thstreet,Tanglish,phonetic,0.9
+276,street,25,5th street,5thstreet,Tanglish,phonetic,0.9
+277,street,25,Gandhipuram 5th street,gandhipuram5thstreet,Tanglish,phonetic,0.9
+278,street,25,5th street gandhipuram,5thstreetgandhipuram,Tanglish,phonetic,0.9
+279,street,25,5வது தெரு,5வதுதெரு,Tamil,phonetic,0.9
+280,street,25,5th street,5thstreet,Tanglish,phonetic,0.9
+281,street,25,5வது தெரு காந்திபுரம்,5வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+282,street,26,6th Street,6thstreet,Tanglish,phonetic,0.9
+283,street,26,6th street,6thstreet,Tanglish,phonetic,0.9
+284,street,26,Gandhipuram 6th street,gandhipuram6thstreet,Tanglish,phonetic,0.9
+285,street,26,6th street gandhipuram,6thstreetgandhipuram,Tanglish,phonetic,0.9
+286,street,26,6வது தெரு,6வதுதெரு,Tamil,phonetic,0.9
+287,street,26,6th street,6thstreet,Tanglish,phonetic,0.9
+288,street,26,6வது தெரு காந்திபுரம்,6வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+289,street,27,7th Street,7thstreet,Tanglish,phonetic,0.9
+290,street,27,7th street,7thstreet,Tanglish,phonetic,0.9
+291,street,27,Gandhipuram 7th street,gandhipuram7thstreet,Tanglish,phonetic,0.9
+292,street,27,7th street gandhipuram,7thstreetgandhipuram,Tanglish,phonetic,0.9
+293,street,27,7வது தெரு,7வதுதெரு,Tamil,phonetic,0.9
+294,street,27,7th street,7thstreet,Tanglish,phonetic,0.9
+295,street,27,7வது தெரு காந்திபுரம்,7வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+296,street,28,8th Street,8thstreet,Tanglish,phonetic,0.9
+297,street,28,8th street,8thstreet,Tanglish,phonetic,0.9
+298,street,28,Gandhipuram 8th street,gandhipuram8thstreet,Tanglish,phonetic,0.9
+299,street,28,8th street gandhipuram,8thstreetgandhipuram,Tanglish,phonetic,0.9
+300,street,28,8வது தெரு,8வதுதெரு,Tamil,phonetic,0.9
+301,street,28,8th street,8thstreet,Tanglish,phonetic,0.9
+302,street,28,8வது தெரு காந்திபுரம்,8வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+303,street,29,9th Street,9thstreet,Tanglish,phonetic,0.9
+304,street,29,9th street,9thstreet,Tanglish,phonetic,0.9
+305,street,29,Gandhipuram 9th street,gandhipuram9thstreet,Tanglish,phonetic,0.9
+306,street,29,9th street gandhipuram,9thstreetgandhipuram,Tanglish,phonetic,0.9
+307,street,29,9வது தெரு,9வதுதெரு,Tamil,phonetic,0.9
+308,street,29,9th street,9thstreet,Tanglish,phonetic,0.9
+309,street,29,9வது தெரு காந்திபுரம்,9வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+310,street,30,10th Street,10thstreet,Tanglish,phonetic,0.9
+311,street,30,10th street,10thstreet,Tanglish,phonetic,0.9
+312,street,30,Gandhipuram 10th street,gandhipuram10thstreet,Tanglish,phonetic,0.9
+313,street,30,10th street gandhipuram,10thstreetgandhipuram,Tanglish,phonetic,0.9
+314,street,30,10வது தெரு,10வதுதெரு,Tamil,phonetic,0.9
+315,street,30,10th street,10thstreet,Tanglish,phonetic,0.9
+316,street,30,10வது தெரு காந்திபுரம்,10வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+317,street,31,11th Street,11thstreet,Tanglish,phonetic,0.9
+318,street,31,11th street,11thstreet,Tanglish,phonetic,0.9
+319,street,31,Gandhipuram 11th street,gandhipuram11thstreet,Tanglish,phonetic,0.9
+320,street,31,11th street gandhipuram,11thstreetgandhipuram,Tanglish,phonetic,0.9
+321,street,31,11வது தெரு,11வதுதெரு,Tamil,phonetic,0.9
+322,street,31,11th street,11thstreet,Tanglish,phonetic,0.9
+323,street,31,11வது தெரு காந்திபுரம்,11வதுதெருகாந்திபுரம்,Tamil,phonetic,0.9
+324,street,32,Ram Nagar 1th street,ramnagar1thstreet,Tanglish,phonetic,0.9
+325,street,32,1th street ram nagar,1thstreetramnagar,Tanglish,phonetic,0.9
+326,street,32,ராம் நகர் 1வது தெரு,ராம்நகர்1வதுதெரு,Tamil,phonetic,0.9
+327,street,33,Ram Nagar 2th street,ramnagar2thstreet,Tanglish,phonetic,0.9
+328,street,33,2th street ram nagar,2thstreetramnagar,Tanglish,phonetic,0.9
+329,street,33,ராம் நகர் 2வது தெரு,ராம்நகர்2வதுதெரு,Tamil,phonetic,0.9
+330,street,34,Ram Nagar 3th street,ramnagar3thstreet,Tanglish,phonetic,0.9
+331,street,34,3th street ram nagar,3thstreetramnagar,Tanglish,phonetic,0.9
+332,street,34,ராம் நகர் 3வது தெரு,ராம்நகர்3வதுதெரு,Tamil,phonetic,0.9
+333,street,35,Ram Nagar 4th street,ramnagar4thstreet,Tanglish,phonetic,0.9
+334,street,35,4th street ram nagar,4thstreetramnagar,Tanglish,phonetic,0.9
+335,street,35,ராம் நகர் 4வது தெரு,ராம்நகர்4வதுதெரு,Tamil,phonetic,0.9
+336,street,36,Ram Nagar 5th street,ramnagar5thstreet,Tanglish,phonetic,0.9
+337,street,36,5th street ram nagar,5thstreetramnagar,Tanglish,phonetic,0.9
+338,street,36,ராம் நகர் 5வது தெரு,ராம்நகர்5வதுதெரு,Tamil,phonetic,0.9
+339,street,37,Ram Nagar 6th street,ramnagar6thstreet,Tanglish,phonetic,0.9
+340,street,37,6th street ram nagar,6thstreetramnagar,Tanglish,phonetic,0.9
+341,street,37,ராம் நகர் 6வது தெரு,ராம்நகர்6வதுதெரு,Tamil,phonetic,0.9
+342,street,38,Ram Nagar 7th street,ramnagar7thstreet,Tanglish,phonetic,0.9
+343,street,38,7th street ram nagar,7thstreetramnagar,Tanglish,phonetic,0.9
+344,street,38,ராம் நகர் 7வது தெரு,ராம்நகர்7வதுதெரு,Tamil,phonetic,0.9
+345,street,39,Tatabad 1th street,tatabad1thstreet,Tanglish,phonetic,0.9
+346,street,39,டாடாபாத் 1வது தெரு,டாடாபாத்1வதுதெரு,Tamil,phonetic,0.9
+347,street,40,Tatabad 2th street,tatabad2thstreet,Tanglish,phonetic,0.9
+348,street,40,டாடாபாத் 2வது தெரு,டாடாபாத்2வதுதெரு,Tamil,phonetic,0.9
+349,street,41,Tatabad 3th street,tatabad3thstreet,Tanglish,phonetic,0.9
+350,street,41,டாடாபாத் 3வது தெரு,டாடாபாத்3வதுதெரு,Tamil,phonetic,0.9
+351,street,42,Tatabad 4th street,tatabad4thstreet,Tanglish,phonetic,0.9
+352,street,42,டாடாபாத் 4வது தெரு,டாடாபாத்4வதுதெரு,Tamil,phonetic,0.9
+353,street,43,Tatabad 5th street,tatabad5thstreet,Tanglish,phonetic,0.9
+354,street,43,டாடாபாத் 5வது தெரு,டாடாபாத்5வதுதெரு,Tamil,phonetic,0.9
+355,street,44,Tatabad 6th street,tatabad6thstreet,Tanglish,phonetic,0.9
+356,street,44,டாடாபாத் 6வது தெரு,டாடாபாத்6வதுதெரு,Tamil,phonetic,0.9
+357,street,45,Tatabad 7th street,tatabad7thstreet,Tanglish,phonetic,0.9
+358,street,45,டாடாபாத் 7வது தெரு,டாடாபாத்7வதுதெரு,Tamil,phonetic,0.9
+359,street,46,Tatabad 8th street,tatabad8thstreet,Tanglish,phonetic,0.9
+360,street,46,டாடாபாத் 8வது தெரு,டாடாபாத்8வதுதெரு,Tamil,phonetic,0.9
+361,street,47,Tatabad 9th street,tatabad9thstreet,Tanglish,phonetic,0.9
+362,street,47,டாடாபாத் 9வது தெரு,டாடாபாத்9வதுதெரு,Tamil,phonetic,0.9
+363,street,48,NSR Road 1th cross,nsrroad1thcross,Tanglish,phonetic,0.9
+364,street,48,Saibaba Colony 1th cross,saibabacolony1thcross,Tanglish,phonetic,0.9
+365,street,48,சாயிபாபா காலனி 1வது கிராஸ்,சாயிபாபாகாலனி1வதுகிராஸ்,Tamil,phonetic,0.9
+366,street,49,NSR Road 2th cross,nsrroad2thcross,Tanglish,phonetic,0.9
+367,street,49,Saibaba Colony 2th cross,saibabacolony2thcross,Tanglish,phonetic,0.9
+368,street,49,சாயிபாபா காலனி 2வது கிராஸ்,சாயிபாபாகாலனி2வதுகிராஸ்,Tamil,phonetic,0.9
+369,street,50,NSR Road 3th cross,nsrroad3thcross,Tanglish,phonetic,0.9
+370,street,50,Saibaba Colony 3th cross,saibabacolony3thcross,Tanglish,phonetic,0.9
+371,street,50,சாயிபாபா காலனி 3வது கிராஸ்,சாயிபாபாகாலனி3வதுகிராஸ்,Tamil,phonetic,0.9
+372,street,51,NSR Road 4th cross,nsrroad4thcross,Tanglish,phonetic,0.9
+373,street,51,Saibaba Colony 4th cross,saibabacolony4thcross,Tanglish,phonetic,0.9
+374,street,51,சாயிபாபா காலனி 4வது கிராஸ்,சாயிபாபாகாலனி4வதுகிராஸ்,Tamil,phonetic,0.9
+375,street,52,NSR Road 5th cross,nsrroad5thcross,Tanglish,phonetic,0.9
+376,street,52,Saibaba Colony 5th cross,saibabacolony5thcross,Tanglish,phonetic,0.9
+377,street,52,சாயிபாபா காலனி 5வது கிராஸ்,சாயிபாபாகாலனி5வதுகிராஸ்,Tamil,phonetic,0.9
+378,street,53,NSR Road 6th cross,nsrroad6thcross,Tanglish,phonetic,0.9
+379,street,53,Saibaba Colony 6th cross,saibabacolony6thcross,Tanglish,phonetic,0.9
+380,street,53,சாயிபாபா காலனி 6வது கிராஸ்,சாயிபாபாகாலனி6வதுகிராஸ்,Tamil,phonetic,0.9
+381,street,54,NSR Road 7th cross,nsrroad7thcross,Tanglish,phonetic,0.9
+382,street,54,Saibaba Colony 7th cross,saibabacolony7thcross,Tanglish,phonetic,0.9
+383,street,54,சாயிபாபா காலனி 7வது கிராஸ்,சாயிபாபாகாலனி7வதுகிராஸ்,Tamil,phonetic,0.9
+384,street,55,NSR Road 8th cross,nsrroad8thcross,Tanglish,phonetic,0.9
+385,street,55,Saibaba Colony 8th cross,saibabacolony8thcross,Tanglish,phonetic,0.9
+386,street,55,சாயிபாபா காலனி 8வது கிராஸ்,சாயிபாபாகாலனி8வதுகிராஸ்,Tamil,phonetic,0.9
+387,street,56,NSR Road 9th cross,nsrroad9thcross,Tanglish,phonetic,0.9
+388,street,56,Saibaba Colony 9th cross,saibabacolony9thcross,Tanglish,phonetic,0.9
+389,street,56,சாயிபாபா காலனி 9வது கிராஸ்,சாயிபாபாகாலனி9வதுகிராஸ்,Tamil,phonetic,0.9
+390,street,57,NSR Road 10th cross,nsrroad10thcross,Tanglish,phonetic,0.9
+391,street,57,Saibaba Colony 10th cross,saibabacolony10thcross,Tanglish,phonetic,0.9
+392,street,57,சாயிபாபா காலனி 10வது கிராஸ்,சாயிபாபாகாலனி10வதுகிராஸ்,Tamil,phonetic,0.9
+393,street,58,NSR Road 11th cross,nsrroad11thcross,Tanglish,phonetic,0.9
+394,street,58,Saibaba Colony 11th cross,saibabacolony11thcross,Tanglish,phonetic,0.9
+395,street,58,சாயிபாபா காலனி 11வது கிராஸ்,சாயிபாபாகாலனி11வதுகிராஸ்,Tamil,phonetic,0.9
+396,street,59,NSR Road 12th cross,nsrroad12thcross,Tanglish,phonetic,0.9
+397,street,59,Saibaba Colony 12th cross,saibabacolony12thcross,Tanglish,phonetic,0.9
+398,street,59,சாயிபாபா காலனி 12வது கிராஸ்,சாயிபாபாகாலனி12வதுகிராஸ்,Tamil,phonetic,0.9
+399,street,60,Cross cut 1th street,crosscut1thstreet,Tanglish,phonetic,0.9
+400,street,60,Cross Cut 1th cross,crosscut1thcross,Tanglish,phonetic,0.9
+401,street,61,Cross cut 2th street,crosscut2thstreet,Tanglish,phonetic,0.9
+402,street,61,Cross Cut 2th cross,crosscut2thcross,Tanglish,phonetic,0.9
+403,street,62,Cross cut 3th street,crosscut3thstreet,Tanglish,phonetic,0.9
+404,street,62,Cross Cut 3th cross,crosscut3thcross,Tanglish,phonetic,0.9
+405,street,63,Cross cut 4th street,crosscut4thstreet,Tanglish,phonetic,0.9
+406,street,63,Cross Cut 4th cross,crosscut4thcross,Tanglish,phonetic,0.9
+407,street,64,Cross cut 5th street,crosscut5thstreet,Tanglish,phonetic,0.9
+408,street,64,Cross Cut 5th cross,crosscut5thcross,Tanglish,phonetic,0.9
+409,street,65,Cross cut 6th street,crosscut6thstreet,Tanglish,phonetic,0.9
+410,street,65,Cross Cut 6th cross,crosscut6thcross,Tanglish,phonetic,0.9
+411,street,66,Cross cut 7th street,crosscut7thstreet,Tanglish,phonetic,0.9
+412,street,66,Cross Cut 7th cross,crosscut7thcross,Tanglish,phonetic,0.9
+413,street,67,Cross cut 8th street,crosscut8thstreet,Tanglish,phonetic,0.9
+414,street,67,Cross Cut 8th cross,crosscut8thcross,Tanglish,phonetic,0.9
+415,street,68,Cross cut 9th street,crosscut9thstreet,Tanglish,phonetic,0.9
+416,street,68,Cross Cut 9th cross,crosscut9thcross,Tanglish,phonetic,0.9
+417,street,69,East Sambandam Road,eastsambandamroad,Tanglish,phonetic,0.9
+418,street,69,Sambandam Road East,sambandamroadeast,Tanglish,phonetic,0.9
+419,street,70,West Sambandam Road,westsambandamroad,Tanglish,phonetic,0.9
+420,street,70,Sambandam Road West,sambandamroadwest,Tanglish,phonetic,0.9
+421,street,71,East Arokiasamy Road,eastarokiasamyroad,Tanglish,phonetic,0.9
+422,street,72,West Arokiasamy Road,westarokiasamyroad,Tanglish,phonetic,0.9
+423,street,73,Lawley Road,lawleyroad,Tanglish,phonetic,0.9
+424,street,73,Lawley Road Junction,lawleyroadjunction,Tanglish,phonetic,0.9
+425,street,74,Alagesan Road,alagesanroad,Tanglish,phonetic,0.9
+426,street,74,Alagesan Salai,alagesansalai,Tanglish,phonetic,0.9
+427,street,75,Bharathi Park Road,bharathiparkroad,Tanglish,phonetic,0.9
+428,street,75,Bharathi Park,bharathipark,Tanglish,phonetic,0.9
+429,street,76,Pankaja Mill Road,pankajamillroad,Tanglish,phonetic,0.9
+430,street,77,80 Feet Road,80feetroad,Tanglish,phonetic,0.9
+431,street,77,80 Feet Road Ramanathapuram,80feetroadramanathapuram,Tanglish,phonetic,0.9
+432,street,78,Sungam Bypass,sungambypass,Tanglish,phonetic,0.9
+433,street,78,Sungam Bypass Road,sungambypassroad,Tanglish,phonetic,0.9
+434,street,79,Sir Shanmugam Road,sirshanmugamroad,Tanglish,phonetic,0.9
+435,street,80,Robertson Road,robertsonroad,Tanglish,phonetic,0.9
+436,street,81,Perur Main Road,perurmainroad,Tanglish,phonetic,0.9
+437,street,81,Perur Road,perurroad,Tanglish,phonetic,0.9
+438,street,82,Siruvani Road,siruvaniroad,Tanglish,phonetic,0.9
+439,street,82,Siruvani Main Road,siruvanimainroad,Tanglish,phonetic,0.9
+440,street,83,Sathy Road Saravanampatti,sathyroadsaravanampatti,Tanglish,phonetic,0.9
+441,street,84,TIDEL Park Road,tidelparkroad,Tanglish,phonetic,0.9
+442,street,84,Civil Aerodrome Road,civilaerodromeroad,Tanglish,phonetic,0.9
+443,street,85,Codissia Road,codissiaroad,Tanglish,phonetic,0.9
+444,street,85,Hopes Codissia Road,hopescodissiaroad,Tanglish,phonetic,0.9
+445,street,86,Cheran Ma Nagar Road,cheranmanagarroad,Tanglish,phonetic,0.9
+446,street,87,Maniakarampalayam Road,maniakarampalayamroad,Tanglish,phonetic,0.9
+447,street,88,Athipalayam Pirivu Road,athipalayampirivuroad,Tanglish,phonetic,0.9
+448,street,89,Sivanandapuram Road,sivanandapuramroad,Tanglish,phonetic,0.9
+449,street,90,Thiruvalluvar Nagar Road,thiruvalluvarnagarroad,Tanglish,phonetic,0.9
+450,street,91,Nava India Road,navaindiaroad,Tanglish,phonetic,0.9
+451,street,91,Nava India Salai,navaindiasalai,Tanglish,phonetic,0.9
+452,street,92,Peelamedu Pudur Road,peelamedupudurroad,Tanglish,phonetic,0.9
+453,street,93,Variety Hall Road,varietyhallroad,Tanglish,phonetic,0.9
+454,street,93,V.H. Road,v.h.road,Tanglish,phonetic,0.9
+455,street,94,Mill Road,millroad,Tanglish,phonetic,0.9
+456,street,94,Mill Salai,millsalai,Tanglish,phonetic,0.9
+457,street,95,Geetha Hall Road,geethahallroad,Tanglish,phonetic,0.9
+458,street,96,Goods Shed Road,goodsshedroad,Tanglish,phonetic,0.9
+459,street,97,Balasundaram Road,balasundaramroad,Tanglish,phonetic,0.9
+460,street,97,Balasundaram Salai,balasundaramsalai,Tanglish,phonetic,0.9
+461,street,98,Gokhale Street,gokhalestreet,Tanglish,phonetic,0.9
+462,street,98,Gokhale Road,gokhaleroad,Tanglish,phonetic,0.9
+463,street,99,Dr. Nanjappa Road,dr.nanjapparoad,Tanglish,phonetic,0.9
+464,street,99,Nanjappa Road,nanjapparoad,Tanglish,phonetic,0.9
+465,street,100,Brooke Bond Road,brookebondroad,Tanglish,phonetic,0.9
+466,street,100,Brookefields Road,brookefieldsroad,Tanglish,phonetic,0.9
+467,street,101,Kovaipudur Main Road,kovaipudurmainroad,Tanglish,phonetic,0.9
+468,street,101,Kovaipudur Road,kovaipudurroad,Tanglish,phonetic,0.9
+469,street,102,VLB College Road,vlbcollegeroad,Tanglish,phonetic,0.9
+470,street,103,Kuniyamuthur Bypass,kuniyamuthurbypass,Tanglish,phonetic,0.9
+471,street,104,Podanur Chettipalayam Road,podanurchettipalayamroad,Tanglish,phonetic,0.9
+472,street,105,Thondamuthur Road Vadavalli,thondamuthurroadvadavalli,Tanglish,phonetic,0.9
+473,landmark,1,Gandhipuram Bus Stand,gandhipurambusstand,Tanglish,phonetic,0.95
+474,landmark,1,Central Bus Stand,centralbusstand,Tanglish,phonetic,0.95
+475,landmark,1,காந்திபுரம் பஸ் ஸ்டாண்ட்,காந்திபுரம்பஸ்ஸ்டாண்ட்,Tamil,phonetic,0.95
+476,landmark,1,gandhipuram bus stand,gandhipurambusstand,Tanglish,phonetic,0.95
+477,landmark,2,Town Bus Stand Gandhipuram,townbusstandgandhipuram,Tanglish,phonetic,0.95
+478,landmark,2,City Bus Stand Gandhipuram,citybusstandgandhipuram,Tanglish,phonetic,0.95
+479,landmark,3,Omni Bus Stand,omnibusstand,Tanglish,phonetic,0.95
+480,landmark,3,SETC Bus Stand Gandhipuram,setcbusstandgandhipuram,Tanglish,phonetic,0.95
+481,landmark,4,Saravanampatti Bus Stand,saravanampattibusstand,Tanglish,phonetic,0.95
+482,landmark,4,Saravanampatti Bus Stop,saravanampattibusstop,Tanglish,phonetic,0.95
+483,landmark,4,சரவணம்பட்டி பஸ் ஸ்டாண்ட்,சரவணம்பட்டிபஸ்ஸ்டாண்ட்,Tamil,phonetic,0.95
+484,landmark,4,saravanampatti bus stand,saravanampattibusstand,Tanglish,phonetic,0.95
+485,landmark,4,saravanampatti bus stop,saravanampattibusstop,Tanglish,phonetic,0.95
+486,landmark,5,Singanallur Bus Stand,singanallurbusstand,Tanglish,phonetic,0.95
+487,landmark,5,சிங்காநல்லூர் பஸ் ஸ்டாண்ட்,சிங்காநல்லூர்பஸ்ஸ்டாண்ட்,Tamil,phonetic,0.95
+488,landmark,6,Ukkadam Bus Stand,ukkadambusstand,Tanglish,phonetic,0.95
+489,landmark,6,உக்கடம் பஸ் ஸ்டாண்ட்,உக்கடம்பஸ்ஸ்டாண்ட்,Tamil,phonetic,0.95
+490,landmark,7,Saibaba Colony Bus Stop,saibabacolonybusstop,Tanglish,phonetic,0.95
+491,landmark,8,Coimbatore Railway Station,coimbatorerailwaystation,Tanglish,phonetic,0.95
+492,landmark,8,Coimbatore Junction,coimbatorejunction,Tanglish,phonetic,0.95
+493,landmark,8,Kovai Junction,kovaijunction,Tanglish,phonetic,0.95
+494,landmark,8,ரயில்வே ஸ்டேஷன்,ரயில்வேஸ்டேஷன்,Tamil,phonetic,0.95
+495,landmark,9,Coimbatore North Station,coimbatorenorthstation,Tanglish,phonetic,0.95
+496,landmark,9,North Railway Station,northrailwaystation,Tanglish,phonetic,0.95
+497,landmark,10,Peelamedu Station,peelamedustation,Tanglish,phonetic,0.95
+498,landmark,11,Podanur Station,podanurstation,Tanglish,phonetic,0.95
+499,landmark,11,Podanur Junction,podanurjunction,Tanglish,phonetic,0.95
+500,landmark,12,Coimbatore Airport,coimbatoreairport,Tanglish,phonetic,0.95
+501,landmark,12,CJB Airport,cjbairport,Tanglish,phonetic,0.95
+502,landmark,12,Peelamedu Airport,peelameduairport,Tanglish,phonetic,0.95
+503,landmark,12,விமான நிலையம்,விமானநிலையம்,Tamil,phonetic,0.95
+504,landmark,13,Coimbatore GH,coimbatoregh,Tanglish,phonetic,0.95
+505,landmark,13,GH Coimbatore,ghcoimbatore,Tanglish,phonetic,0.95
+506,landmark,13,Government Hospital Coimbatore,governmenthospitalcoimbatore,Tanglish,phonetic,0.95
+507,landmark,13,அரசு மருத்துவமனை,அரசுமருத்துவமனை,Tamil,phonetic,0.95
+508,landmark,14,KMCH,kmch,Tanglish,phonetic,0.95
+509,landmark,14,KMCH Hospital,kmchhospital,Tanglish,phonetic,0.95
+510,landmark,14,Kovai Medical Center,kovaimedicalcenter,Tanglish,phonetic,0.95
+511,landmark,15,PSG Hospital,psghospital,Tanglish,phonetic,0.95
+512,landmark,15,PSG IMSR,psgimsr,Tanglish,phonetic,0.95
+513,landmark,16,Ganga Hospital MTP Road,gangahospitalmtproad,Tanglish,phonetic,0.95
+514,landmark,16,Ganga Ortho,gangaortho,Tanglish,phonetic,0.95
+515,landmark,17,Ramakrishna Hospital,ramakrishnahospital,Tanglish,phonetic,0.95
+516,landmark,17,Siddhapudur Hospital,siddhapudurhospital,Tanglish,phonetic,0.95
+517,landmark,18,GKNM Hospital,gknmhospital,Tanglish,phonetic,0.95
+518,landmark,18,GKNM,gknm,Tanglish,phonetic,0.95
+519,landmark,18,Pappanaickenpalayam Hospital,pappanaickenpalayamhospital,Tanglish,phonetic,0.95
+520,landmark,19,Royal Care Hospital Neelambur,royalcarehospitalneelambur,Tanglish,phonetic,0.95
+521,landmark,20,PSG Tech,psgtech,Tanglish,phonetic,0.95
+522,landmark,20,PSG College of Technology,psgcollegeoftechnology,Tanglish,phonetic,0.95
+523,landmark,21,CIT College,citcollege,Tanglish,phonetic,0.95
+524,landmark,21,CIT Coimbatore,citcoimbatore,Tanglish,phonetic,0.95
+525,landmark,22,GCT College,gctcollege,Tanglish,phonetic,0.95
+526,landmark,22,GCT Coimbatore,gctcoimbatore,Tanglish,phonetic,0.95
+527,landmark,22,Thadagam Road GCT,thadagamroadgct,Tanglish,phonetic,0.95
+528,landmark,23,TNAU,tnau,Tanglish,phonetic,0.95
+529,landmark,23,Agri University Coimbatore,agriuniversitycoimbatore,Tanglish,phonetic,0.95
+530,landmark,23,வேளாண்மைப் பல்கலைக்கழகம்,வேளாண்மைப்பல்கலைக்கழகம்,Tamil,phonetic,0.95
+531,landmark,24,Bharathiar University Marudamalai Road,bharathiaruniversitymarudamalairoad,Tanglish,phonetic,0.95
+532,landmark,25,KCT College,kctcollege,Tanglish,phonetic,0.95
+533,landmark,25,Kumaraguru,kumaraguru,Tanglish,phonetic,0.95
+534,landmark,26,Krishna College Kuniyamuthur,krishnacollegekuniyamuthur,Tanglish,phonetic,0.95
+535,landmark,26,SKCET,skcet,Tanglish,phonetic,0.95
+536,landmark,27,Arts College Coimbatore,artscollegecoimbatore,Tanglish,phonetic,0.95
+537,landmark,27,Govt Arts College,govtartscollege,Tanglish,phonetic,0.95
+538,landmark,28,Brookefields,brookefields,Tanglish,phonetic,0.95
+539,landmark,28,Brookefields Mall Brooke Bond Road,brookefieldsmallbrookebondroad,Tanglish,phonetic,0.95
+540,landmark,28,புரூக்ஃபீல்ட்ஸ்,புரூக்ஃபீல்ட்ஸ்,Tamil,phonetic,0.95
+541,landmark,29,Prozone Mall Sathy Road,prozonemallsathyroad,Tanglish,phonetic,0.95
+542,landmark,29,Prozone,prozone,Tanglish,phonetic,0.95
+543,landmark,30,Fun Mall,funmall,Tanglish,phonetic,0.95
+544,landmark,30,Fun Republic,funrepublic,Tanglish,phonetic,0.95
+545,landmark,30,Fun Mall Avinashi Road,funmallavinashiroad,Tanglish,phonetic,0.95
+546,landmark,30,ஃபன் மால்,ஃபன்மால்,Tamil,phonetic,0.95
+547,landmark,31,TIDEL Park,tidelpark,Tanglish,phonetic,0.95
+548,landmark,31,Coimbatore IT Park,coimbatoreitpark,Tanglish,phonetic,0.95
+549,landmark,31,டைடல் பார்க்,டைடல்பார்க்,Tamil,phonetic,0.95
+550,landmark,32,KGISL Tech Park Saravanampatti,kgisltechparksaravanampatti,Tanglish,phonetic,0.95
+551,landmark,32,CHIL SEZ,chilsez,Tanglish,phonetic,0.95
+552,landmark,33,Marudamalai Temple,marudamalaitemple,Tanglish,phonetic,0.95
+553,landmark,33,Maruthamalai,maruthamalai,Tanglish,phonetic,0.95
+554,landmark,33,மருதமலை கோவில்,மருதமலைகோவில்,Tamil,phonetic,0.95
+555,landmark,34,Eachanari Temple,eachanaritemple,Tanglish,phonetic,0.95
+556,landmark,34,Eachanari Vinayagar,eachanarivinayagar,Tanglish,phonetic,0.95
+557,landmark,34,ஈச்சனாரி கோவில்,ஈச்சனாரிகோவில்,Tamil,phonetic,0.95
+558,landmark,35,Perur Temple,perurtemple,Tanglish,phonetic,0.95
+559,landmark,35,Pateeswarar Temple,pateeswarartemple,Tanglish,phonetic,0.95
+560,landmark,35,பேரூர் கோவில்,பேரூர்கோவில்,Tamil,phonetic,0.95
+561,landmark,36,Puliakulam Vinayagar Temple,puliakulamvinayagartemple,Tanglish,phonetic,0.95
+562,landmark,36,Big Vinayagar Puliakulam,bigvinayagarpuliakulam,Tanglish,phonetic,0.95
+563,landmark,37,Koniamman Temple,koniammantemple,Tanglish,phonetic,0.95
+564,landmark,37,Townhall Temple,townhalltemple,Tanglish,phonetic,0.95
+565,landmark,38,Ukkadam Big Mosque,ukkadambigmosque,Tanglish,phonetic,0.95
+566,landmark,38,Athar Jamath Mosque,atharjamathmosque,Tanglish,phonetic,0.95
+567,landmark,39,St Michaels Church Town Hall,stmichaelschurchtownhall,Tanglish,phonetic,0.95
+568,landmark,39,Cathedral Church Coimbatore,cathedralchurchcoimbatore,Tanglish,phonetic,0.95
+569,landmark,40,VOC Park,vocpark,Tanglish,phonetic,0.95
+570,landmark,40,VOC Ground,vocground,Tanglish,phonetic,0.95
+571,landmark,41,Valankulam Lake,valankulamlake,Tanglish,phonetic,0.95
+572,landmark,41,Valankulam Smart City Park,valankulamsmartcitypark,Tanglish,phonetic,0.95
+573,landmark,42,Singanallur Lake,singanallurlake,Tanglish,phonetic,0.95
+574,landmark,43,Ukkadam Lake,ukkadamlake,Tanglish,phonetic,0.95
+575,landmark,43,Periyakulam Lake Ukkadam,periyakulamlakeukkadam,Tanglish,phonetic,0.95
+576,landmark,44,Gandhipuram Flyover,gandhipuramflyover,Tanglish,phonetic,0.95
+577,landmark,45,Ukkadam Flyover,ukkadamflyover,Tanglish,phonetic,0.95
+578,landmark,45,Athupalam Flyover,athupalamflyover,Tanglish,phonetic,0.95
+579,landmark,46,Lakshmi Mills Junction,lakshmimillsjunction,Tanglish,phonetic,0.95
+580,landmark,46,Lakshmi Mills Signal,lakshmimillssignal,Tanglish,phonetic,0.95
+581,landmark,46,லட்சுமி மில்ஸ்,லட்சுமிமில்ஸ்,Tamil,phonetic,0.95
+582,landmark,47,Chinthamani Signal,chinthamanisignal,Tanglish,phonetic,0.95
+583,landmark,47,Chinthamani Junction,chinthamanijunction,Tanglish,phonetic,0.95
+584,landmark,48,CCMC Head Office,ccmcheadoffice,Tanglish,phonetic,0.95
+585,landmark,48,Corporation Office Coimbatore,corporationofficecoimbatore,Tanglish,phonetic,0.95
+586,landmark,48,Town Hall Office,townhalloffice,Tanglish,phonetic,0.95
+587,landmark,49,Collector Office Coimbatore,collectorofficecoimbatore,Tanglish,phonetic,0.95
+588,landmark,49,Collectorate,collectorate,Tanglish,phonetic,0.95
+589,landmark,49,கலெக்டர் ஆபீஸ்,கலெக்டர்ஆபீஸ்,Tamil,phonetic,0.95
+590,area,1,gandhi puram,gandhipuram,Tanglish,whisper_error,0.9
+591,area,1,gandhi puram la,gandhipuramla,Tanglish,whisper_error,0.9
+592,area,1,gandhipuramla,gandhipuramla,Tanglish,whisper_error,0.9
+593,area,1,காந்தி தம்பியின்,காந்திதம்பியின்,Tamil,whisper_error,0.9
+594,street,11,rs puram db road,rspuramdbroad,Tanglish,whisper_error,0.9
+595,area,2,r s puram,rspuram,Tanglish,whisper_error,0.9
+596,street,11,d b road,dbroad,Tanglish,whisper_error,0.9
+597,area,3,peela medu,peelamedu,Tanglish,whisper_error,0.9
+598,area,4,sai baba colony,saibabacolony,Tanglish,whisper_error,0.9
+599,landmark,4,saravanampatty bus stand,saravanampattybusstand,Tanglish,whisper_error,0.9
+600,street,80,maruthamalai road,maruthamalairoad,Tanglish,whisper_error,0.9
+601,street,9,cross cut,crosscut,Tanglish,whisper_error,0.9
+602,street,10,100 feet,100feet,Tanglish,whisper_error,0.9
+603,street,25,5 th street,5thstreet,Tanglish,whisper_error,0.9
+604,street,25,5 th street gandhipuram,5thstreetgandhipuram,Tanglish,whisper_error,0.9

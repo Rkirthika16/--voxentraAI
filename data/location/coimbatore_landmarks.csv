@@ -1,0 +1,50 @@
+id,name_en,name_ta,landmark_type,area_id,ward_id,latitude,longitude,aliases,source,confidence
+1,Gandhipuram Central Bus Stand,காந்திபுரம் மத்திய பேருந்து நிலையம்,Bus Stand,1,45,11.0175,76.968,"[""Gandhipuram Bus Stand"", ""Central Bus Stand"", ""காந்திபுரம் பஸ் ஸ்டாண்ட்"", ""gandhipuram bus stand""]",Government of Tamil Nadu & OpenStreetMap,0.95
+2,Gandhipuram Town Bus Stand,காந்திபுரம் நகரப் பேருந்து நிலையம்,Bus Stand,1,45,11.016,76.9665,"[""Town Bus Stand Gandhipuram"", ""City Bus Stand Gandhipuram""]",Government of Tamil Nadu & OpenStreetMap,0.95
+3,Gandhipuram SETC / Omni Bus Stand,காந்திபுரம் ஆம்னி பேருந்து நிலையம்,Bus Stand,1,45,11.019,76.971,"[""Omni Bus Stand"", ""SETC Bus Stand Gandhipuram""]",Government of Tamil Nadu & OpenStreetMap,0.95
+4,Saravanampatti Bus Stand,சரவணம்பட்டி பேருந்து நிலையம்,Bus Stand,5,2,11.079,76.996,"[""Saravanampatti Bus Stand"", ""Saravanampatti Bus Stop"", ""சரவணம்பட்டி பஸ் ஸ்டாண்ட்"", ""saravanampatti bus stand"", ""saravanampatti bus stop""]",Government of Tamil Nadu & OpenStreetMap,0.95
+5,Singanallur Bus Stand,சிங்காநல்லூர் பேருந்து நிலையம்,Bus Stand,7,31,10.9985,77.026,"[""Singanallur Bus Stand"", ""சிங்காநல்லூர் பஸ் ஸ்டாண்ட்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+6,Ukkadam Bus Stand,உக்கடம் பேருந்து நிலையம்,Bus Stand,9,61,10.9885,76.961,"[""Ukkadam Bus Stand"", ""உக்கடம் பஸ் ஸ்டாண்ட்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+7,Saibaba Colony Bus Stand / MTP Road,சாயிபாபா காலனி பேருந்து நிறுத்தம்,Bus Stand,4,81,11.0285,76.944,"[""Saibaba Colony Bus Stop""]",Government of Tamil Nadu & OpenStreetMap,0.95
+8,Coimbatore Main Railway Junction,கோயம்புத்தூர் முதன்மை ரயில் நிலையம்,Railway Station,10,58,10.998,76.966,"[""Coimbatore Railway Station"", ""Coimbatore Junction"", ""Kovai Junction"", ""ரயில்வே ஸ்டேஷன்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+9,Coimbatore North Railway Station,கோயம்புத்தூர் வடக்கு ரயில் நிலையம்,Railway Station,4,81,11.022,76.95,"[""Coimbatore North Station"", ""North Railway Station""]",Government of Tamil Nadu & OpenStreetMap,0.95
+10,Peelamedu Railway Station,பீளமேடு ரயில் நிலையம்,Railway Station,3,23,11.028,77.012,"[""Peelamedu Station""]",Government of Tamil Nadu & OpenStreetMap,0.95
+11,Podanur Railway Junction,போத்தனூர் ரயில் சந்திப்பு,Railway Station,45,66,10.963,76.987,"[""Podanur Station"", ""Podanur Junction""]",Government of Tamil Nadu & OpenStreetMap,0.95
+12,Coimbatore International Airport,கோயம்புத்தூர் சர்வதேச விமான நிலையம்,Airport,41,25,11.03,77.043,"[""Coimbatore Airport"", ""CJB Airport"", ""Peelamedu Airport"", ""விமான நிலையம்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+13,Coimbatore Medical College Hospital (CMCH / GH),கோவை அரசு மருத்துவக் கல்லூரி மருத்துவமனை,Government Hospital,10,58,10.9995,76.971,"[""Coimbatore GH"", ""GH Coimbatore"", ""Government Hospital Coimbatore"", ""அரசு மருத்துவமனை""]",Government of Tamil Nadu & OpenStreetMap,0.95
+14,Kovai Medical Center and Hospital (KMCH),கோவை மெடிக்கல் சென்டர் மருத்துவமனை (KMCH),Hospital,3,25,11.045,77.047,"[""KMCH"", ""KMCH Hospital"", ""Kovai Medical Center""]",Government of Tamil Nadu & OpenStreetMap,0.95
+15,PSG Hospitals,பி.எஸ்.ஜி மருத்துவமனை,Hospital,3,23,11.026,77.003,"[""PSG Hospital"", ""PSG IMSR""]",Government of Tamil Nadu & OpenStreetMap,0.95
+16,Ganga Hospital,கங்கா மருத்துவமனை,Hospital,4,81,11.024,76.945,"[""Ganga Hospital MTP Road"", ""Ganga Ortho""]",Government of Tamil Nadu & OpenStreetMap,0.95
+17,Sri Ramakrishna Hospital,ஸ்ரீ ராமகிருஷ்ணா மருத்துவமனை,Hospital,1,44,11.022,76.981,"[""Ramakrishna Hospital"", ""Siddhapudur Hospital""]",Government of Tamil Nadu & OpenStreetMap,0.95
+18,G. Kuppuswamy Naidu Memorial Hospital (GKNM),ஜி. குப்புசாமி நாயுடு நினைவு மருத்துவமனை (GKNM),Hospital,11,52,11.01,76.979,"[""GKNM Hospital"", ""GKNM"", ""Pappanaickenpalayam Hospital""]",Government of Tamil Nadu & OpenStreetMap,0.95
+19,Royal Care Super Speciality Hospital,ராயல் கேர் மருத்துவமனை,Hospital,44,,11.062,77.085,"[""Royal Care Hospital Neelambur""]",Government of Tamil Nadu & OpenStreetMap,0.95
+20,PSG College of Technology (PSG Tech),பி.எஸ்.ஜி தொழில்நுட்பக் கல்லூரி,College / University,3,23,11.0245,77.0025,"[""PSG Tech"", ""PSG College of Technology""]",Government of Tamil Nadu & OpenStreetMap,0.95
+21,Coimbatore Institute of Technology (CIT),கோயம்புத்தூர் இன்ஸ்டிடியூட் ஆப் டெக்னாலஜி (CIT),College / University,40,24,11.027,77.016,"[""CIT College"", ""CIT Coimbatore""]",Government of Tamil Nadu & OpenStreetMap,0.95
+22,Government College of Technology (GCT),அரசு தொழில்நுட்பக் கல்லூரி (GCT),College / University,2,94,11.018,76.935,"[""GCT College"", ""GCT Coimbatore"", ""Thadagam Road GCT""]",Government of Tamil Nadu & OpenStreetMap,0.95
+23,Tamil Nadu Agricultural University (TNAU),தமிழ்நாடு வேளாண்மைப் பல்கலைக்கழகம் (TNAU),University,2,95,11.013,76.932,"[""TNAU"", ""Agri University Coimbatore"", ""வேளாண்மைப் பல்கலைக்கழகம்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+24,Bharathiar University,பாரதியார் பல்கலைக்கழகம்,University,14,,11.038,76.877,"[""Bharathiar University Marudamalai Road""]",Government of Tamil Nadu & OpenStreetMap,0.95
+25,Kumaraguru College of Technology (KCT),குமரகுரு தொழில்நுட்பக் கல்லூரி (KCT),College / University,5,2,11.082,76.988,"[""KCT College"", ""Kumaraguru""]",Government of Tamil Nadu & OpenStreetMap,0.95
+26,Sri Krishna College of Engineering and Technology (SKCET),ஸ்ரீ கிருஷ்ணா பொறியியல் கல்லூரி,College / University,16,73,10.938,76.955,"[""Krishna College Kuniyamuthur"", ""SKCET""]",Government of Tamil Nadu & OpenStreetMap,0.95
+27,Government Arts College Coimbatore,அரசு கலைக் கல்லூரி கோயம்புத்தூர்,College / University,11,53,11.004,76.971,"[""Arts College Coimbatore"", ""Govt Arts College""]",Government of Tamil Nadu & OpenStreetMap,0.95
+28,Brookefields Mall,புரூக்ஃபீல்ட்ஸ் மால்,Shopping Mall,10,57,11.007,76.956,"[""Brookefields"", ""Brookefields Mall Brooke Bond Road"", ""புரூக்ஃபீல்ட்ஸ்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+29,Prozone Mall,புரோசோன் மால்,Shopping Mall,5,3,11.054,76.993,"[""Prozone Mall Sathy Road"", ""Prozone""]",Government of Tamil Nadu & OpenStreetMap,0.95
+30,Fun Republic Mall,ஃபன் ரிபப்ளிக் மால்,Shopping Mall,3,24,11.0265,77.011,"[""Fun Mall"", ""Fun Republic"", ""Fun Mall Avinashi Road"", ""ஃபன் மால்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+31,TIDEL Park Coimbatore,டைடல் பார்க் கோயம்புத்தூர்,Technology Park,3,25,11.031,77.028,"[""TIDEL Park"", ""Coimbatore IT Park"", ""டைடல் பார்க்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+32,KGiSL Tech Park / CHIL SEZ,கே.ஜி.ஐ.எஸ்.எல் ஐடி பார்க்,Technology Park,5,2,11.085,76.998,"[""KGISL Tech Park Saravanampatti"", ""CHIL SEZ""]",Government of Tamil Nadu & OpenStreetMap,0.95
+33,Marudamalai Murugan Temple,மருதமலை சுப்பிரமணிய சுவாமி திருக்கோவில்,Temple,14,,11.047,76.852,"[""Marudamalai Temple"", ""Maruthamalai"", ""மருதமலை கோவில்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+34,Eachanari Vinayagar Temple,ஈச்சனாரி விநாயகர் திருக்கோவில்,Temple,21,69,10.927,76.981,"[""Eachanari Temple"", ""Eachanari Vinayagar"", ""ஈச்சனாரி கோவில்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+35,Perur Pateeswarar Temple,பேரூர் பட்டீஸ்வரர் திருக்கோவில்,Temple,33,,10.976,76.917,"[""Perur Temple"", ""Pateeswarar Temple"", ""பேரூர் கோவில்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+36,Puliakulam Munthi Vinayagar Temple,புலியகுளம் முந்தி விநாயகர் கோவில்,Temple,8,77,10.999,76.994,"[""Puliakulam Vinayagar Temple"", ""Big Vinayagar Puliakulam""]",Government of Tamil Nadu & OpenStreetMap,0.95
+37,Koniamman Temple Town Hall,கோனியம்மன் திருக்கோவில் டவுன் ஹால்,Temple,10,55,10.995,76.96,"[""Koniamman Temple"", ""Townhall Temple""]",Government of Tamil Nadu & OpenStreetMap,0.95
+38,Athar Jamath Big Mosque Ukkadam,அத்தர் ஜமாத் பெரிய பள்ளிவாசல் உக்கடம்,Mosque,9,60,10.991,76.96,"[""Ukkadam Big Mosque"", ""Athar Jamath Mosque""]",Government of Tamil Nadu & OpenStreetMap,0.95
+39,St. Michael's Cathedral Big Bazaar Street,புனித மைக்கேல் பேராலயம்,Church,10,55,10.996,76.965,"[""St Michaels Church Town Hall"", ""Cathedral Church Coimbatore""]",Government of Tamil Nadu & OpenStreetMap,0.95
+40,VOC Park and Zoo,வ.உ.சி பூங்கா,Park,11,52,11.006,76.972,"[""VOC Park"", ""VOC Ground""]",Government of Tamil Nadu & OpenStreetMap,0.95
+41,Valankulam Lake Promenade,வாலாங்குளம் படகு இல்லம் மற்றும் நடைபாதை,Lake,8,79,10.992,76.976,"[""Valankulam Lake"", ""Valankulam Smart City Park""]",Government of Tamil Nadu & OpenStreetMap,0.95
+42,Singanallur Lake Boat House,சிங்காநல்லூர் குளம்,Lake,7,32,10.992,77.021,"[""Singanallur Lake""]",Government of Tamil Nadu & OpenStreetMap,0.95
+43,Ukkadam Periyakulam Smart City Lake,உக்கடம் பெரியகுளம்,Lake,9,61,10.985,76.958,"[""Ukkadam Lake"", ""Periyakulam Lake Ukkadam""]",Government of Tamil Nadu & OpenStreetMap,0.95
+44,Gandhipuram Two-Tier Flyover,காந்திபுரம் மேம்பாலம்,Flyover,1,45,11.018,76.968,"[""Gandhipuram Flyover""]",Government of Tamil Nadu & OpenStreetMap,0.95
+45,Ukkadam Flyover Junction,உக்கடம் மேம்பாலம்,Flyover,9,61,10.989,76.962,"[""Ukkadam Flyover"", ""Athupalam Flyover""]",Government of Tamil Nadu & OpenStreetMap,0.95
+46,Lakshmi Mills Junction,லட்சுமி மில்ஸ் சந்திப்பு,Major Junction,3,24,11.015,76.987,"[""Lakshmi Mills Junction"", ""Lakshmi Mills Signal"", ""லட்சுமி மில்ஸ்""]",Government of Tamil Nadu & OpenStreetMap,0.95
+47,Chinthamani Junction North Coimbatore,சிந்தாமணி சந்திப்பு,Major Junction,4,81,11.021,76.952,"[""Chinthamani Signal"", ""Chinthamani Junction""]",Government of Tamil Nadu & OpenStreetMap,0.95
+48,Victoria Town Hall CCMC Headquarters,விக்டோரியா டவுன் ஹால் மாநகராட்சி அலுவலகம்,Government Office,10,55,10.997,76.963,"[""CCMC Head Office"", ""Corporation Office Coimbatore"", ""Town Hall Office""]",Government of Tamil Nadu & OpenStreetMap,0.95
+49,Coimbatore District Collectorate,கோவை மாவட்ட ஆட்சியர் அலுவலகம்,Government Office,11,53,11.0025,76.969,"[""Collector Office Coimbatore"", ""Collectorate"", ""கலெக்டர் ஆபீஸ்""]",Government of Tamil Nadu & OpenStreetMap,0.95

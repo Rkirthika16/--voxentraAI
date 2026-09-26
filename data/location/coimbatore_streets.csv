@@ -1,0 +1,106 @@
+id,name_en,name_ta,street_type,area_id,ward_id,zone_id,latitude,longitude,aliases,source,confidence
+1,Avinashi Road,அவினாசி சாலை,Highway,3,23,2,11.028,77.008,"[""Avinashi Road"", ""Avinashi Salai"", ""அவினாசி சாலை"", ""avinasi road"", ""avinashi main road""]",CCMC Open GIS & OpenStreetMap,0.9
+2,Trichy Road,திருச்சி சாலை,Highway,7,32,2,10.998,77.018,"[""Trichy Road"", ""Trichy Salai"", ""திருச்சி சாலை"", ""trichy road coimbatore""]",CCMC Open GIS & OpenStreetMap,0.9
+3,Mettupalayam Road,மேட்டுப்பாளையம் சாலை,Highway,4,81,5,11.04,76.945,"[""Mettupalayam Road"", ""MTP Road"", ""மேட்டுப்பாளையம் சாலை"", ""mtp road""]",CCMC Open GIS & OpenStreetMap,0.9
+4,Sathy Road,சத்தி சாலை,Highway,6,9,1,11.05,76.985,"[""Sathy Road"", ""Sathyamangalam Road"", ""சத்தி சாலை"", ""sathy road""]",CCMC Open GIS & OpenStreetMap,0.9
+5,Pollachi Road,பொள்ளாச்சி சாலை,Highway,19,67,4,10.935,76.978,"[""Pollachi Road"", ""Pollachi Main Road"", ""பொள்ளாச்சி சாலை"", ""pollachi road""]",CCMC Open GIS & OpenStreetMap,0.9
+6,Palakkad Road,பாலக்காடு சாலை,Highway,16,72,4,10.955,76.94,"[""Palakkad Road"", ""Palghat Road"", ""பாலக்காடு சாலை"", ""palakkad main road""]",CCMC Open GIS & OpenStreetMap,0.9
+7,Thadagam Road,தடாகம் சாலை,Main Road,4,83,5,11.035,76.925,"[""Thadagam Road"", ""Thadagam Salai"", ""தடாகம் சாலை""]",CCMC Open GIS & OpenStreetMap,0.9
+8,Marudamalai Road,மருதமலை சாலை,Main Road,14,85,5,11.03,76.89,"[""Marudamalai Road"", ""Marudamalai Salai"", ""மருதமலை சாலை"", ""marudamalai main road""]",CCMC Open GIS & OpenStreetMap,0.9
+9,Cross Cut Road,கிராஸ் கட் சாலை,Commercial Arterial,1,45,3,11.018,76.966,"[""Cross Cut Road"", ""Crosscut Road"", ""கிராஸ் கட் ரோடு"", ""cross cut salai"", ""cross cut road gandhipuram""]",CCMC Open GIS & OpenStreetMap,0.9
+10,100 Feet Road,100 அடி சாலை,Main Road,1,45,3,11.0195,76.964,"[""100 Feet Road"", ""Hundred Feet Road"", ""100 அடி ரோடு"", ""100 feet road gandhipuram""]",CCMC Open GIS & OpenStreetMap,0.9
+11,Diwan Bahadur Road (DB Road),திவான் பகதூர் சாலை (டி.பி. ரோடு),Commercial Arterial,2,93,5,11.009,76.947,"[""DB Road"", ""D.B. Road"", ""Diwan Bahadur Road"", ""டி.பி. ரோடு"", ""db road rs puram""]",CCMC Open GIS & OpenStreetMap,0.9
+12,Thiruvenkatasamy Road (TV Swamy Road),திருவேங்கடசாமி சாலை (டி.வி. சாமி ரோடு),Main Road,2,92,5,11.011,76.949,"[""TV Swamy Road"", ""T.V. Swamy Road"", ""Thiruvenkatasamy Road"", ""டி.வி. சாமி ரோடு""]",CCMC Open GIS & OpenStreetMap,0.9
+13,NSR Road,என்.எஸ்.ஆர் சாலை,Commercial Arterial,4,81,5,11.029,76.941,"[""NSR Road"", ""N.S.R. Road"", ""Narayanasamy Road"", ""என்.எஸ்.ஆர் ரோடு""]",CCMC Open GIS & OpenStreetMap,0.9
+14,Bharathiar Road,பாரதியார் சாலை,Main Road,1,45,3,11.014,76.972,"[""Bharathiar Road"", ""Bharathiyar Road"", ""பாரதியார் ரோடு""]",CCMC Open GIS & OpenStreetMap,0.9
+15,Race Course Road,ரேஸ் கோர்ஸ் சாலை,Arterial Promenade,11,52,3,11.003,76.974,"[""Race Course Road"", ""Racecourse Promenade"", ""ரேஸ் கோர்ஸ் ரோடு""]",CCMC Open GIS & OpenStreetMap,0.9
+16,Oppanakara Street,ஒப்பணக்கார வீதி,Commercial Heritage,10,56,3,10.994,76.961,"[""Oppanakara Street"", ""Oppanakkara Street"", ""ஒப்பணக்கார வீதி"", ""oppanakara theru""]",CCMC Open GIS & OpenStreetMap,0.9
+17,Big Bazaar Street,பெரிய கடை வீதி,Commercial Heritage,10,55,3,10.995,76.963,"[""Big Bazaar Street"", ""Periya Kadai Veedhi"", ""பெரிய கடை வீதி""]",CCMC Open GIS & OpenStreetMap,0.9
+18,Raja Street,ராஜா வீதி,Commercial Heritage,10,56,3,10.997,76.959,"[""Raja Street"", ""Raja Veedhi"", ""ராஜா வீதி""]",CCMC Open GIS & OpenStreetMap,0.9
+19,Sukrawarpet Street,சுக்கிரவார்பேட்டை வீதி,Heritage Road,10,57,3,11.001,76.955,"[""Sukrawarpet Street"", ""Sukrawarpettai"", ""சுக்கிரவார்பேட்டை""]",CCMC Open GIS & OpenStreetMap,0.9
+20,Kamarajar Road,காமராஜர் சாலை,Main Road,7,30,2,11.002,77.022,"[""Kamarajar Road"", ""Kamaraj Road Singanallur"", ""காமராஜர் ரோடு""]",CCMC Open GIS & OpenStreetMap,0.9
+21,Gandhipuram 1st Street,காந்திபுரம் 1-வது தெரு,Cross Street,1,46,3,11.0168,76.9665,"[""1st Street"", ""1th street"", ""Gandhipuram 1th street"", ""1th street gandhipuram"", ""1வது தெரு"", ""1th street"", ""1வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+22,Gandhipuram 2nd Street,காந்திபுரம் 2-வது தெரு,Cross Street,1,46,3,11.0176,76.967,"[""2nd Street"", ""2th street"", ""Gandhipuram 2th street"", ""2th street gandhipuram"", ""2வது தெரு"", ""2th street"", ""2வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+23,Gandhipuram 3rd Street,காந்திபுரம் 3-வது தெரு,Cross Street,1,46,3,11.0184,76.9675,"[""3rd Street"", ""3th street"", ""Gandhipuram 3th street"", ""3th street gandhipuram"", ""3வது தெரு"", ""3th street"", ""3வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+24,Gandhipuram 4th Street,காந்திபுரம் 4-வது தெரு,Cross Street,1,46,3,11.0192,76.968,"[""4th Street"", ""4th street"", ""Gandhipuram 4th street"", ""4th street gandhipuram"", ""4வது தெரு"", ""4th street"", ""4வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+25,Gandhipuram 5th Street,காந்திபுரம் 5-வது தெரு,Cross Street,1,46,3,11.02,76.9685,"[""5th Street"", ""5th street"", ""Gandhipuram 5th street"", ""5th street gandhipuram"", ""5வது தெரு"", ""5th street"", ""5வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+26,Gandhipuram 6th Street,காந்திபுரம் 6-வது தெரு,Cross Street,1,46,3,11.0208,76.969,"[""6th Street"", ""6th street"", ""Gandhipuram 6th street"", ""6th street gandhipuram"", ""6வது தெரு"", ""6th street"", ""6வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+27,Gandhipuram 7th Street,காந்திபுரம் 7-வது தெரு,Cross Street,1,46,3,11.0216,76.9695,"[""7th Street"", ""7th street"", ""Gandhipuram 7th street"", ""7th street gandhipuram"", ""7வது தெரு"", ""7th street"", ""7வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+28,Gandhipuram 8th Street,காந்திபுரம் 8-வது தெரு,Cross Street,1,46,3,11.0224,76.97,"[""8th Street"", ""8th street"", ""Gandhipuram 8th street"", ""8th street gandhipuram"", ""8வது தெரு"", ""8th street"", ""8வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+29,Gandhipuram 9th Street,காந்திபுரம் 9-வது தெரு,Cross Street,1,46,3,11.0232,76.9705,"[""9th Street"", ""9th street"", ""Gandhipuram 9th street"", ""9th street gandhipuram"", ""9வது தெரு"", ""9th street"", ""9வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+30,Gandhipuram 10th Street,காந்திபுரம் 10-வது தெரு,Cross Street,1,46,3,11.024,76.971,"[""10th Street"", ""10th street"", ""Gandhipuram 10th street"", ""10th street gandhipuram"", ""10வது தெரு"", ""10th street"", ""10வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+31,Gandhipuram 11th Street,காந்திபுரம் 11-வது தெரு,Cross Street,1,46,3,11.0248,76.9715,"[""11th Street"", ""11th street"", ""Gandhipuram 11th street"", ""11th street gandhipuram"", ""11வது தெரு"", ""11th street"", ""11வது தெரு காந்திபுரம்""]",CCMC Open GIS & OpenStreetMap,0.9
+32,Ram Nagar 1st Street,ராம் நகர் 1-வது தெரு,Residential Street,13,47,3,11.0116,76.9624,"[""Ram Nagar 1th street"", ""1th street ram nagar"", ""ராம் நகர் 1வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+33,Ram Nagar 2nd Street,ராம் நகர் 2-வது தெரு,Residential Street,13,47,3,11.0122,76.9628,"[""Ram Nagar 2th street"", ""2th street ram nagar"", ""ராம் நகர் 2வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+34,Ram Nagar 3rd Street,ராம் நகர் 3-வது தெரு,Residential Street,13,47,3,11.0128,76.9632,"[""Ram Nagar 3th street"", ""3th street ram nagar"", ""ராம் நகர் 3வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+35,Ram Nagar 4th Street,ராம் நகர் 4-வது தெரு,Residential Street,13,47,3,11.0134,76.9636,"[""Ram Nagar 4th street"", ""4th street ram nagar"", ""ராம் நகர் 4வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+36,Ram Nagar 5th Street,ராம் நகர் 5-வது தெரு,Residential Street,13,47,3,11.014,76.964,"[""Ram Nagar 5th street"", ""5th street ram nagar"", ""ராம் நகர் 5வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+37,Ram Nagar 6th Street,ராம் நகர் 6-வது தெரு,Residential Street,13,47,3,11.0146,76.9644,"[""Ram Nagar 6th street"", ""6th street ram nagar"", ""ராம் நகர் 6வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+38,Ram Nagar 7th Street,ராம் நகர் 7-வது தெரு,Residential Street,13,47,3,11.0152,76.9648,"[""Ram Nagar 7th street"", ""7th street ram nagar"", ""ராம் நகர் 7வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+39,Tatabad 1st Street,டாடாபாத் 1-வது தெரு,Residential Street,12,49,3,11.0215,76.9584,"[""Tatabad 1th street"", ""டாடாபாத் 1வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+40,Tatabad 2nd Street,டாடாபாத் 2-வது தெரு,Residential Street,12,49,3,11.022,76.9588,"[""Tatabad 2th street"", ""டாடாபாத் 2வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+41,Tatabad 3rd Street,டாடாபாத் 3-வது தெரு,Residential Street,12,49,3,11.0225,76.9592,"[""Tatabad 3th street"", ""டாடாபாத் 3வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+42,Tatabad 4th Street,டாடாபாத் 4-வது தெரு,Residential Street,12,49,3,11.023,76.9596,"[""Tatabad 4th street"", ""டாடாபாத் 4வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+43,Tatabad 5th Street,டாடாபாத் 5-வது தெரு,Residential Street,12,49,3,11.0235,76.96,"[""Tatabad 5th street"", ""டாடாபாத் 5வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+44,Tatabad 6th Street,டாடாபாத் 6-வது தெரு,Residential Street,12,49,3,11.024,76.9604,"[""Tatabad 6th street"", ""டாடாபாத் 6வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+45,Tatabad 7th Street,டாடாபாத் 7-வது தெரு,Residential Street,12,49,3,11.0245,76.9608,"[""Tatabad 7th street"", ""டாடாபாத் 7வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+46,Tatabad 8th Street,டாடாபாத் 8-வது தெரு,Residential Street,12,49,3,11.025,76.9612,"[""Tatabad 8th street"", ""டாடாபாத் 8வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+47,Tatabad 9th Street,டாடாபாத் 9-வது தெரு,Residential Street,12,49,3,11.0255,76.9616,"[""Tatabad 9th street"", ""டாடாபாத் 9வது தெரு""]",CCMC Open GIS & OpenStreetMap,0.9
+48,Saibaba Colony 1st Cross,சாயிபாபா காலனி 1-வது கிராஸ்,Cross Street,4,81,5,11.0286,76.9405,"[""NSR Road 1th cross"", ""Saibaba Colony 1th cross"", ""சாயிபாபா காலனி 1வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+49,Saibaba Colony 2nd Cross,சாயிபாபா காலனி 2-வது கிராஸ்,Cross Street,4,81,5,11.0292,76.941,"[""NSR Road 2th cross"", ""Saibaba Colony 2th cross"", ""சாயிபாபா காலனி 2வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+50,Saibaba Colony 3rd Cross,சாயிபாபா காலனி 3-வது கிராஸ்,Cross Street,4,81,5,11.0298,76.9415,"[""NSR Road 3th cross"", ""Saibaba Colony 3th cross"", ""சாயிபாபா காலனி 3வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+51,Saibaba Colony 4th Cross,சாயிபாபா காலனி 4-வது கிராஸ்,Cross Street,4,81,5,11.0304,76.942,"[""NSR Road 4th cross"", ""Saibaba Colony 4th cross"", ""சாயிபாபா காலனி 4வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+52,Saibaba Colony 5th Cross,சாயிபாபா காலனி 5-வது கிராஸ்,Cross Street,4,81,5,11.031,76.9425,"[""NSR Road 5th cross"", ""Saibaba Colony 5th cross"", ""சாயிபாபா காலனி 5வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+53,Saibaba Colony 6th Cross,சாயிபாபா காலனி 6-வது கிராஸ்,Cross Street,4,81,5,11.0316,76.943,"[""NSR Road 6th cross"", ""Saibaba Colony 6th cross"", ""சாயிபாபா காலனி 6வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+54,Saibaba Colony 7th Cross,சாயிபாபா காலனி 7-வது கிராஸ்,Cross Street,4,81,5,11.0322,76.9435,"[""NSR Road 7th cross"", ""Saibaba Colony 7th cross"", ""சாயிபாபா காலனி 7வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+55,Saibaba Colony 8th Cross,சாயிபாபா காலனி 8-வது கிராஸ்,Cross Street,4,81,5,11.0328,76.944,"[""NSR Road 8th cross"", ""Saibaba Colony 8th cross"", ""சாயிபாபா காலனி 8வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+56,Saibaba Colony 9th Cross,சாயிபாபா காலனி 9-வது கிராஸ்,Cross Street,4,81,5,11.0334,76.9445,"[""NSR Road 9th cross"", ""Saibaba Colony 9th cross"", ""சாயிபாபா காலனி 9வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+57,Saibaba Colony 10th Cross,சாயிபாபா காலனி 10-வது கிராஸ்,Cross Street,4,81,5,11.034,76.945,"[""NSR Road 10th cross"", ""Saibaba Colony 10th cross"", ""சாயிபாபா காலனி 10வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+58,Saibaba Colony 11th Cross,சாயிபாபா காலனி 11-வது கிராஸ்,Cross Street,4,81,5,11.0346,76.9455,"[""NSR Road 11th cross"", ""Saibaba Colony 11th cross"", ""சாயிபாபா காலனி 11வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+59,Saibaba Colony 12th Cross,சாயிபாபா காலனி 12-வது கிராஸ்,Cross Street,4,81,5,11.0352,76.946,"[""NSR Road 12th cross"", ""Saibaba Colony 12th cross"", ""சாயிபாபா காலனி 12வது கிராஸ்""]",CCMC Open GIS & OpenStreetMap,0.9
+60,Cross Cut 1st Street,கிராஸ் கட் 1-வது தெரு,Commercial Cross Street,1,45,3,11.0184,76.9673,"[""Cross cut 1th street"", ""Cross Cut 1th cross""]",CCMC Open GIS & OpenStreetMap,0.9
+61,Cross Cut 2nd Street,கிராஸ் கட் 2-வது தெரு,Commercial Cross Street,1,45,3,11.0188,76.9676,"[""Cross cut 2th street"", ""Cross Cut 2th cross""]",CCMC Open GIS & OpenStreetMap,0.9
+62,Cross Cut 3rd Street,கிராஸ் கட் 3-வது தெரு,Commercial Cross Street,1,45,3,11.0192,76.9679,"[""Cross cut 3th street"", ""Cross Cut 3th cross""]",CCMC Open GIS & OpenStreetMap,0.9
+63,Cross Cut 4th Street,கிராஸ் கட் 4-வது தெரு,Commercial Cross Street,1,45,3,11.0196,76.9682,"[""Cross cut 4th street"", ""Cross Cut 4th cross""]",CCMC Open GIS & OpenStreetMap,0.9
+64,Cross Cut 5th Street,கிராஸ் கட் 5-வது தெரு,Commercial Cross Street,1,45,3,11.02,76.9685,"[""Cross cut 5th street"", ""Cross Cut 5th cross""]",CCMC Open GIS & OpenStreetMap,0.9
+65,Cross Cut 6th Street,கிராஸ் கட் 6-வது தெரு,Commercial Cross Street,1,45,3,11.0204,76.9688,"[""Cross cut 6th street"", ""Cross Cut 6th cross""]",CCMC Open GIS & OpenStreetMap,0.9
+66,Cross Cut 7th Street,கிராஸ் கட் 7-வது தெரு,Commercial Cross Street,1,45,3,11.0208,76.9691,"[""Cross cut 7th street"", ""Cross Cut 7th cross""]",CCMC Open GIS & OpenStreetMap,0.9
+67,Cross Cut 8th Street,கிராஸ் கட் 8-வது தெரு,Commercial Cross Street,1,45,3,11.0212,76.9694,"[""Cross cut 8th street"", ""Cross Cut 8th cross""]",CCMC Open GIS & OpenStreetMap,0.9
+68,Cross Cut 9th Street,கிராஸ் கட் 9-வது தெரு,Commercial Cross Street,1,45,3,11.0216,76.9697,"[""Cross cut 9th street"", ""Cross Cut 9th cross""]",CCMC Open GIS & OpenStreetMap,0.9
+69,East Sambandam Road,கிழக்கு சம்பந்தம் சாலை,Municipal Road,2,92,5,11.007,76.945,"[""East Sambandam Road"", ""Sambandam Road East""]",CCMC Open GIS & OpenStreetMap,0.9
+70,West Sambandam Road,மேற்கு சம்பந்தம் சாலை,Municipal Road,2,92,5,11.0065,76.942,"[""West Sambandam Road"", ""Sambandam Road West""]",CCMC Open GIS & OpenStreetMap,0.9
+71,East Arokiasamy Road,கிழக்கு ஆரோக்கியசாமி சாலை,Municipal Road,2,93,5,11.01,76.946,"[""East Arokiasamy Road""]",CCMC Open GIS & OpenStreetMap,0.9
+72,West Arokiasamy Road,மேற்கு ஆரோக்கியசாமி சாலை,Municipal Road,2,93,5,11.0095,76.943,"[""West Arokiasamy Road""]",CCMC Open GIS & OpenStreetMap,0.9
+73,Lawley Road,லாலி சாலை,Municipal Road,2,94,5,11.0125,76.938,"[""Lawley Road"", ""Lawley Road Junction""]",CCMC Open GIS & OpenStreetMap,0.9
+74,Alagesan Road,அழகேசன் சாலை,Municipal Road,4,82,5,11.031,76.944,"[""Alagesan Road"", ""Alagesan Salai""]",CCMC Open GIS & OpenStreetMap,0.9
+75,Bharathi Park Road,பாரதி பார்க் சாலை,Municipal Road,4,81,5,11.026,76.946,"[""Bharathi Park Road"", ""Bharathi Park""]",CCMC Open GIS & OpenStreetMap,0.9
+76,Pankaja Mill Road,பங்கஜ மில் சாலை,Municipal Road,8,42,3,10.997,76.988,"[""Pankaja Mill Road""]",CCMC Open GIS & OpenStreetMap,0.9
+77,80 Feet Road Ramanathapuram,80 அடி சாலை இராமநாதபுரம்,Municipal Road,8,43,4,10.993,76.982,"[""80 Feet Road"", ""80 Feet Road Ramanathapuram""]",CCMC Open GIS & OpenStreetMap,0.9
+78,Sungam Bypass Road,சுங்கம் பைபாஸ் சாலை,Municipal Road,8,79,4,10.991,76.98,"[""Sungam Bypass"", ""Sungam Bypass Road""]",CCMC Open GIS & OpenStreetMap,0.9
+79,Sir Shanmugam Road,சர் சண்முகம் சாலை,Municipal Road,2,92,5,11.005,76.948,"[""Sir Shanmugam Road""]",CCMC Open GIS & OpenStreetMap,0.9
+80,Robertson Road,ராபர்ட்சன் சாலை,Municipal Road,2,92,5,11.004,76.95,"[""Robertson Road""]",CCMC Open GIS & OpenStreetMap,0.9
+81,Perur Main Road,பேரூர் மெயின் ரோடு,Municipal Road,38,98,5,10.982,76.935,"[""Perur Main Road"", ""Perur Road""]",CCMC Open GIS & OpenStreetMap,0.9
+82,Siruvani Main Road,சிறுவாணி மெயின் ரோடு,Municipal Road,15,,,10.95,76.81,"[""Siruvani Road"", ""Siruvani Main Road""]",CCMC Open GIS & OpenStreetMap,0.9
+83,Saravanampatti Sathy Main Road,சரவணம்பட்டி சத்தி மெயின் ரோடு,Municipal Road,5,2,1,11.076,76.993,"[""Sathy Road Saravanampatti""]",CCMC Open GIS & OpenStreetMap,0.9
+84,TIDEL Park Road,டைடல் பார்க் சாலை,Municipal Road,3,25,2,11.031,77.027,"[""TIDEL Park Road"", ""Civil Aerodrome Road""]",CCMC Open GIS & OpenStreetMap,0.9
+85,Codissia Road,கொடிசியா சாலை,Municipal Road,3,25,2,11.042,77.032,"[""Codissia Road"", ""Hopes Codissia Road""]",CCMC Open GIS & OpenStreetMap,0.9
+86,Cheran Ma Nagar Main Road,சேரன் மா நகர் மெயின் ரோடு,Municipal Road,3,21,2,11.048,77.018,"[""Cheran Ma Nagar Road""]",CCMC Open GIS & OpenStreetMap,0.9
+87,Maniakarampalayam Road,மணியகாரம்பாளையம் சாலை,Municipal Road,6,8,1,11.042,76.972,"[""Maniakarampalayam Road""]",CCMC Open GIS & OpenStreetMap,0.9
+88,Athipalayam Pirivu Road,அத்திப்பாளையம் பிரிவு சாலை,Municipal Road,6,9,1,11.048,76.978,"[""Athipalayam Pirivu Road""]",CCMC Open GIS & OpenStreetMap,0.9
+89,Sivanandapuram Main Road,சிவானந்தாபுரம் மெயின் ரோடு,Municipal Road,5,3,1,11.071,76.99,"[""Sivanandapuram Road""]",CCMC Open GIS & OpenStreetMap,0.9
+90,Thiruvaluvar Nagar Road,திருவள்ளுவர் நகர் சாலை,Municipal Road,7,30,2,11.005,77.028,"[""Thiruvalluvar Nagar Road""]",CCMC Open GIS & OpenStreetMap,0.9
+91,Nava India Road,நவா இந்தியா சாலை,Municipal Road,3,24,2,11.019,76.992,"[""Nava India Road"", ""Nava India Salai""]",CCMC Open GIS & OpenStreetMap,0.9
+92,Peelamedu Pudur Main Road,பீளமேடு புதூர் மெயின் ரோடு,Municipal Road,3,22,2,11.028,77.001,"[""Peelamedu Pudur Road""]",CCMC Open GIS & OpenStreetMap,0.9
+93,Variety Hall Road,வெரைட்டி ஹால் சாலை,Municipal Road,10,58,3,10.998,76.958,"[""Variety Hall Road"", ""V.H. Road""]",CCMC Open GIS & OpenStreetMap,0.9
+94,Mill Road,மில் சாலை,Municipal Road,10,58,3,10.9975,76.956,"[""Mill Road"", ""Mill Salai""]",CCMC Open GIS & OpenStreetMap,0.9
+95,Geetha Hall Road,கீதா ஹால் சாலை,Municipal Road,13,48,3,11.003,76.964,"[""Geetha Hall Road""]",CCMC Open GIS & OpenStreetMap,0.9
+96,Goods Shed Road,கூட்ஸ் ஷெட் சாலை,Municipal Road,10,58,3,10.999,76.967,"[""Goods Shed Road""]",CCMC Open GIS & OpenStreetMap,0.9
+97,Balasundaram Road,பாலசுந்தரம் சாலை,Municipal Road,1,45,3,11.015,76.97,"[""Balasundaram Road"", ""Balasundaram Salai""]",CCMC Open GIS & OpenStreetMap,0.9
+98,Gokhale Street,கோகலே வீதி,Municipal Road,13,47,3,11.013,76.965,"[""Gokhale Street"", ""Gokhale Road""]",CCMC Open GIS & OpenStreetMap,0.9
+99,Dr. Nanjappa Road,டாக்டர் நஞ்சப்பா சாலை,Municipal Road,1,45,3,11.008,76.968,"[""Dr. Nanjappa Road"", ""Nanjappa Road""]",CCMC Open GIS & OpenStreetMap,0.9
+100,Brooke Bond Road,புரூக் பாண்ட் சாலை,Municipal Road,10,57,3,11.005,76.954,"[""Brooke Bond Road"", ""Brookefields Road""]",CCMC Open GIS & OpenStreetMap,0.9
+101,Kovaipudur Main Road,கோவைப்புதூர் மெயின் ரோடு,Main Road,17,74,4,10.942,76.932,"[""Kovaipudur Main Road"", ""Kovaipudur Road""]",CCMC Open GIS & OpenStreetMap,0.9
+102,VLB Arts College Road,வி.எல்.பி கல்லூரி சாலை,Institutional Road,17,74,4,10.938,76.928,"[""VLB College Road""]",CCMC Open GIS & OpenStreetMap,0.9
+103,Kuniyamuthur Palakkad Bypass,குனியமுத்தூர் பாலக்காடு பைபாஸ்,Bypass,16,71,4,10.962,76.938,"[""Kuniyamuthur Bypass""]",CCMC Open GIS & OpenStreetMap,0.9
+104,Podanur Chettipalayam Main Road,போத்தனூர் செட்டிபாளையம் மெயின் ரோடு,Main Road,45,65,4,10.963,76.992,"[""Podanur Chettipalayam Road""]",CCMC Open GIS & OpenStreetMap,0.9
+105,Vadavalli Thondamuthur Road,வடவள்ளி தொண்டாமுத்தூர் சாலை,Main Road,14,86,5,11.021,76.892,"[""Thondamuthur Road Vadavalli""]",CCMC Open GIS & OpenStreetMap,0.9

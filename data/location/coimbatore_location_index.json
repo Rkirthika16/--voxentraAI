@@ -1,0 +1,8049 @@
+{
+  "taluks": {
+    "1": {
+      "id": 1,
+      "name_en": "Coimbatore North",
+      "name_ta": "கோயம்புத்தூர் வடக்கு",
+      "division_id": 1,
+      "confidence": 1.0
+    },
+    "2": {
+      "id": 2,
+      "name_en": "Coimbatore South",
+      "name_ta": "கோயம்புத்தூர் தெற்கு",
+      "division_id": 2,
+      "confidence": 1.0
+    },
+    "3": {
+      "id": 3,
+      "name_en": "Annur",
+      "name_ta": "அன்னூர்",
+      "division_id": 1,
+      "confidence": 1.0
+    },
+    "4": {
+      "id": 4,
+      "name_en": "Mettupalayam",
+      "name_ta": "மேட்டுப்பாளையம்",
+      "division_id": 1,
+      "confidence": 1.0
+    },
+    "5": {
+      "id": 5,
+      "name_en": "Sulur",
+      "name_ta": "சூலூர்",
+      "division_id": 2,
+      "confidence": 1.0
+    },
+    "6": {
+      "id": 6,
+      "name_en": "Pollachi",
+      "name_ta": "பொள்ளாச்சி",
+      "division_id": 3,
+      "confidence": 1.0
+    },
+    "7": {
+      "id": 7,
+      "name_en": "Kinathukadavu",
+      "name_ta": "கிணத்துக்கடவு",
+      "division_id": 3,
+      "confidence": 1.0
+    },
+    "8": {
+      "id": 8,
+      "name_en": "Valparai",
+      "name_ta": "வால்பாறை",
+      "division_id": 3,
+      "confidence": 1.0
+    },
+    "9": {
+      "id": 9,
+      "name_en": "Madukkarai",
+      "name_ta": "மதுக்கரை",
+      "division_id": 2,
+      "confidence": 1.0
+    },
+    "10": {
+      "id": 10,
+      "name_en": "Perur",
+      "name_ta": "பேரூர்",
+      "division_id": 2,
+      "confidence": 1.0
+    },
+    "11": {
+      "id": 11,
+      "name_en": "Anaimalai",
+      "name_ta": "ஆனைமலை",
+      "division_id": 3,
+      "confidence": 1.0
+    }
+  },
+  "firkas": {},
+  "villages": {},
+  "zones": {
+    "1": {
+      "id": 1,
+      "name": "North Zone",
+      "name_ta": "வடக்கு மண்டலம்"
+    },
+    "2": {
+      "id": 2,
+      "name": "East Zone",
+      "name_ta": "கிழக்கு மண்டலம்"
+    },
+    "3": {
+      "id": 3,
+      "name": "Central Zone",
+      "name_ta": "மத்திய மண்டலம்"
+    },
+    "4": {
+      "id": 4,
+      "name": "South Zone",
+      "name_ta": "தெற்கு மண்டலம்"
+    },
+    "5": {
+      "id": 5,
+      "name": "West Zone",
+      "name_ta": "மேற்கு மண்டலம்"
+    }
+  },
+  "wards": {
+    "1": {
+      "id": 1,
+      "ward_no": 1,
+      "name": "Ward 1 - Saravanampatti North",
+      "zone_id": 1
+    },
+    "2": {
+      "id": 2,
+      "ward_no": 2,
+      "name": "Ward 2 - Saravanampatti Central / Sathy Road",
+      "zone_id": 1
+    },
+    "3": {
+      "id": 3,
+      "ward_no": 3,
+      "name": "Ward 3 - Saravanampatti South / Sivanandapuram",
+      "zone_id": 1
+    },
+    "4": {
+      "id": 4,
+      "ward_no": 4,
+      "name": "Ward 4 - Chinnavedampatti North",
+      "zone_id": 1
+    },
+    "5": {
+      "id": 5,
+      "ward_no": 5,
+      "name": "Ward 5 - Chinnavedampatti South",
+      "zone_id": 1
+    },
+    "6": {
+      "id": 6,
+      "ward_no": 6,
+      "name": "Ward 6 - Vilankurichi Road",
+      "zone_id": 1
+    },
+    "7": {
+      "id": 7,
+      "ward_no": 7,
+      "name": "Ward 7 - Vilankurichi Village / Cheran Nagar",
+      "zone_id": 1
+    },
+    "8": {
+      "id": 8,
+      "ward_no": 8,
+      "name": "Ward 8 - Ganapathy North / Maniyakarampalayam",
+      "zone_id": 1
+    },
+    "9": {
+      "id": 9,
+      "ward_no": 9,
+      "name": "Ward 9 - Ganapathy Central / Athipalayam Pirivu",
+      "zone_id": 1
+    },
+    "10": {
+      "id": 10,
+      "ward_no": 10,
+      "name": "Ward 10 - Ganapathy Pudur",
+      "zone_id": 1
+    },
+    "11": {
+      "id": 11,
+      "ward_no": 11,
+      "name": "Ward 11 - Awarampalayam",
+      "zone_id": 1
+    },
+    "12": {
+      "id": 12,
+      "ward_no": 12,
+      "name": "Ward 12 - Sanganoor",
+      "zone_id": 1
+    },
+    "13": {
+      "id": 13,
+      "ward_no": 13,
+      "name": "Ward 13 - Kannappa Nagar",
+      "zone_id": 1
+    },
+    "14": {
+      "id": 14,
+      "ward_no": 14,
+      "name": "Ward 14 - Rathinapuri North",
+      "zone_id": 1
+    },
+    "15": {
+      "id": 15,
+      "ward_no": 15,
+      "name": "Ward 15 - Rathinapuri South",
+      "zone_id": 1
+    },
+    "16": {
+      "id": 16,
+      "ward_no": 16,
+      "name": "Ward 16 - Udayampalayam / Peelamedu North",
+      "zone_id": 1
+    },
+    "17": {
+      "id": 17,
+      "ward_no": 17,
+      "name": "Ward 17 - Thudiyalur North",
+      "zone_id": 1
+    },
+    "18": {
+      "id": 18,
+      "ward_no": 18,
+      "name": "Ward 18 - Thudiyalur South",
+      "zone_id": 1
+    },
+    "19": {
+      "id": 19,
+      "ward_no": 19,
+      "name": "Ward 19 - Vellakinaru",
+      "zone_id": 1
+    },
+    "20": {
+      "id": 20,
+      "ward_no": 20,
+      "name": "Ward 20 - Kavundampalayam North",
+      "zone_id": 1
+    },
+    "21": {
+      "id": 21,
+      "ward_no": 21,
+      "name": "Ward 21 - Kavundampalayam South / Cheran Ma Nagar",
+      "zone_id": 2
+    },
+    "22": {
+      "id": 22,
+      "ward_no": 22,
+      "name": "Ward 22 - Peelamedu Pudur",
+      "zone_id": 2
+    },
+    "23": {
+      "id": 23,
+      "ward_no": 23,
+      "name": "Ward 23 - Peelamedu East / Avinashi Road",
+      "zone_id": 2
+    },
+    "24": {
+      "id": 24,
+      "ward_no": 24,
+      "name": "Ward 24 - Hope College / Nava India",
+      "zone_id": 2
+    },
+    "25": {
+      "id": 25,
+      "ward_no": 25,
+      "name": "Ward 25 - Sitra / Airport Environs",
+      "zone_id": 2
+    },
+    "26": {
+      "id": 26,
+      "ward_no": 26,
+      "name": "Ward 26 - Goldwins / Civil Aerodrome",
+      "zone_id": 2
+    },
+    "27": {
+      "id": 27,
+      "ward_no": 27,
+      "name": "Ward 27 - Kalapatti Road / Sharp Nagar",
+      "zone_id": 2
+    },
+    "28": {
+      "id": 28,
+      "ward_no": 28,
+      "name": "Ward 28 - Neelikonampalayam North",
+      "zone_id": 2
+    },
+    "29": {
+      "id": 29,
+      "ward_no": 29,
+      "name": "Ward 29 - Neelikonampalayam South",
+      "zone_id": 2
+    },
+    "30": {
+      "id": 30,
+      "ward_no": 30,
+      "name": "Ward 30 - Singanallur North / Kamarajar Road",
+      "zone_id": 2
+    },
+    "31": {
+      "id": 31,
+      "ward_no": 31,
+      "name": "Ward 31 - Singanallur Central / Bus Stand",
+      "zone_id": 2
+    },
+    "32": {
+      "id": 32,
+      "ward_no": 32,
+      "name": "Ward 32 - Singanallur South / Trichy Road",
+      "zone_id": 2
+    },
+    "33": {
+      "id": 33,
+      "ward_no": 33,
+      "name": "Ward 33 - Varadarajapuram",
+      "zone_id": 2
+    },
+    "34": {
+      "id": 34,
+      "ward_no": 34,
+      "name": "Ward 34 - Uppilipalayam",
+      "zone_id": 2
+    },
+    "35": {
+      "id": 35,
+      "ward_no": 35,
+      "name": "Ward 35 - Masakalipalayam",
+      "zone_id": 2
+    },
+    "36": {
+      "id": 36,
+      "ward_no": 36,
+      "name": "Ward 36 - Ondipudur North",
+      "zone_id": 2
+    },
+    "37": {
+      "id": 37,
+      "ward_no": 37,
+      "name": "Ward 37 - Ondipudur South / Railway Colony",
+      "zone_id": 2
+    },
+    "38": {
+      "id": 38,
+      "ward_no": 38,
+      "name": "Ward 38 - Irugur Pirivu / SIHS Colony",
+      "zone_id": 2
+    },
+    "39": {
+      "id": 39,
+      "ward_no": 39,
+      "name": "Ward 39 - Kallimadai",
+      "zone_id": 2
+    },
+    "40": {
+      "id": 40,
+      "ward_no": 40,
+      "name": "Ward 40 - Sowripalayam East",
+      "zone_id": 2
+    },
+    "41": {
+      "id": 41,
+      "ward_no": 41,
+      "name": "Ward 41 - Sowripalayam West / Meena Estate",
+      "zone_id": 3
+    },
+    "42": {
+      "id": 42,
+      "ward_no": 42,
+      "name": "Ward 42 - Ramanathapuram North / Pankaja Mill",
+      "zone_id": 3
+    },
+    "43": {
+      "id": 43,
+      "ward_no": 43,
+      "name": "Ward 43 - Ramanathapuram Central / 80 Feet Road",
+      "zone_id": 3
+    },
+    "44": {
+      "id": 44,
+      "ward_no": 44,
+      "name": "Ward 44 - Siddhapudur North / Cross Cut Road",
+      "zone_id": 3
+    },
+    "45": {
+      "id": 45,
+      "ward_no": 45,
+      "name": "Ward 45 - Gandhipuram Central / Cross Cut",
+      "zone_id": 3
+    },
+    "46": {
+      "id": 46,
+      "ward_no": 46,
+      "name": "Ward 46 - Gandhipuram 1st to 11th Streets",
+      "zone_id": 3
+    },
+    "47": {
+      "id": 47,
+      "ward_no": 47,
+      "name": "Ward 47 - Ram Nagar North",
+      "zone_id": 3
+    },
+    "48": {
+      "id": 48,
+      "ward_no": 48,
+      "name": "Ward 48 - Ram Nagar Central / Geetha Hall Road",
+      "zone_id": 3
+    },
+    "49": {
+      "id": 49,
+      "ward_no": 49,
+      "name": "Ward 49 - Tatabad 1st to 9th Streets",
+      "zone_id": 3
+    },
+    "50": {
+      "id": 50,
+      "ward_no": 50,
+      "name": "Ward 50 - Sivananda Colony",
+      "zone_id": 3
+    },
+    "51": {
+      "id": 51,
+      "ward_no": 51,
+      "name": "Ward 51 - Anupparpalayam / Ramakrishna Puram",
+      "zone_id": 3
+    },
+    "52": {
+      "id": 52,
+      "ward_no": 52,
+      "name": "Ward 52 - Race Course North / Thomas Park",
+      "zone_id": 3
+    },
+    "53": {
+      "id": 53,
+      "ward_no": 53,
+      "name": "Ward 53 - Race Course South / Court Complex",
+      "zone_id": 3
+    },
+    "54": {
+      "id": 54,
+      "ward_no": 54,
+      "name": "Ward 54 - Gopalapuram / Trichy Road",
+      "zone_id": 3
+    },
+    "55": {
+      "id": 55,
+      "ward_no": 55,
+      "name": "Ward 55 - Town Hall / Big Bazaar Street",
+      "zone_id": 3
+    },
+    "56": {
+      "id": 56,
+      "ward_no": 56,
+      "name": "Ward 56 - Raja Street / Oppanakara Street",
+      "zone_id": 3
+    },
+    "57": {
+      "id": 57,
+      "ward_no": 57,
+      "name": "Ward 57 - Sukrawarpet / Rangai Gounder Street",
+      "zone_id": 3
+    },
+    "58": {
+      "id": 58,
+      "ward_no": 58,
+      "name": "Ward 58 - Old Post Office Road / Railway Station",
+      "zone_id": 3
+    },
+    "59": {
+      "id": 59,
+      "ward_no": 59,
+      "name": "Ward 59 - Vincent Road / Fort Coimbatore",
+      "zone_id": 3
+    },
+    "60": {
+      "id": 60,
+      "ward_no": 60,
+      "name": "Ward 60 - Ukkadam North / Big Mosque",
+      "zone_id": 3
+    },
+    "61": {
+      "id": 61,
+      "ward_no": 61,
+      "name": "Ward 61 - Ukkadam South / Bus Stand & Lake",
+      "zone_id": 4
+    },
+    "62": {
+      "id": 62,
+      "ward_no": 62,
+      "name": "Ward 62 - Karumbukkadai North",
+      "zone_id": 4
+    },
+    "63": {
+      "id": 63,
+      "ward_no": 63,
+      "name": "Ward 63 - Karumbukkadai South / Saramedu",
+      "zone_id": 4
+    },
+    "64": {
+      "id": 64,
+      "ward_no": 64,
+      "name": "Ward 64 - Athupalam / Tollgate",
+      "zone_id": 4
+    },
+    "65": {
+      "id": 65,
+      "ward_no": 65,
+      "name": "Ward 65 - Podanur North / Chettipalayam Road",
+      "zone_id": 4
+    },
+    "66": {
+      "id": 66,
+      "ward_no": 66,
+      "name": "Ward 66 - Podanur Junction / Railway Colony",
+      "zone_id": 4
+    },
+    "67": {
+      "id": 67,
+      "ward_no": 67,
+      "name": "Ward 67 - Kurichi North / Sundarapuram",
+      "zone_id": 4
+    },
+    "68": {
+      "id": 68,
+      "ward_no": 68,
+      "name": "Ward 68 - Kurichi Central / SIDCO Industrial Estate",
+      "zone_id": 4
+    },
+    "69": {
+      "id": 69,
+      "ward_no": 69,
+      "name": "Ward 69 - Kurichi South / Eachanari Road",
+      "zone_id": 4
+    },
+    "70": {
+      "id": 70,
+      "ward_no": 70,
+      "name": "Ward 70 - Sundarapuram West / Madukkarai Market",
+      "zone_id": 4
+    },
+    "71": {
+      "id": 71,
+      "ward_no": 71,
+      "name": "Ward 71 - Kuniyamuthur North / Kovaipudur Pirivu",
+      "zone_id": 4
+    },
+    "72": {
+      "id": 72,
+      "ward_no": 72,
+      "name": "Ward 72 - Kuniyamuthur Central / Palakkad Road",
+      "zone_id": 4
+    },
+    "73": {
+      "id": 73,
+      "ward_no": 73,
+      "name": "Ward 73 - Kuniyamuthur South / Sri Krishna College",
+      "zone_id": 4
+    },
+    "74": {
+      "id": 74,
+      "ward_no": 74,
+      "name": "Ward 74 - Kovaipudur North / VLB Arts",
+      "zone_id": 4
+    },
+    "75": {
+      "id": 75,
+      "ward_no": 75,
+      "name": "Ward 75 - Kovaipudur Central / Ashram Road",
+      "zone_id": 4
+    },
+    "76": {
+      "id": 76,
+      "ward_no": 76,
+      "name": "Ward 76 - Kovaipudur South",
+      "zone_id": 4
+    },
+    "77": {
+      "id": 77,
+      "ward_no": 77,
+      "name": "Ward 77 - Puliakulam North / Red Fields",
+      "zone_id": 4
+    },
+    "78": {
+      "id": 78,
+      "ward_no": 78,
+      "name": "Ward 78 - Puliakulam South / Damu Nagar",
+      "zone_id": 4
+    },
+    "79": {
+      "id": 79,
+      "ward_no": 79,
+      "name": "Ward 79 - Sungam / Trichy Road Junction",
+      "zone_id": 4
+    },
+    "80": {
+      "id": 80,
+      "ward_no": 80,
+      "name": "Ward 80 - Olymbus / Ramanathapuram South",
+      "zone_id": 4
+    },
+    "81": {
+      "id": 81,
+      "ward_no": 81,
+      "name": "Ward 81 - Saibaba Colony / NSR Road",
+      "zone_id": 5
+    },
+    "82": {
+      "id": 82,
+      "ward_no": 82,
+      "name": "Ward 82 - Saibaba Colony / Alagesan Road",
+      "zone_id": 5
+    },
+    "83": {
+      "id": 83,
+      "ward_no": 83,
+      "name": "Ward 83 - Kavundampalayam West / Edayarpalayam",
+      "zone_id": 5
+    },
+    "84": {
+      "id": 84,
+      "ward_no": 84,
+      "name": "Ward 84 - Edayarpalayam North / TVS Nagar",
+      "zone_id": 5
+    },
+    "85": {
+      "id": 85,
+      "ward_no": 85,
+      "name": "Ward 85 - Vadavalli North / Marudamalai Road",
+      "zone_id": 5
+    },
+    "86": {
+      "id": 86,
+      "ward_no": 86,
+      "name": "Ward 86 - Vadavalli Central / Thondamuthur Road",
+      "zone_id": 5
+    },
+    "87": {
+      "id": 87,
+      "ward_no": 87,
+      "name": "Ward 87 - Vadavalli South / Navavoor Pirivu",
+      "zone_id": 5
+    },
+    "88": {
+      "id": 88,
+      "ward_no": 88,
+      "name": "Ward 88 - Veerakeralam North",
+      "zone_id": 5
+    },
+    "89": {
+      "id": 89,
+      "ward_no": 89,
+      "name": "Ward 89 - Veerakeralam South",
+      "zone_id": 5
+    },
+    "90": {
+      "id": 90,
+      "ward_no": 90,
+      "name": "Ward 90 - Telungupalayam North",
+      "zone_id": 5
+    },
+    "91": {
+      "id": 91,
+      "ward_no": 91,
+      "name": "Ward 91 - Telungupalayam South / Gandhi Park",
+      "zone_id": 5
+    },
+    "92": {
+      "id": 92,
+      "ward_no": 92,
+      "name": "Ward 92 - RS Puram North / Thiruvenkatasamy Road",
+      "zone_id": 5
+    },
+    "93": {
+      "id": 93,
+      "ward_no": 93,
+      "name": "Ward 93 - RS Puram Central / DB Road",
+      "zone_id": 5
+    },
+    "94": {
+      "id": 94,
+      "ward_no": 94,
+      "name": "Ward 94 - RS Puram South / Lawley Road",
+      "zone_id": 5
+    },
+    "95": {
+      "id": 95,
+      "ward_no": 95,
+      "name": "Ward 95 - Forest College / TNAU Environs",
+      "zone_id": 5
+    },
+    "96": {
+      "id": 96,
+      "ward_no": 96,
+      "name": "Ward 96 - Selvapuram North / Perur Bypass",
+      "zone_id": 5
+    },
+    "97": {
+      "id": 97,
+      "ward_no": 97,
+      "name": "Ward 97 - Selvapuram South / Shivalaya Theatre",
+      "zone_id": 5
+    },
+    "98": {
+      "id": 98,
+      "ward_no": 98,
+      "name": "Ward 98 - Perur Road / Selvapuram High School",
+      "zone_id": 5
+    },
+    "99": {
+      "id": 99,
+      "ward_no": 99,
+      "name": "Ward 99 - Komarapalayam / Selvapuram West",
+      "zone_id": 5
+    },
+    "100": {
+      "id": 100,
+      "ward_no": 100,
+      "name": "Ward 100 - Chokkampudur / Gandhipark West",
+      "zone_id": 5
+    }
+  },
+  "areas": {
+    "1": {
+      "id": 1,
+      "name_en": "Gandhipuram",
+      "name_ta": "காந்திபுரம்",
+      "zone_id": 3,
+      "ward_id": 45,
+      "taluk_id": 2,
+      "village_id": 1,
+      "latitude": 11.0168,
+      "longitude": 76.967
+    },
+    "2": {
+      "id": 2,
+      "name_en": "RS Puram",
+      "name_ta": "ஆர்.எஸ். புரம்",
+      "zone_id": 5,
+      "ward_id": 92,
+      "taluk_id": 2,
+      "village_id": 29,
+      "latitude": 11.008,
+      "longitude": 76.948
+    },
+    "3": {
+      "id": 3,
+      "name_en": "Peelamedu",
+      "name_ta": "பீளமேடு",
+      "zone_id": 2,
+      "ward_id": 23,
+      "taluk_id": 2,
+      "village_id": 31,
+      "latitude": 11.025,
+      "longitude": 77.005
+    },
+    "4": {
+      "id": 4,
+      "name_en": "Saibaba Colony",
+      "name_ta": "சாயிபாபா காலனி",
+      "zone_id": 5,
+      "ward_id": 81,
+      "taluk_id": 1,
+      "village_id": 9,
+      "latitude": 11.028,
+      "longitude": 76.942
+    },
+    "5": {
+      "id": 5,
+      "name_en": "Saravanampatti",
+      "name_ta": "சரவணம்பட்டி",
+      "zone_id": 1,
+      "ward_id": 2,
+      "taluk_id": 1,
+      "village_id": 3,
+      "latitude": 11.078,
+      "longitude": 76.995
+    },
+    "6": {
+      "id": 6,
+      "name_en": "Ganapathy",
+      "name_ta": "கணபதி",
+      "zone_id": 1,
+      "ward_id": 9,
+      "taluk_id": 1,
+      "village_id": 2,
+      "latitude": 11.035,
+      "longitude": 76.975
+    },
+    "7": {
+      "id": 7,
+      "name_en": "Singanallur",
+      "name_ta": "சிங்காநல்லூர்",
+      "zone_id": 2,
+      "ward_id": 31,
+      "taluk_id": 2,
+      "village_id": 34,
+      "latitude": 10.998,
+      "longitude": 77.025
+    },
+    "8": {
+      "id": 8,
+      "name_en": "Ramanathapuram",
+      "name_ta": "இராமநாதபுரம்",
+      "zone_id": 4,
+      "ward_id": 43,
+      "taluk_id": 2,
+      "village_id": 30,
+      "latitude": 10.995,
+      "longitude": 76.985
+    },
+    "9": {
+      "id": 9,
+      "name_en": "Ukkadam",
+      "name_ta": "உக்கடம்",
+      "zone_id": 4,
+      "ward_id": 61,
+      "taluk_id": 2,
+      "village_id": 29,
+      "latitude": 10.988,
+      "longitude": 76.96
+    },
+    "10": {
+      "id": 10,
+      "name_en": "Town Hall",
+      "name_ta": "டவுன் ஹால்",
+      "zone_id": 3,
+      "ward_id": 55,
+      "taluk_id": 2,
+      "village_id": 29,
+      "latitude": 10.996,
+      "longitude": 76.962
+    },
+    "11": {
+      "id": 11,
+      "name_en": "Race Course",
+      "name_ta": "ரேஸ் கோர்ஸ்",
+      "zone_id": 3,
+      "ward_id": 52,
+      "taluk_id": 2,
+      "village_id": 29,
+      "latitude": 11.002,
+      "longitude": 76.975
+    },
+    "12": {
+      "id": 12,
+      "name_en": "Tatabad",
+      "name_ta": "டாடாபாத்",
+      "zone_id": 3,
+      "ward_id": 49,
+      "taluk_id": 2,
+      "village_id": 1,
+      "latitude": 11.02,
+      "longitude": 76.96
+    },
+    "13": {
+      "id": 13,
+      "name_en": "Ram Nagar",
+      "name_ta": "ராம் நகர்",
+      "zone_id": 3,
+      "ward_id": 47,
+      "taluk_id": 2,
+      "village_id": 29,
+      "latitude": 11.012,
+      "longitude": 76.963
+    },
+    "14": {
+      "id": 14,
+      "name_en": "Vadavalli",
+      "name_ta": "வடவள்ளி",
+      "zone_id": 5,
+      "ward_id": 85,
+      "taluk_id": 10,
+      "village_id": 236,
+      "latitude": 11.025,
+      "longitude": 76.9
+    },
+    "15": {
+      "id": 15,
+      "name_en": "Thondamuthur",
+      "name_ta": "தொண்டாமுத்தூர்",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 10,
+      "village_id": 230,
+      "latitude": 10.995,
+      "longitude": 76.835
+    },
+    "16": {
+      "id": 16,
+      "name_en": "Kuniyamuthur",
+      "name_ta": "குனியமுத்தூர்",
+      "zone_id": 4,
+      "ward_id": 72,
+      "taluk_id": 10,
+      "village_id": 240,
+      "latitude": 10.96,
+      "longitude": 76.945
+    },
+    "17": {
+      "id": 17,
+      "name_en": "Kovaipudur",
+      "name_ta": "கோவைப்புதூர்",
+      "zone_id": 4,
+      "ward_id": 75,
+      "taluk_id": 10,
+      "village_id": 241,
+      "latitude": 10.94,
+      "longitude": 76.93
+    },
+    "18": {
+      "id": 18,
+      "name_en": "Kurichi",
+      "name_ta": "குறிச்சி",
+      "zone_id": 4,
+      "ward_id": 67,
+      "taluk_id": 9,
+      "village_id": 218,
+      "latitude": 10.95,
+      "longitude": 76.97
+    },
+    "19": {
+      "id": 19,
+      "name_en": "Sundarapuram",
+      "name_ta": "சுந்தராபுரம்",
+      "zone_id": 4,
+      "ward_id": 67,
+      "taluk_id": 9,
+      "village_id": 219,
+      "latitude": 10.94,
+      "longitude": 76.975
+    },
+    "20": {
+      "id": 20,
+      "name_en": "Ondipudur",
+      "name_ta": "ஒண்டிப்புதூர்",
+      "zone_id": 2,
+      "ward_id": 36,
+      "taluk_id": 2,
+      "village_id": 38,
+      "latitude": 10.995,
+      "longitude": 77.045
+    },
+    "21": {
+      "id": 21,
+      "name_en": "Eachanari",
+      "name_ta": "ஈச்சனாரி",
+      "zone_id": 4,
+      "ward_id": 69,
+      "taluk_id": 9,
+      "village_id": 220,
+      "latitude": 10.925,
+      "longitude": 76.98
+    },
+    "22": {
+      "id": 22,
+      "name_en": "Irugur",
+      "name_ta": "இருவூர்",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 5,
+      "village_id": 116,
+      "latitude": 11.02,
+      "longitude": 77.07
+    },
+    "23": {
+      "id": 23,
+      "name_en": "Kalapatti",
+      "name_ta": "காளப்பட்டி",
+      "zone_id": 2,
+      "ward_id": 27,
+      "taluk_id": 1,
+      "village_id": 6,
+      "latitude": 11.072,
+      "longitude": 77.035
+    },
+    "24": {
+      "id": 24,
+      "name_en": "Chinnavedampatti",
+      "name_ta": "சின்னவேடம்பட்டி",
+      "zone_id": 1,
+      "ward_id": 4,
+      "taluk_id": 1,
+      "village_id": 4,
+      "latitude": 11.06,
+      "longitude": 76.98
+    },
+    "25": {
+      "id": 25,
+      "name_en": "Vilankurichi",
+      "name_ta": "விளாங்குறிச்சி",
+      "zone_id": 1,
+      "ward_id": 6,
+      "taluk_id": 1,
+      "village_id": 5,
+      "latitude": 11.055,
+      "longitude": 77.01
+    },
+    "26": {
+      "id": 26,
+      "name_en": "Thudiyalur",
+      "name_ta": "துடியலூர்",
+      "zone_id": 1,
+      "ward_id": 17,
+      "taluk_id": 1,
+      "village_id": 7,
+      "latitude": 11.08,
+      "longitude": 76.94
+    },
+    "27": {
+      "id": 27,
+      "name_en": "Kavundampalayam",
+      "name_ta": "கவுண்டம்பாளையம்",
+      "zone_id": 1,
+      "ward_id": 20,
+      "taluk_id": 1,
+      "village_id": 9,
+      "latitude": 11.045,
+      "longitude": 76.935
+    },
+    "28": {
+      "id": 28,
+      "name_en": "Periyanaickenpalayam",
+      "name_ta": "பெரியநாயக்கன்பாளையம்",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 1,
+      "village_id": 16,
+      "latitude": 11.145,
+      "longitude": 76.935
+    },
+    "29": {
+      "id": 29,
+      "name_en": "Sulur",
+      "name_ta": "சூலூர்",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 5,
+      "village_id": 115,
+      "latitude": 11.025,
+      "longitude": 77.125
+    },
+    "30": {
+      "id": 30,
+      "name_en": "Mettupalayam",
+      "name_ta": "மேட்டுப்பாளையம்",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 4,
+      "village_id": 89,
+      "latitude": 11.3,
+      "longitude": 76.94
+    },
+    "31": {
+      "id": 31,
+      "name_en": "Pollachi",
+      "name_ta": "பொள்ளாச்சி",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 6,
+      "village_id": 156,
+      "latitude": 10.66,
+      "longitude": 77.01
+    },
+    "32": {
+      "id": 32,
+      "name_en": "Madukkarai",
+      "name_ta": "மதுக்கரை",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 9,
+      "village_id": 217,
+      "latitude": 10.903,
+      "longitude": 76.963
+    },
+    "33": {
+      "id": 33,
+      "name_en": "Perur",
+      "name_ta": "பேரூர்",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 10,
+      "village_id": 229,
+      "latitude": 10.975,
+      "longitude": 76.915
+    },
+    "34": {
+      "id": 34,
+      "name_en": "Annur",
+      "name_ta": "அன்னூர்",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 3,
+      "village_id": 59,
+      "latitude": 11.233,
+      "longitude": 77.1
+    },
+    "35": {
+      "id": 35,
+      "name_en": "Kinathukadavu",
+      "name_ta": "கிணத்துக்கடவு",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 7,
+      "village_id": 204,
+      "latitude": 10.82,
+      "longitude": 77.02
+    },
+    "36": {
+      "id": 36,
+      "name_en": "Valparai",
+      "name_ta": "வால்பாறை",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 8,
+      "village_id": 239,
+      "latitude": 10.325,
+      "longitude": 76.955
+    },
+    "37": {
+      "id": 37,
+      "name_en": "Anaimalai",
+      "name_ta": "ஆனைமலை",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 11,
+      "village_id": 253,
+      "latitude": 10.58,
+      "longitude": 76.93
+    },
+    "38": {
+      "id": 38,
+      "name_en": "Selvapuram",
+      "name_ta": "செல்வபுரம்",
+      "zone_id": 5,
+      "ward_id": 96,
+      "taluk_id": 2,
+      "village_id": 44,
+      "latitude": 10.985,
+      "longitude": 76.94
+    },
+    "39": {
+      "id": 39,
+      "name_en": "Sowripalayam",
+      "name_ta": "சௌரிபாளையம்",
+      "zone_id": 2,
+      "ward_id": 40,
+      "taluk_id": 2,
+      "village_id": 32,
+      "latitude": 11.005,
+      "longitude": 77.005
+    },
+    "40": {
+      "id": 40,
+      "name_en": "Hope College",
+      "name_ta": "ஹோப் காலேஜ்",
+      "zone_id": 2,
+      "ward_id": 24,
+      "taluk_id": 2,
+      "village_id": 31,
+      "latitude": 11.026,
+      "longitude": 77.012
+    },
+    "41": {
+      "id": 41,
+      "name_en": "SITRA",
+      "name_ta": "சித்ரா",
+      "zone_id": 2,
+      "ward_id": 25,
+      "taluk_id": 2,
+      "village_id": 31,
+      "latitude": 11.038,
+      "longitude": 77.042
+    },
+    "42": {
+      "id": 42,
+      "name_en": "Karamadai",
+      "name_ta": "காரமடை",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 4,
+      "village_id": 91,
+      "latitude": 11.245,
+      "longitude": 76.96
+    },
+    "43": {
+      "id": 43,
+      "name_en": "Sirumugai",
+      "name_ta": "சிறுமுகை",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 4,
+      "village_id": 90,
+      "latitude": 11.33,
+      "longitude": 77.0
+    },
+    "44": {
+      "id": 44,
+      "name_en": "Neelambur",
+      "name_ta": "நீலம்பூர்",
+      "zone_id": null,
+      "ward_id": null,
+      "taluk_id": 5,
+      "village_id": 124,
+      "latitude": 11.055,
+      "longitude": 77.08
+    },
+    "45": {
+      "id": 45,
+      "name_en": "Podanur",
+      "name_ta": "போத்தனூர்",
+      "zone_id": 4,
+      "ward_id": 65,
+      "taluk_id": 9,
+      "village_id": 218,
+      "latitude": 10.965,
+      "longitude": 76.985
+    }
+  },
+  "streets": {
+    "1": {
+      "id": 1,
+      "name_en": "Avinashi Road",
+      "name_ta": "அவினாசி சாலை",
+      "area_id": 3,
+      "ward_id": 23,
+      "zone_id": 2,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.028,
+      "longitude": 77.008,
+      "confidence": 0.9
+    },
+    "2": {
+      "id": 2,
+      "name_en": "Trichy Road",
+      "name_ta": "திருச்சி சாலை",
+      "area_id": 7,
+      "ward_id": 32,
+      "zone_id": 2,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.998,
+      "longitude": 77.018,
+      "confidence": 0.9
+    },
+    "3": {
+      "id": 3,
+      "name_en": "Mettupalayam Road",
+      "name_ta": "மேட்டுப்பாளையம் சாலை",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.04,
+      "longitude": 76.945,
+      "confidence": 0.9
+    },
+    "4": {
+      "id": 4,
+      "name_en": "Sathy Road",
+      "name_ta": "சத்தி சாலை",
+      "area_id": 6,
+      "ward_id": 9,
+      "zone_id": 1,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.05,
+      "longitude": 76.985,
+      "confidence": 0.9
+    },
+    "5": {
+      "id": 5,
+      "name_en": "Pollachi Road",
+      "name_ta": "பொள்ளாச்சி சாலை",
+      "area_id": 19,
+      "ward_id": 67,
+      "zone_id": 4,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.935,
+      "longitude": 76.978,
+      "confidence": 0.9
+    },
+    "6": {
+      "id": 6,
+      "name_en": "Palakkad Road",
+      "name_ta": "பாலக்காடு சாலை",
+      "area_id": 16,
+      "ward_id": 72,
+      "zone_id": 4,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.955,
+      "longitude": 76.94,
+      "confidence": 0.9
+    },
+    "7": {
+      "id": 7,
+      "name_en": "Thadagam Road",
+      "name_ta": "தடாகம் சாலை",
+      "area_id": 4,
+      "ward_id": 83,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.035,
+      "longitude": 76.925,
+      "confidence": 0.9
+    },
+    "8": {
+      "id": 8,
+      "name_en": "Marudamalai Road",
+      "name_ta": "மருதமலை சாலை",
+      "area_id": 14,
+      "ward_id": 85,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.03,
+      "longitude": 76.89,
+      "confidence": 0.9
+    },
+    "9": {
+      "id": 9,
+      "name_en": "Cross Cut Road",
+      "name_ta": "கிராஸ் கட் சாலை",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.018,
+      "longitude": 76.966,
+      "confidence": 0.9
+    },
+    "10": {
+      "id": 10,
+      "name_en": "100 Feet Road",
+      "name_ta": "100 அடி சாலை",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0195,
+      "longitude": 76.964,
+      "confidence": 0.9
+    },
+    "11": {
+      "id": 11,
+      "name_en": "Diwan Bahadur Road (DB Road)",
+      "name_ta": "திவான் பகதூர் சாலை (டி.பி. ரோடு)",
+      "area_id": 2,
+      "ward_id": 93,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.009,
+      "longitude": 76.947,
+      "confidence": 0.9
+    },
+    "12": {
+      "id": 12,
+      "name_en": "Thiruvenkatasamy Road (TV Swamy Road)",
+      "name_ta": "திருவேங்கடசாமி சாலை (டி.வி. சாமி ரோடு)",
+      "area_id": 2,
+      "ward_id": 92,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.011,
+      "longitude": 76.949,
+      "confidence": 0.9
+    },
+    "13": {
+      "id": 13,
+      "name_en": "NSR Road",
+      "name_ta": "என்.எஸ்.ஆர் சாலை",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.029,
+      "longitude": 76.941,
+      "confidence": 0.9
+    },
+    "14": {
+      "id": 14,
+      "name_en": "Bharathiar Road",
+      "name_ta": "பாரதியார் சாலை",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.014,
+      "longitude": 76.972,
+      "confidence": 0.9
+    },
+    "15": {
+      "id": 15,
+      "name_en": "Race Course Road",
+      "name_ta": "ரேஸ் கோர்ஸ் சாலை",
+      "area_id": 11,
+      "ward_id": 52,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.003,
+      "longitude": 76.974,
+      "confidence": 0.9
+    },
+    "16": {
+      "id": 16,
+      "name_en": "Oppanakara Street",
+      "name_ta": "ஒப்பணக்கார வீதி",
+      "area_id": 10,
+      "ward_id": 56,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.994,
+      "longitude": 76.961,
+      "confidence": 0.9
+    },
+    "17": {
+      "id": 17,
+      "name_en": "Big Bazaar Street",
+      "name_ta": "பெரிய கடை வீதி",
+      "area_id": 10,
+      "ward_id": 55,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.995,
+      "longitude": 76.963,
+      "confidence": 0.9
+    },
+    "18": {
+      "id": 18,
+      "name_en": "Raja Street",
+      "name_ta": "ராஜா வீதி",
+      "area_id": 10,
+      "ward_id": 56,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.997,
+      "longitude": 76.959,
+      "confidence": 0.9
+    },
+    "19": {
+      "id": 19,
+      "name_en": "Sukrawarpet Street",
+      "name_ta": "சுக்கிரவார்பேட்டை வீதி",
+      "area_id": 10,
+      "ward_id": 57,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.001,
+      "longitude": 76.955,
+      "confidence": 0.9
+    },
+    "20": {
+      "id": 20,
+      "name_en": "Kamarajar Road",
+      "name_ta": "காமராஜர் சாலை",
+      "area_id": 7,
+      "ward_id": 30,
+      "zone_id": 2,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.002,
+      "longitude": 77.022,
+      "confidence": 0.9
+    },
+    "21": {
+      "id": 21,
+      "name_en": "Gandhipuram 1st Street",
+      "name_ta": "காந்திபுரம் 1-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0168,
+      "longitude": 76.9665,
+      "confidence": 0.9
+    },
+    "22": {
+      "id": 22,
+      "name_en": "Gandhipuram 2nd Street",
+      "name_ta": "காந்திபுரம் 2-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0176,
+      "longitude": 76.967,
+      "confidence": 0.9
+    },
+    "23": {
+      "id": 23,
+      "name_en": "Gandhipuram 3rd Street",
+      "name_ta": "காந்திபுரம் 3-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0184,
+      "longitude": 76.9675,
+      "confidence": 0.9
+    },
+    "24": {
+      "id": 24,
+      "name_en": "Gandhipuram 4th Street",
+      "name_ta": "காந்திபுரம் 4-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0192,
+      "longitude": 76.968,
+      "confidence": 0.9
+    },
+    "25": {
+      "id": 25,
+      "name_en": "Gandhipuram 5th Street",
+      "name_ta": "காந்திபுரம் 5-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.02,
+      "longitude": 76.9685,
+      "confidence": 0.9
+    },
+    "26": {
+      "id": 26,
+      "name_en": "Gandhipuram 6th Street",
+      "name_ta": "காந்திபுரம் 6-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0208,
+      "longitude": 76.969,
+      "confidence": 0.9
+    },
+    "27": {
+      "id": 27,
+      "name_en": "Gandhipuram 7th Street",
+      "name_ta": "காந்திபுரம் 7-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0216,
+      "longitude": 76.9695,
+      "confidence": 0.9
+    },
+    "28": {
+      "id": 28,
+      "name_en": "Gandhipuram 8th Street",
+      "name_ta": "காந்திபுரம் 8-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0224,
+      "longitude": 76.97,
+      "confidence": 0.9
+    },
+    "29": {
+      "id": 29,
+      "name_en": "Gandhipuram 9th Street",
+      "name_ta": "காந்திபுரம் 9-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0232,
+      "longitude": 76.9705,
+      "confidence": 0.9
+    },
+    "30": {
+      "id": 30,
+      "name_en": "Gandhipuram 10th Street",
+      "name_ta": "காந்திபுரம் 10-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.024,
+      "longitude": 76.971,
+      "confidence": 0.9
+    },
+    "31": {
+      "id": 31,
+      "name_en": "Gandhipuram 11th Street",
+      "name_ta": "காந்திபுரம் 11-வது தெரு",
+      "area_id": 1,
+      "ward_id": 46,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0248,
+      "longitude": 76.9715,
+      "confidence": 0.9
+    },
+    "32": {
+      "id": 32,
+      "name_en": "Ram Nagar 1st Street",
+      "name_ta": "ராம் நகர் 1-வது தெரு",
+      "area_id": 13,
+      "ward_id": 47,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0116,
+      "longitude": 76.9624,
+      "confidence": 0.9
+    },
+    "33": {
+      "id": 33,
+      "name_en": "Ram Nagar 2nd Street",
+      "name_ta": "ராம் நகர் 2-வது தெரு",
+      "area_id": 13,
+      "ward_id": 47,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0122,
+      "longitude": 76.9628,
+      "confidence": 0.9
+    },
+    "34": {
+      "id": 34,
+      "name_en": "Ram Nagar 3rd Street",
+      "name_ta": "ராம் நகர் 3-வது தெரு",
+      "area_id": 13,
+      "ward_id": 47,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0128,
+      "longitude": 76.9632,
+      "confidence": 0.9
+    },
+    "35": {
+      "id": 35,
+      "name_en": "Ram Nagar 4th Street",
+      "name_ta": "ராம் நகர் 4-வது தெரு",
+      "area_id": 13,
+      "ward_id": 47,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0134,
+      "longitude": 76.9636,
+      "confidence": 0.9
+    },
+    "36": {
+      "id": 36,
+      "name_en": "Ram Nagar 5th Street",
+      "name_ta": "ராம் நகர் 5-வது தெரு",
+      "area_id": 13,
+      "ward_id": 47,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.014,
+      "longitude": 76.964,
+      "confidence": 0.9
+    },
+    "37": {
+      "id": 37,
+      "name_en": "Ram Nagar 6th Street",
+      "name_ta": "ராம் நகர் 6-வது தெரு",
+      "area_id": 13,
+      "ward_id": 47,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0146,
+      "longitude": 76.9644,
+      "confidence": 0.9
+    },
+    "38": {
+      "id": 38,
+      "name_en": "Ram Nagar 7th Street",
+      "name_ta": "ராம் நகர் 7-வது தெரு",
+      "area_id": 13,
+      "ward_id": 47,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0152,
+      "longitude": 76.9648,
+      "confidence": 0.9
+    },
+    "39": {
+      "id": 39,
+      "name_en": "Tatabad 1st Street",
+      "name_ta": "டாடாபாத் 1-வது தெரு",
+      "area_id": 12,
+      "ward_id": 49,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0215,
+      "longitude": 76.9584,
+      "confidence": 0.9
+    },
+    "40": {
+      "id": 40,
+      "name_en": "Tatabad 2nd Street",
+      "name_ta": "டாடாபாத் 2-வது தெரு",
+      "area_id": 12,
+      "ward_id": 49,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.022,
+      "longitude": 76.9588,
+      "confidence": 0.9
+    },
+    "41": {
+      "id": 41,
+      "name_en": "Tatabad 3rd Street",
+      "name_ta": "டாடாபாத் 3-வது தெரு",
+      "area_id": 12,
+      "ward_id": 49,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0225,
+      "longitude": 76.9592,
+      "confidence": 0.9
+    },
+    "42": {
+      "id": 42,
+      "name_en": "Tatabad 4th Street",
+      "name_ta": "டாடாபாத் 4-வது தெரு",
+      "area_id": 12,
+      "ward_id": 49,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.023,
+      "longitude": 76.9596,
+      "confidence": 0.9
+    },
+    "43": {
+      "id": 43,
+      "name_en": "Tatabad 5th Street",
+      "name_ta": "டாடாபாத் 5-வது தெரு",
+      "area_id": 12,
+      "ward_id": 49,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0235,
+      "longitude": 76.96,
+      "confidence": 0.9
+    },
+    "44": {
+      "id": 44,
+      "name_en": "Tatabad 6th Street",
+      "name_ta": "டாடாபாத் 6-வது தெரு",
+      "area_id": 12,
+      "ward_id": 49,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.024,
+      "longitude": 76.9604,
+      "confidence": 0.9
+    },
+    "45": {
+      "id": 45,
+      "name_en": "Tatabad 7th Street",
+      "name_ta": "டாடாபாத் 7-வது தெரு",
+      "area_id": 12,
+      "ward_id": 49,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0245,
+      "longitude": 76.9608,
+      "confidence": 0.9
+    },
+    "46": {
+      "id": 46,
+      "name_en": "Tatabad 8th Street",
+      "name_ta": "டாடாபாத் 8-வது தெரு",
+      "area_id": 12,
+      "ward_id": 49,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.025,
+      "longitude": 76.9612,
+      "confidence": 0.9
+    },
+    "47": {
+      "id": 47,
+      "name_en": "Tatabad 9th Street",
+      "name_ta": "டாடாபாத் 9-வது தெரு",
+      "area_id": 12,
+      "ward_id": 49,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0255,
+      "longitude": 76.9616,
+      "confidence": 0.9
+    },
+    "48": {
+      "id": 48,
+      "name_en": "Saibaba Colony 1st Cross",
+      "name_ta": "சாயிபாபா காலனி 1-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0286,
+      "longitude": 76.9405,
+      "confidence": 0.9
+    },
+    "49": {
+      "id": 49,
+      "name_en": "Saibaba Colony 2nd Cross",
+      "name_ta": "சாயிபாபா காலனி 2-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0292,
+      "longitude": 76.941,
+      "confidence": 0.9
+    },
+    "50": {
+      "id": 50,
+      "name_en": "Saibaba Colony 3rd Cross",
+      "name_ta": "சாயிபாபா காலனி 3-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0298,
+      "longitude": 76.9415,
+      "confidence": 0.9
+    },
+    "51": {
+      "id": 51,
+      "name_en": "Saibaba Colony 4th Cross",
+      "name_ta": "சாயிபாபா காலனி 4-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0304,
+      "longitude": 76.942,
+      "confidence": 0.9
+    },
+    "52": {
+      "id": 52,
+      "name_en": "Saibaba Colony 5th Cross",
+      "name_ta": "சாயிபாபா காலனி 5-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.031,
+      "longitude": 76.9425,
+      "confidence": 0.9
+    },
+    "53": {
+      "id": 53,
+      "name_en": "Saibaba Colony 6th Cross",
+      "name_ta": "சாயிபாபா காலனி 6-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0316,
+      "longitude": 76.943,
+      "confidence": 0.9
+    },
+    "54": {
+      "id": 54,
+      "name_en": "Saibaba Colony 7th Cross",
+      "name_ta": "சாயிபாபா காலனி 7-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0322,
+      "longitude": 76.9435,
+      "confidence": 0.9
+    },
+    "55": {
+      "id": 55,
+      "name_en": "Saibaba Colony 8th Cross",
+      "name_ta": "சாயிபாபா காலனி 8-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0328,
+      "longitude": 76.944,
+      "confidence": 0.9
+    },
+    "56": {
+      "id": 56,
+      "name_en": "Saibaba Colony 9th Cross",
+      "name_ta": "சாயிபாபா காலனி 9-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0334,
+      "longitude": 76.9445,
+      "confidence": 0.9
+    },
+    "57": {
+      "id": 57,
+      "name_en": "Saibaba Colony 10th Cross",
+      "name_ta": "சாயிபாபா காலனி 10-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.034,
+      "longitude": 76.945,
+      "confidence": 0.9
+    },
+    "58": {
+      "id": 58,
+      "name_en": "Saibaba Colony 11th Cross",
+      "name_ta": "சாயிபாபா காலனி 11-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0346,
+      "longitude": 76.9455,
+      "confidence": 0.9
+    },
+    "59": {
+      "id": 59,
+      "name_en": "Saibaba Colony 12th Cross",
+      "name_ta": "சாயிபாபா காலனி 12-வது கிராஸ்",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0352,
+      "longitude": 76.946,
+      "confidence": 0.9
+    },
+    "60": {
+      "id": 60,
+      "name_en": "Cross Cut 1st Street",
+      "name_ta": "கிராஸ் கட் 1-வது தெரு",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0184,
+      "longitude": 76.9673,
+      "confidence": 0.9
+    },
+    "61": {
+      "id": 61,
+      "name_en": "Cross Cut 2nd Street",
+      "name_ta": "கிராஸ் கட் 2-வது தெரு",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0188,
+      "longitude": 76.9676,
+      "confidence": 0.9
+    },
+    "62": {
+      "id": 62,
+      "name_en": "Cross Cut 3rd Street",
+      "name_ta": "கிராஸ் கட் 3-வது தெரு",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0192,
+      "longitude": 76.9679,
+      "confidence": 0.9
+    },
+    "63": {
+      "id": 63,
+      "name_en": "Cross Cut 4th Street",
+      "name_ta": "கிராஸ் கட் 4-வது தெரு",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0196,
+      "longitude": 76.9682,
+      "confidence": 0.9
+    },
+    "64": {
+      "id": 64,
+      "name_en": "Cross Cut 5th Street",
+      "name_ta": "கிராஸ் கட் 5-வது தெரு",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.02,
+      "longitude": 76.9685,
+      "confidence": 0.9
+    },
+    "65": {
+      "id": 65,
+      "name_en": "Cross Cut 6th Street",
+      "name_ta": "கிராஸ் கட் 6-வது தெரு",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0204,
+      "longitude": 76.9688,
+      "confidence": 0.9
+    },
+    "66": {
+      "id": 66,
+      "name_en": "Cross Cut 7th Street",
+      "name_ta": "கிராஸ் கட் 7-வது தெரு",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0208,
+      "longitude": 76.9691,
+      "confidence": 0.9
+    },
+    "67": {
+      "id": 67,
+      "name_en": "Cross Cut 8th Street",
+      "name_ta": "கிராஸ் கட் 8-வது தெரு",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0212,
+      "longitude": 76.9694,
+      "confidence": 0.9
+    },
+    "68": {
+      "id": 68,
+      "name_en": "Cross Cut 9th Street",
+      "name_ta": "கிராஸ் கட் 9-வது தெரு",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0216,
+      "longitude": 76.9697,
+      "confidence": 0.9
+    },
+    "69": {
+      "id": 69,
+      "name_en": "East Sambandam Road",
+      "name_ta": "கிழக்கு சம்பந்தம் சாலை",
+      "area_id": 2,
+      "ward_id": 92,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.007,
+      "longitude": 76.945,
+      "confidence": 0.9
+    },
+    "70": {
+      "id": 70,
+      "name_en": "West Sambandam Road",
+      "name_ta": "மேற்கு சம்பந்தம் சாலை",
+      "area_id": 2,
+      "ward_id": 92,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0065,
+      "longitude": 76.942,
+      "confidence": 0.9
+    },
+    "71": {
+      "id": 71,
+      "name_en": "East Arokiasamy Road",
+      "name_ta": "கிழக்கு ஆரோக்கியசாமி சாலை",
+      "area_id": 2,
+      "ward_id": 93,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.01,
+      "longitude": 76.946,
+      "confidence": 0.9
+    },
+    "72": {
+      "id": 72,
+      "name_en": "West Arokiasamy Road",
+      "name_ta": "மேற்கு ஆரோக்கியசாமி சாலை",
+      "area_id": 2,
+      "ward_id": 93,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0095,
+      "longitude": 76.943,
+      "confidence": 0.9
+    },
+    "73": {
+      "id": 73,
+      "name_en": "Lawley Road",
+      "name_ta": "லாலி சாலை",
+      "area_id": 2,
+      "ward_id": 94,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0125,
+      "longitude": 76.938,
+      "confidence": 0.9
+    },
+    "74": {
+      "id": 74,
+      "name_en": "Alagesan Road",
+      "name_ta": "அழகேசன் சாலை",
+      "area_id": 4,
+      "ward_id": 82,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.031,
+      "longitude": 76.944,
+      "confidence": 0.9
+    },
+    "75": {
+      "id": 75,
+      "name_en": "Bharathi Park Road",
+      "name_ta": "பாரதி பார்க் சாலை",
+      "area_id": 4,
+      "ward_id": 81,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.026,
+      "longitude": 76.946,
+      "confidence": 0.9
+    },
+    "76": {
+      "id": 76,
+      "name_en": "Pankaja Mill Road",
+      "name_ta": "பங்கஜ மில் சாலை",
+      "area_id": 8,
+      "ward_id": 42,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.997,
+      "longitude": 76.988,
+      "confidence": 0.9
+    },
+    "77": {
+      "id": 77,
+      "name_en": "80 Feet Road Ramanathapuram",
+      "name_ta": "80 அடி சாலை இராமநாதபுரம்",
+      "area_id": 8,
+      "ward_id": 43,
+      "zone_id": 4,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.993,
+      "longitude": 76.982,
+      "confidence": 0.9
+    },
+    "78": {
+      "id": 78,
+      "name_en": "Sungam Bypass Road",
+      "name_ta": "சுங்கம் பைபாஸ் சாலை",
+      "area_id": 8,
+      "ward_id": 79,
+      "zone_id": 4,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.991,
+      "longitude": 76.98,
+      "confidence": 0.9
+    },
+    "79": {
+      "id": 79,
+      "name_en": "Sir Shanmugam Road",
+      "name_ta": "சர் சண்முகம் சாலை",
+      "area_id": 2,
+      "ward_id": 92,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.005,
+      "longitude": 76.948,
+      "confidence": 0.9
+    },
+    "80": {
+      "id": 80,
+      "name_en": "Robertson Road",
+      "name_ta": "ராபர்ட்சன் சாலை",
+      "area_id": 2,
+      "ward_id": 92,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.004,
+      "longitude": 76.95,
+      "confidence": 0.9
+    },
+    "81": {
+      "id": 81,
+      "name_en": "Perur Main Road",
+      "name_ta": "பேரூர் மெயின் ரோடு",
+      "area_id": 38,
+      "ward_id": 98,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.982,
+      "longitude": 76.935,
+      "confidence": 0.9
+    },
+    "82": {
+      "id": 82,
+      "name_en": "Siruvani Main Road",
+      "name_ta": "சிறுவாணி மெயின் ரோடு",
+      "area_id": 15,
+      "ward_id": null,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.95,
+      "longitude": 76.81,
+      "confidence": 0.9
+    },
+    "83": {
+      "id": 83,
+      "name_en": "Saravanampatti Sathy Main Road",
+      "name_ta": "சரவணம்பட்டி சத்தி மெயின் ரோடு",
+      "area_id": 5,
+      "ward_id": 2,
+      "zone_id": 1,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.076,
+      "longitude": 76.993,
+      "confidence": 0.9
+    },
+    "84": {
+      "id": 84,
+      "name_en": "TIDEL Park Road",
+      "name_ta": "டைடல் பார்க் சாலை",
+      "area_id": 3,
+      "ward_id": 25,
+      "zone_id": 2,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.031,
+      "longitude": 77.027,
+      "confidence": 0.9
+    },
+    "85": {
+      "id": 85,
+      "name_en": "Codissia Road",
+      "name_ta": "கொடிசியா சாலை",
+      "area_id": 3,
+      "ward_id": 25,
+      "zone_id": 2,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.042,
+      "longitude": 77.032,
+      "confidence": 0.9
+    },
+    "86": {
+      "id": 86,
+      "name_en": "Cheran Ma Nagar Main Road",
+      "name_ta": "சேரன் மா நகர் மெயின் ரோடு",
+      "area_id": 3,
+      "ward_id": 21,
+      "zone_id": 2,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.048,
+      "longitude": 77.018,
+      "confidence": 0.9
+    },
+    "87": {
+      "id": 87,
+      "name_en": "Maniakarampalayam Road",
+      "name_ta": "மணியகாரம்பாளையம் சாலை",
+      "area_id": 6,
+      "ward_id": 8,
+      "zone_id": 1,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.042,
+      "longitude": 76.972,
+      "confidence": 0.9
+    },
+    "88": {
+      "id": 88,
+      "name_en": "Athipalayam Pirivu Road",
+      "name_ta": "அத்திப்பாளையம் பிரிவு சாலை",
+      "area_id": 6,
+      "ward_id": 9,
+      "zone_id": 1,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.048,
+      "longitude": 76.978,
+      "confidence": 0.9
+    },
+    "89": {
+      "id": 89,
+      "name_en": "Sivanandapuram Main Road",
+      "name_ta": "சிவானந்தாபுரம் மெயின் ரோடு",
+      "area_id": 5,
+      "ward_id": 3,
+      "zone_id": 1,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.071,
+      "longitude": 76.99,
+      "confidence": 0.9
+    },
+    "90": {
+      "id": 90,
+      "name_en": "Thiruvaluvar Nagar Road",
+      "name_ta": "திருவள்ளுவர் நகர் சாலை",
+      "area_id": 7,
+      "ward_id": 30,
+      "zone_id": 2,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.005,
+      "longitude": 77.028,
+      "confidence": 0.9
+    },
+    "91": {
+      "id": 91,
+      "name_en": "Nava India Road",
+      "name_ta": "நவா இந்தியா சாலை",
+      "area_id": 3,
+      "ward_id": 24,
+      "zone_id": 2,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.019,
+      "longitude": 76.992,
+      "confidence": 0.9
+    },
+    "92": {
+      "id": 92,
+      "name_en": "Peelamedu Pudur Main Road",
+      "name_ta": "பீளமேடு புதூர் மெயின் ரோடு",
+      "area_id": 3,
+      "ward_id": 22,
+      "zone_id": 2,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.028,
+      "longitude": 77.001,
+      "confidence": 0.9
+    },
+    "93": {
+      "id": 93,
+      "name_en": "Variety Hall Road",
+      "name_ta": "வெரைட்டி ஹால் சாலை",
+      "area_id": 10,
+      "ward_id": 58,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.998,
+      "longitude": 76.958,
+      "confidence": 0.9
+    },
+    "94": {
+      "id": 94,
+      "name_en": "Mill Road",
+      "name_ta": "மில் சாலை",
+      "area_id": 10,
+      "ward_id": 58,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.9975,
+      "longitude": 76.956,
+      "confidence": 0.9
+    },
+    "95": {
+      "id": 95,
+      "name_en": "Geetha Hall Road",
+      "name_ta": "கீதா ஹால் சாலை",
+      "area_id": 13,
+      "ward_id": 48,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.003,
+      "longitude": 76.964,
+      "confidence": 0.9
+    },
+    "96": {
+      "id": 96,
+      "name_en": "Goods Shed Road",
+      "name_ta": "கூட்ஸ் ஷெட் சாலை",
+      "area_id": 10,
+      "ward_id": 58,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.999,
+      "longitude": 76.967,
+      "confidence": 0.9
+    },
+    "97": {
+      "id": 97,
+      "name_en": "Balasundaram Road",
+      "name_ta": "பாலசுந்தரம் சாலை",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.015,
+      "longitude": 76.97,
+      "confidence": 0.9
+    },
+    "98": {
+      "id": 98,
+      "name_en": "Gokhale Street",
+      "name_ta": "கோகலே வீதி",
+      "area_id": 13,
+      "ward_id": 47,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.013,
+      "longitude": 76.965,
+      "confidence": 0.9
+    },
+    "99": {
+      "id": 99,
+      "name_en": "Dr. Nanjappa Road",
+      "name_ta": "டாக்டர் நஞ்சப்பா சாலை",
+      "area_id": 1,
+      "ward_id": 45,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.008,
+      "longitude": 76.968,
+      "confidence": 0.9
+    },
+    "100": {
+      "id": 100,
+      "name_en": "Brooke Bond Road",
+      "name_ta": "புரூக் பாண்ட் சாலை",
+      "area_id": 10,
+      "ward_id": 57,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.005,
+      "longitude": 76.954,
+      "confidence": 0.9
+    },
+    "101": {
+      "id": 101,
+      "name_en": "Kovaipudur Main Road",
+      "name_ta": "கோவைப்புதூர் மெயின் ரோடு",
+      "area_id": 17,
+      "ward_id": 74,
+      "zone_id": 4,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.942,
+      "longitude": 76.932,
+      "confidence": 0.9
+    },
+    "102": {
+      "id": 102,
+      "name_en": "VLB Arts College Road",
+      "name_ta": "வி.எல்.பி கல்லூரி சாலை",
+      "area_id": 17,
+      "ward_id": 74,
+      "zone_id": 4,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.938,
+      "longitude": 76.928,
+      "confidence": 0.9
+    },
+    "103": {
+      "id": 103,
+      "name_en": "Kuniyamuthur Palakkad Bypass",
+      "name_ta": "குனியமுத்தூர் பாலக்காடு பைபாஸ்",
+      "area_id": 16,
+      "ward_id": 71,
+      "zone_id": 4,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.962,
+      "longitude": 76.938,
+      "confidence": 0.9
+    },
+    "104": {
+      "id": 104,
+      "name_en": "Podanur Chettipalayam Main Road",
+      "name_ta": "போத்தனூர் செட்டிபாளையம் மெயின் ரோடு",
+      "area_id": 45,
+      "ward_id": 65,
+      "zone_id": 4,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.963,
+      "longitude": 76.992,
+      "confidence": 0.9
+    },
+    "105": {
+      "id": 105,
+      "name_en": "Vadavalli Thondamuthur Road",
+      "name_ta": "வடவள்ளி தொண்டாமுத்தூர் சாலை",
+      "area_id": 14,
+      "ward_id": 86,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.021,
+      "longitude": 76.892,
+      "confidence": 0.9
+    }
+  },
+  "landmarks": {
+    "1": {
+      "id": 1,
+      "name_en": "Gandhipuram Central Bus Stand",
+      "name_ta": "காந்திபுரம் மத்திய பேருந்து நிலையம்",
+      "landmark_type": "Bus Stand",
+      "area_id": 1,
+      "street_id": null,
+      "ward_id": 45,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0175,
+      "longitude": 76.968,
+      "confidence": 0.95
+    },
+    "2": {
+      "id": 2,
+      "name_en": "Gandhipuram Town Bus Stand",
+      "name_ta": "காந்திபுரம் நகரப் பேருந்து நிலையம்",
+      "landmark_type": "Bus Stand",
+      "area_id": 1,
+      "street_id": null,
+      "ward_id": 45,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.016,
+      "longitude": 76.9665,
+      "confidence": 0.95
+    },
+    "3": {
+      "id": 3,
+      "name_en": "Gandhipuram SETC / Omni Bus Stand",
+      "name_ta": "காந்திபுரம் ஆம்னி பேருந்து நிலையம்",
+      "landmark_type": "Bus Stand",
+      "area_id": 1,
+      "street_id": null,
+      "ward_id": 45,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.019,
+      "longitude": 76.971,
+      "confidence": 0.95
+    },
+    "4": {
+      "id": 4,
+      "name_en": "Saravanampatti Bus Stand",
+      "name_ta": "சரவணம்பட்டி பேருந்து நிலையம்",
+      "landmark_type": "Bus Stand",
+      "area_id": 5,
+      "street_id": null,
+      "ward_id": 2,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.079,
+      "longitude": 76.996,
+      "confidence": 0.95
+    },
+    "5": {
+      "id": 5,
+      "name_en": "Singanallur Bus Stand",
+      "name_ta": "சிங்காநல்லூர் பேருந்து நிலையம்",
+      "landmark_type": "Bus Stand",
+      "area_id": 7,
+      "street_id": null,
+      "ward_id": 31,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.9985,
+      "longitude": 77.026,
+      "confidence": 0.95
+    },
+    "6": {
+      "id": 6,
+      "name_en": "Ukkadam Bus Stand",
+      "name_ta": "உக்கடம் பேருந்து நிலையம்",
+      "landmark_type": "Bus Stand",
+      "area_id": 9,
+      "street_id": null,
+      "ward_id": 61,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.9885,
+      "longitude": 76.961,
+      "confidence": 0.95
+    },
+    "7": {
+      "id": 7,
+      "name_en": "Saibaba Colony Bus Stand / MTP Road",
+      "name_ta": "சாயிபாபா காலனி பேருந்து நிறுத்தம்",
+      "landmark_type": "Bus Stand",
+      "area_id": 4,
+      "street_id": null,
+      "ward_id": 81,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0285,
+      "longitude": 76.944,
+      "confidence": 0.95
+    },
+    "8": {
+      "id": 8,
+      "name_en": "Coimbatore Main Railway Junction",
+      "name_ta": "கோயம்புத்தூர் முதன்மை ரயில் நிலையம்",
+      "landmark_type": "Railway Station",
+      "area_id": 10,
+      "street_id": null,
+      "ward_id": 58,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.998,
+      "longitude": 76.966,
+      "confidence": 0.95
+    },
+    "9": {
+      "id": 9,
+      "name_en": "Coimbatore North Railway Station",
+      "name_ta": "கோயம்புத்தூர் வடக்கு ரயில் நிலையம்",
+      "landmark_type": "Railway Station",
+      "area_id": 4,
+      "street_id": null,
+      "ward_id": 81,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.022,
+      "longitude": 76.95,
+      "confidence": 0.95
+    },
+    "10": {
+      "id": 10,
+      "name_en": "Peelamedu Railway Station",
+      "name_ta": "பீளமேடு ரயில் நிலையம்",
+      "landmark_type": "Railway Station",
+      "area_id": 3,
+      "street_id": null,
+      "ward_id": 23,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.028,
+      "longitude": 77.012,
+      "confidence": 0.95
+    },
+    "11": {
+      "id": 11,
+      "name_en": "Podanur Railway Junction",
+      "name_ta": "போத்தனூர் ரயில் சந்திப்பு",
+      "landmark_type": "Railway Station",
+      "area_id": 45,
+      "street_id": null,
+      "ward_id": 66,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.963,
+      "longitude": 76.987,
+      "confidence": 0.95
+    },
+    "12": {
+      "id": 12,
+      "name_en": "Coimbatore International Airport",
+      "name_ta": "கோயம்புத்தூர் சர்வதேச விமான நிலையம்",
+      "landmark_type": "Airport",
+      "area_id": 41,
+      "street_id": null,
+      "ward_id": 25,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.03,
+      "longitude": 77.043,
+      "confidence": 0.95
+    },
+    "13": {
+      "id": 13,
+      "name_en": "Coimbatore Medical College Hospital (CMCH / GH)",
+      "name_ta": "கோவை அரசு மருத்துவக் கல்லூரி மருத்துவமனை",
+      "landmark_type": "Government Hospital",
+      "area_id": 10,
+      "street_id": null,
+      "ward_id": 58,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.9995,
+      "longitude": 76.971,
+      "confidence": 0.95
+    },
+    "14": {
+      "id": 14,
+      "name_en": "Kovai Medical Center and Hospital (KMCH)",
+      "name_ta": "கோவை மெடிக்கல் சென்டர் மருத்துவமனை (KMCH)",
+      "landmark_type": "Hospital",
+      "area_id": 3,
+      "street_id": null,
+      "ward_id": 25,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.045,
+      "longitude": 77.047,
+      "confidence": 0.95
+    },
+    "15": {
+      "id": 15,
+      "name_en": "PSG Hospitals",
+      "name_ta": "பி.எஸ்.ஜி மருத்துவமனை",
+      "landmark_type": "Hospital",
+      "area_id": 3,
+      "street_id": null,
+      "ward_id": 23,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.026,
+      "longitude": 77.003,
+      "confidence": 0.95
+    },
+    "16": {
+      "id": 16,
+      "name_en": "Ganga Hospital",
+      "name_ta": "கங்கா மருத்துவமனை",
+      "landmark_type": "Hospital",
+      "area_id": 4,
+      "street_id": null,
+      "ward_id": 81,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.024,
+      "longitude": 76.945,
+      "confidence": 0.95
+    },
+    "17": {
+      "id": 17,
+      "name_en": "Sri Ramakrishna Hospital",
+      "name_ta": "ஸ்ரீ ராமகிருஷ்ணா மருத்துவமனை",
+      "landmark_type": "Hospital",
+      "area_id": 1,
+      "street_id": null,
+      "ward_id": 44,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.022,
+      "longitude": 76.981,
+      "confidence": 0.95
+    },
+    "18": {
+      "id": 18,
+      "name_en": "G. Kuppuswamy Naidu Memorial Hospital (GKNM)",
+      "name_ta": "ஜி. குப்புசாமி நாயுடு நினைவு மருத்துவமனை (GKNM)",
+      "landmark_type": "Hospital",
+      "area_id": 11,
+      "street_id": null,
+      "ward_id": 52,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.01,
+      "longitude": 76.979,
+      "confidence": 0.95
+    },
+    "19": {
+      "id": 19,
+      "name_en": "Royal Care Super Speciality Hospital",
+      "name_ta": "ராயல் கேர் மருத்துவமனை",
+      "landmark_type": "Hospital",
+      "area_id": 44,
+      "street_id": null,
+      "ward_id": null,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.062,
+      "longitude": 77.085,
+      "confidence": 0.95
+    },
+    "20": {
+      "id": 20,
+      "name_en": "PSG College of Technology (PSG Tech)",
+      "name_ta": "பி.எஸ்.ஜி தொழில்நுட்பக் கல்லூரி",
+      "landmark_type": "College / University",
+      "area_id": 3,
+      "street_id": null,
+      "ward_id": 23,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0245,
+      "longitude": 77.0025,
+      "confidence": 0.95
+    },
+    "21": {
+      "id": 21,
+      "name_en": "Coimbatore Institute of Technology (CIT)",
+      "name_ta": "கோயம்புத்தூர் இன்ஸ்டிடியூட் ஆப் டெக்னாலஜி (CIT)",
+      "landmark_type": "College / University",
+      "area_id": 40,
+      "street_id": null,
+      "ward_id": 24,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.027,
+      "longitude": 77.016,
+      "confidence": 0.95
+    },
+    "22": {
+      "id": 22,
+      "name_en": "Government College of Technology (GCT)",
+      "name_ta": "அரசு தொழில்நுட்பக் கல்லூரி (GCT)",
+      "landmark_type": "College / University",
+      "area_id": 2,
+      "street_id": null,
+      "ward_id": 94,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.018,
+      "longitude": 76.935,
+      "confidence": 0.95
+    },
+    "23": {
+      "id": 23,
+      "name_en": "Tamil Nadu Agricultural University (TNAU)",
+      "name_ta": "தமிழ்நாடு வேளாண்மைப் பல்கலைக்கழகம் (TNAU)",
+      "landmark_type": "University",
+      "area_id": 2,
+      "street_id": null,
+      "ward_id": 95,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.013,
+      "longitude": 76.932,
+      "confidence": 0.95
+    },
+    "24": {
+      "id": 24,
+      "name_en": "Bharathiar University",
+      "name_ta": "பாரதியார் பல்கலைக்கழகம்",
+      "landmark_type": "University",
+      "area_id": 14,
+      "street_id": null,
+      "ward_id": null,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.038,
+      "longitude": 76.877,
+      "confidence": 0.95
+    },
+    "25": {
+      "id": 25,
+      "name_en": "Kumaraguru College of Technology (KCT)",
+      "name_ta": "குமரகுரு தொழில்நுட்பக் கல்லூரி (KCT)",
+      "landmark_type": "College / University",
+      "area_id": 5,
+      "street_id": null,
+      "ward_id": 2,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.082,
+      "longitude": 76.988,
+      "confidence": 0.95
+    },
+    "26": {
+      "id": 26,
+      "name_en": "Sri Krishna College of Engineering and Technology (SKCET)",
+      "name_ta": "ஸ்ரீ கிருஷ்ணா பொறியியல் கல்லூரி",
+      "landmark_type": "College / University",
+      "area_id": 16,
+      "street_id": null,
+      "ward_id": 73,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.938,
+      "longitude": 76.955,
+      "confidence": 0.95
+    },
+    "27": {
+      "id": 27,
+      "name_en": "Government Arts College Coimbatore",
+      "name_ta": "அரசு கலைக் கல்லூரி கோயம்புத்தூர்",
+      "landmark_type": "College / University",
+      "area_id": 11,
+      "street_id": null,
+      "ward_id": 53,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.004,
+      "longitude": 76.971,
+      "confidence": 0.95
+    },
+    "28": {
+      "id": 28,
+      "name_en": "Brookefields Mall",
+      "name_ta": "புரூக்ஃபீல்ட்ஸ் மால்",
+      "landmark_type": "Shopping Mall",
+      "area_id": 10,
+      "street_id": null,
+      "ward_id": 57,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.007,
+      "longitude": 76.956,
+      "confidence": 0.95
+    },
+    "29": {
+      "id": 29,
+      "name_en": "Prozone Mall",
+      "name_ta": "புரோசோன் மால்",
+      "landmark_type": "Shopping Mall",
+      "area_id": 5,
+      "street_id": null,
+      "ward_id": 3,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.054,
+      "longitude": 76.993,
+      "confidence": 0.95
+    },
+    "30": {
+      "id": 30,
+      "name_en": "Fun Republic Mall",
+      "name_ta": "ஃபன் ரிபப்ளிக் மால்",
+      "landmark_type": "Shopping Mall",
+      "area_id": 3,
+      "street_id": null,
+      "ward_id": 24,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0265,
+      "longitude": 77.011,
+      "confidence": 0.95
+    },
+    "31": {
+      "id": 31,
+      "name_en": "TIDEL Park Coimbatore",
+      "name_ta": "டைடல் பார்க் கோயம்புத்தூர்",
+      "landmark_type": "Technology Park",
+      "area_id": 3,
+      "street_id": null,
+      "ward_id": 25,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.031,
+      "longitude": 77.028,
+      "confidence": 0.95
+    },
+    "32": {
+      "id": 32,
+      "name_en": "KGiSL Tech Park / CHIL SEZ",
+      "name_ta": "கே.ஜி.ஐ.எஸ்.எல் ஐடி பார்க்",
+      "landmark_type": "Technology Park",
+      "area_id": 5,
+      "street_id": null,
+      "ward_id": 2,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.085,
+      "longitude": 76.998,
+      "confidence": 0.95
+    },
+    "33": {
+      "id": 33,
+      "name_en": "Marudamalai Murugan Temple",
+      "name_ta": "மருதமலை சுப்பிரமணிய சுவாமி திருக்கோவில்",
+      "landmark_type": "Temple",
+      "area_id": 14,
+      "street_id": null,
+      "ward_id": null,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.047,
+      "longitude": 76.852,
+      "confidence": 0.95
+    },
+    "34": {
+      "id": 34,
+      "name_en": "Eachanari Vinayagar Temple",
+      "name_ta": "ஈச்சனாரி விநாயகர் திருக்கோவில்",
+      "landmark_type": "Temple",
+      "area_id": 21,
+      "street_id": null,
+      "ward_id": 69,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.927,
+      "longitude": 76.981,
+      "confidence": 0.95
+    },
+    "35": {
+      "id": 35,
+      "name_en": "Perur Pateeswarar Temple",
+      "name_ta": "பேரூர் பட்டீஸ்வரர் திருக்கோவில்",
+      "landmark_type": "Temple",
+      "area_id": 33,
+      "street_id": null,
+      "ward_id": null,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.976,
+      "longitude": 76.917,
+      "confidence": 0.95
+    },
+    "36": {
+      "id": 36,
+      "name_en": "Puliakulam Munthi Vinayagar Temple",
+      "name_ta": "புலியகுளம் முந்தி விநாயகர் கோவில்",
+      "landmark_type": "Temple",
+      "area_id": 8,
+      "street_id": null,
+      "ward_id": 77,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.999,
+      "longitude": 76.994,
+      "confidence": 0.95
+    },
+    "37": {
+      "id": 37,
+      "name_en": "Koniamman Temple Town Hall",
+      "name_ta": "கோனியம்மன் திருக்கோவில் டவுன் ஹால்",
+      "landmark_type": "Temple",
+      "area_id": 10,
+      "street_id": null,
+      "ward_id": 55,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.995,
+      "longitude": 76.96,
+      "confidence": 0.95
+    },
+    "38": {
+      "id": 38,
+      "name_en": "Athar Jamath Big Mosque Ukkadam",
+      "name_ta": "அத்தர் ஜமாத் பெரிய பள்ளிவாசல் உக்கடம்",
+      "landmark_type": "Mosque",
+      "area_id": 9,
+      "street_id": null,
+      "ward_id": 60,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.991,
+      "longitude": 76.96,
+      "confidence": 0.95
+    },
+    "39": {
+      "id": 39,
+      "name_en": "St. Michael's Cathedral Big Bazaar Street",
+      "name_ta": "புனித மைக்கேல் பேராலயம்",
+      "landmark_type": "Church",
+      "area_id": 10,
+      "street_id": null,
+      "ward_id": 55,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.996,
+      "longitude": 76.965,
+      "confidence": 0.95
+    },
+    "40": {
+      "id": 40,
+      "name_en": "VOC Park and Zoo",
+      "name_ta": "வ.உ.சி பூங்கா",
+      "landmark_type": "Park",
+      "area_id": 11,
+      "street_id": null,
+      "ward_id": 52,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.006,
+      "longitude": 76.972,
+      "confidence": 0.95
+    },
+    "41": {
+      "id": 41,
+      "name_en": "Valankulam Lake Promenade",
+      "name_ta": "வாலாங்குளம் படகு இல்லம் மற்றும் நடைபாதை",
+      "landmark_type": "Lake",
+      "area_id": 8,
+      "street_id": null,
+      "ward_id": 79,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.992,
+      "longitude": 76.976,
+      "confidence": 0.95
+    },
+    "42": {
+      "id": 42,
+      "name_en": "Singanallur Lake Boat House",
+      "name_ta": "சிங்காநல்லூர் குளம்",
+      "landmark_type": "Lake",
+      "area_id": 7,
+      "street_id": null,
+      "ward_id": 32,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.992,
+      "longitude": 77.021,
+      "confidence": 0.95
+    },
+    "43": {
+      "id": 43,
+      "name_en": "Ukkadam Periyakulam Smart City Lake",
+      "name_ta": "உக்கடம் பெரியகுளம்",
+      "landmark_type": "Lake",
+      "area_id": 9,
+      "street_id": null,
+      "ward_id": 61,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.985,
+      "longitude": 76.958,
+      "confidence": 0.95
+    },
+    "44": {
+      "id": 44,
+      "name_en": "Gandhipuram Two-Tier Flyover",
+      "name_ta": "காந்திபுரம் மேம்பாலம்",
+      "landmark_type": "Flyover",
+      "area_id": 1,
+      "street_id": null,
+      "ward_id": 45,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.018,
+      "longitude": 76.968,
+      "confidence": 0.95
+    },
+    "45": {
+      "id": 45,
+      "name_en": "Ukkadam Flyover Junction",
+      "name_ta": "உக்கடம் மேம்பாலம்",
+      "landmark_type": "Flyover",
+      "area_id": 9,
+      "street_id": null,
+      "ward_id": 61,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.989,
+      "longitude": 76.962,
+      "confidence": 0.95
+    },
+    "46": {
+      "id": 46,
+      "name_en": "Lakshmi Mills Junction",
+      "name_ta": "லட்சுமி மில்ஸ் சந்திப்பு",
+      "landmark_type": "Major Junction",
+      "area_id": 3,
+      "street_id": null,
+      "ward_id": 24,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.015,
+      "longitude": 76.987,
+      "confidence": 0.95
+    },
+    "47": {
+      "id": 47,
+      "name_en": "Chinthamani Junction North Coimbatore",
+      "name_ta": "சிந்தாமணி சந்திப்பு",
+      "landmark_type": "Major Junction",
+      "area_id": 4,
+      "street_id": null,
+      "ward_id": 81,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.021,
+      "longitude": 76.952,
+      "confidence": 0.95
+    },
+    "48": {
+      "id": 48,
+      "name_en": "Victoria Town Hall CCMC Headquarters",
+      "name_ta": "விக்டோரியா டவுன் ஹால் மாநகராட்சி அலுவலகம்",
+      "landmark_type": "Government Office",
+      "area_id": 10,
+      "street_id": null,
+      "ward_id": 55,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.997,
+      "longitude": 76.963,
+      "confidence": 0.95
+    },
+    "49": {
+      "id": 49,
+      "name_en": "Coimbatore District Collectorate",
+      "name_ta": "கோவை மாவட்ட ஆட்சியர் அலுவலகம்",
+      "landmark_type": "Government Office",
+      "area_id": 11,
+      "street_id": null,
+      "ward_id": 53,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.0025,
+      "longitude": 76.969,
+      "confidence": 0.95
+    }
+  },
+  "alias_to_entity": {
+    "coimbatore north": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 1,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "kovai north": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 1,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "coimbatore vada": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 1,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "கோயம்புத்தூர் வடக்கு": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 1,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      }
+    ],
+    "coimbatore south": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 2,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "kovai south": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 2,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "coimbatore therku": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 2,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "கோயம்புத்தூர் தெற்கு": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 2,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      }
+    ],
+    "annur": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 3,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 34,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "annoor": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 3,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 34,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "அன்னூர்": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 3,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 34,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "mettupalayam": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 4,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 30,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "mtp": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 4,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 30,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "mettupalaiyam": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 4,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "மேட்டுப்பாளையம்": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 4,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 30,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sulur": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 5,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 29,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "suloor": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 5,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 29,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சூலூர்": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 5,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 29,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pollachi": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 6,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 31,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pollachi taluk": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 6,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "பொள்ளாச்சி": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 6,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 31,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kinathukadavu": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 7,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 35,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kinathukadavoo": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 7,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "கிணத்துக்கடவு": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 7,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 35,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "valparai": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 8,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 36,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "valpaarai": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 8,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "வால்பாறை": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 8,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 36,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "madukkarai": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 9,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 32,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "mathukkarai": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 9,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "மதுக்கரை": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 9,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 32,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "perur": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 10,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 33,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "peroor": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 10,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "பேரூர்": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 10,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 33,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "anaimalai": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 11,
+        "language": "English",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 37,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "anamalai": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 11,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "ஆனைமலை": [
+      {
+        "entity_type": "taluk",
+        "entity_id": 11,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 37,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram": [
+      {
+        "entity_type": "area",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhi puram": [
+      {
+        "entity_type": "area",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "காந்திபுரம்": [
+      {
+        "entity_type": "area",
+        "entity_id": 1,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kaandhipuram": [
+      {
+        "entity_type": "area",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ganthipuram": [
+      {
+        "entity_type": "area",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram area": [
+      {
+        "entity_type": "area",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "rs puram": [
+      {
+        "entity_type": "area",
+        "entity_id": 2,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "r.s. puram": [
+      {
+        "entity_type": "area",
+        "entity_id": 2,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "rathinasinghpuram": [
+      {
+        "entity_type": "area",
+        "entity_id": 2,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ஆர்.எஸ். புரம்": [
+      {
+        "entity_type": "area",
+        "entity_id": 2,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "rspuram": [
+      {
+        "entity_type": "area",
+        "entity_id": 2,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "peelamedu": [
+      {
+        "entity_type": "area",
+        "entity_id": 3,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pelamedu": [
+      {
+        "entity_type": "area",
+        "entity_id": 3,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "பீளமேடு": [
+      {
+        "entity_type": "area",
+        "entity_id": 3,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "peelamedu area": [
+      {
+        "entity_type": "area",
+        "entity_id": 3,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pilamedu": [
+      {
+        "entity_type": "area",
+        "entity_id": 3,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony": [
+      {
+        "entity_type": "area",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sai baba colony": [
+      {
+        "entity_type": "area",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "area",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "சாயிபாபா காலனி": [
+      {
+        "entity_type": "area",
+        "entity_id": 4,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony area": [
+      {
+        "entity_type": "area",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saravanampatti": [
+      {
+        "entity_type": "area",
+        "entity_id": 5,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saravanampatty": [
+      {
+        "entity_type": "area",
+        "entity_id": 5,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சரவணம்பட்டி": [
+      {
+        "entity_type": "area",
+        "entity_id": 5,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saravanampatti area": [
+      {
+        "entity_type": "area",
+        "entity_id": 5,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ganapathy": [
+      {
+        "entity_type": "area",
+        "entity_id": 6,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ganapathi": [
+      {
+        "entity_type": "area",
+        "entity_id": 6,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "கணபதி": [
+      {
+        "entity_type": "area",
+        "entity_id": 6,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ganapathy area": [
+      {
+        "entity_type": "area",
+        "entity_id": 6,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "singanallur": [
+      {
+        "entity_type": "area",
+        "entity_id": 7,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "singanalloor": [
+      {
+        "entity_type": "area",
+        "entity_id": 7,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சிங்காநல்லூர்": [
+      {
+        "entity_type": "area",
+        "entity_id": 7,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "singanallur bus stand area": [
+      {
+        "entity_type": "area",
+        "entity_id": 7,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ramanathapuram": [
+      {
+        "entity_type": "area",
+        "entity_id": 8,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ramnagar coimbatore": [
+      {
+        "entity_type": "area",
+        "entity_id": 8,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "இராமநாதபுரம்": [
+      {
+        "entity_type": "area",
+        "entity_id": 8,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ukkadam": [
+      {
+        "entity_type": "area",
+        "entity_id": 9,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ukkadam bus stand": [
+      {
+        "entity_type": "area",
+        "entity_id": 9,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "landmark",
+        "entity_id": 6,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "உக்கடம்": [
+      {
+        "entity_type": "area",
+        "entity_id": 9,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "town hall": [
+      {
+        "entity_type": "area",
+        "entity_id": 10,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "townhall": [
+      {
+        "entity_type": "area",
+        "entity_id": 10,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டவுன் ஹால்": [
+      {
+        "entity_type": "area",
+        "entity_id": 10,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "race course": [
+      {
+        "entity_type": "area",
+        "entity_id": 11,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "racecourse": [
+      {
+        "entity_type": "area",
+        "entity_id": 11,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ரேஸ் கோர்ஸ்": [
+      {
+        "entity_type": "area",
+        "entity_id": 11,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tatabad": [
+      {
+        "entity_type": "area",
+        "entity_id": 12,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thathabad": [
+      {
+        "entity_type": "area",
+        "entity_id": 12,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டாடாபாத்": [
+      {
+        "entity_type": "area",
+        "entity_id": 12,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ram nagar": [
+      {
+        "entity_type": "area",
+        "entity_id": 13,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ramnagar": [
+      {
+        "entity_type": "area",
+        "entity_id": 13,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ராம் நகர்": [
+      {
+        "entity_type": "area",
+        "entity_id": 13,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "vadavalli": [
+      {
+        "entity_type": "area",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "vadavali": [
+      {
+        "entity_type": "area",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "வடவள்ளி": [
+      {
+        "entity_type": "area",
+        "entity_id": 14,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thondamuthur": [
+      {
+        "entity_type": "area",
+        "entity_id": 15,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thondamuthoor": [
+      {
+        "entity_type": "area",
+        "entity_id": 15,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "தொண்டாமுத்தூர்": [
+      {
+        "entity_type": "area",
+        "entity_id": 15,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kuniyamuthur": [
+      {
+        "entity_type": "area",
+        "entity_id": 16,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kuniyamuthoor": [
+      {
+        "entity_type": "area",
+        "entity_id": 16,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "குனியமுத்தூர்": [
+      {
+        "entity_type": "area",
+        "entity_id": 16,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kovaipudur": [
+      {
+        "entity_type": "area",
+        "entity_id": 17,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kovai pudur": [
+      {
+        "entity_type": "area",
+        "entity_id": 17,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "கோவைப்புதூர்": [
+      {
+        "entity_type": "area",
+        "entity_id": 17,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kurichi": [
+      {
+        "entity_type": "area",
+        "entity_id": 18,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "குறிச்சி": [
+      {
+        "entity_type": "area",
+        "entity_id": 18,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sundarapuram": [
+      {
+        "entity_type": "area",
+        "entity_id": 19,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sundarapuram area": [
+      {
+        "entity_type": "area",
+        "entity_id": 19,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சுந்தராபுரம்": [
+      {
+        "entity_type": "area",
+        "entity_id": 19,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ondipudur": [
+      {
+        "entity_type": "area",
+        "entity_id": 20,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ondipudoor": [
+      {
+        "entity_type": "area",
+        "entity_id": 20,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ஒண்டிப்புதூர்": [
+      {
+        "entity_type": "area",
+        "entity_id": 20,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "eachanari": [
+      {
+        "entity_type": "area",
+        "entity_id": 21,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "echanari": [
+      {
+        "entity_type": "area",
+        "entity_id": 21,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ஈச்சனாரி": [
+      {
+        "entity_type": "area",
+        "entity_id": 21,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "irugur": [
+      {
+        "entity_type": "area",
+        "entity_id": 22,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "irugoor": [
+      {
+        "entity_type": "area",
+        "entity_id": 22,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "இருவூர்": [
+      {
+        "entity_type": "area",
+        "entity_id": 22,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kalapatti": [
+      {
+        "entity_type": "area",
+        "entity_id": 23,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kaalapatti": [
+      {
+        "entity_type": "area",
+        "entity_id": 23,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "காளப்பட்டி": [
+      {
+        "entity_type": "area",
+        "entity_id": 23,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "chinnavedampatti": [
+      {
+        "entity_type": "area",
+        "entity_id": 24,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "chinnavedampatty": [
+      {
+        "entity_type": "area",
+        "entity_id": 24,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சின்னவேடம்பட்டி": [
+      {
+        "entity_type": "area",
+        "entity_id": 24,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "vilankurichi": [
+      {
+        "entity_type": "area",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "vilankurichi road": [
+      {
+        "entity_type": "area",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "விளாங்குறிச்சி": [
+      {
+        "entity_type": "area",
+        "entity_id": 25,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thudiyalur": [
+      {
+        "entity_type": "area",
+        "entity_id": 26,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thudiyaloor": [
+      {
+        "entity_type": "area",
+        "entity_id": 26,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "துடியலூர்": [
+      {
+        "entity_type": "area",
+        "entity_id": 26,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kavundampalayam": [
+      {
+        "entity_type": "area",
+        "entity_id": 27,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "goundampalayam": [
+      {
+        "entity_type": "area",
+        "entity_id": 27,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "கவுண்டம்பாளையம்": [
+      {
+        "entity_type": "area",
+        "entity_id": 27,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "periyanaickenpalayam": [
+      {
+        "entity_type": "area",
+        "entity_id": 28,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "பெரியநாயக்கன்பாளையம்": [
+      {
+        "entity_type": "area",
+        "entity_id": 28,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pollachi town": [
+      {
+        "entity_type": "area",
+        "entity_id": 31,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "selvapuram": [
+      {
+        "entity_type": "area",
+        "entity_id": 38,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "செல்வபுரம்": [
+      {
+        "entity_type": "area",
+        "entity_id": 38,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sowripalayam": [
+      {
+        "entity_type": "area",
+        "entity_id": 39,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சௌரிபாளையம்": [
+      {
+        "entity_type": "area",
+        "entity_id": 39,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "hope college": [
+      {
+        "entity_type": "area",
+        "entity_id": 40,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "hopes": [
+      {
+        "entity_type": "area",
+        "entity_id": 40,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ஹோப் காலேஜ்": [
+      {
+        "entity_type": "area",
+        "entity_id": 40,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sitra": [
+      {
+        "entity_type": "area",
+        "entity_id": 41,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sitra airport": [
+      {
+        "entity_type": "area",
+        "entity_id": 41,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சித்ரா": [
+      {
+        "entity_type": "area",
+        "entity_id": 41,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "karamadai": [
+      {
+        "entity_type": "area",
+        "entity_id": 42,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "காரமடை": [
+      {
+        "entity_type": "area",
+        "entity_id": 42,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sirumugai": [
+      {
+        "entity_type": "area",
+        "entity_id": 43,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சிறுமுகை": [
+      {
+        "entity_type": "area",
+        "entity_id": 43,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "neelambur": [
+      {
+        "entity_type": "area",
+        "entity_id": 44,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "நீலம்பூர்": [
+      {
+        "entity_type": "area",
+        "entity_id": 44,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "podanur": [
+      {
+        "entity_type": "area",
+        "entity_id": 45,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pothanur": [
+      {
+        "entity_type": "area",
+        "entity_id": 45,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "போத்தனூர்": [
+      {
+        "entity_type": "area",
+        "entity_id": 45,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "avinashi road": [
+      {
+        "entity_type": "street",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "avinashi salai": [
+      {
+        "entity_type": "street",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "அவினாசி சாலை": [
+      {
+        "entity_type": "street",
+        "entity_id": 1,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "avinasi road": [
+      {
+        "entity_type": "street",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "avinashi main road": [
+      {
+        "entity_type": "street",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "trichy road": [
+      {
+        "entity_type": "street",
+        "entity_id": 2,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "trichy salai": [
+      {
+        "entity_type": "street",
+        "entity_id": 2,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "திருச்சி சாலை": [
+      {
+        "entity_type": "street",
+        "entity_id": 2,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "trichy road coimbatore": [
+      {
+        "entity_type": "street",
+        "entity_id": 2,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "mettupalayam road": [
+      {
+        "entity_type": "street",
+        "entity_id": 3,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "mtp road": [
+      {
+        "entity_type": "street",
+        "entity_id": 3,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 3,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "மேட்டுப்பாளையம் சாலை": [
+      {
+        "entity_type": "street",
+        "entity_id": 3,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sathy road": [
+      {
+        "entity_type": "street",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sathyamangalam road": [
+      {
+        "entity_type": "street",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சத்தி சாலை": [
+      {
+        "entity_type": "street",
+        "entity_id": 4,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pollachi road": [
+      {
+        "entity_type": "street",
+        "entity_id": 5,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 5,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pollachi main road": [
+      {
+        "entity_type": "street",
+        "entity_id": 5,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "பொள்ளாச்சி சாலை": [
+      {
+        "entity_type": "street",
+        "entity_id": 5,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "palakkad road": [
+      {
+        "entity_type": "street",
+        "entity_id": 6,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "palghat road": [
+      {
+        "entity_type": "street",
+        "entity_id": 6,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "பாலக்காடு சாலை": [
+      {
+        "entity_type": "street",
+        "entity_id": 6,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "palakkad main road": [
+      {
+        "entity_type": "street",
+        "entity_id": 6,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thadagam road": [
+      {
+        "entity_type": "street",
+        "entity_id": 7,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thadagam salai": [
+      {
+        "entity_type": "street",
+        "entity_id": 7,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "தடாகம் சாலை": [
+      {
+        "entity_type": "street",
+        "entity_id": 7,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "marudamalai road": [
+      {
+        "entity_type": "street",
+        "entity_id": 8,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "marudamalai salai": [
+      {
+        "entity_type": "street",
+        "entity_id": 8,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "மருதமலை சாலை": [
+      {
+        "entity_type": "street",
+        "entity_id": 8,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "marudamalai main road": [
+      {
+        "entity_type": "street",
+        "entity_id": 8,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut road": [
+      {
+        "entity_type": "street",
+        "entity_id": 9,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "crosscut road": [
+      {
+        "entity_type": "street",
+        "entity_id": 9,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "கிராஸ் கட் ரோடு": [
+      {
+        "entity_type": "street",
+        "entity_id": 9,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut salai": [
+      {
+        "entity_type": "street",
+        "entity_id": 9,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut road gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 9,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "100 feet road": [
+      {
+        "entity_type": "street",
+        "entity_id": 10,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "hundred feet road": [
+      {
+        "entity_type": "street",
+        "entity_id": 10,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "100 அடி ரோடு": [
+      {
+        "entity_type": "street",
+        "entity_id": 10,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "100 feet road gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 10,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "db road": [
+      {
+        "entity_type": "street",
+        "entity_id": 11,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "d.b. road": [
+      {
+        "entity_type": "street",
+        "entity_id": 11,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "diwan bahadur road": [
+      {
+        "entity_type": "street",
+        "entity_id": 11,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டி.பி. ரோடு": [
+      {
+        "entity_type": "street",
+        "entity_id": 11,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "db road rs puram": [
+      {
+        "entity_type": "street",
+        "entity_id": 11,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tv swamy road": [
+      {
+        "entity_type": "street",
+        "entity_id": 12,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "t.v. swamy road": [
+      {
+        "entity_type": "street",
+        "entity_id": 12,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thiruvenkatasamy road": [
+      {
+        "entity_type": "street",
+        "entity_id": 12,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டி.வி. சாமி ரோடு": [
+      {
+        "entity_type": "street",
+        "entity_id": 12,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road": [
+      {
+        "entity_type": "street",
+        "entity_id": 13,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "n.s.r. road": [
+      {
+        "entity_type": "street",
+        "entity_id": 13,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "narayanasamy road": [
+      {
+        "entity_type": "street",
+        "entity_id": 13,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "என்.எஸ்.ஆர் ரோடு": [
+      {
+        "entity_type": "street",
+        "entity_id": 13,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "bharathiar road": [
+      {
+        "entity_type": "street",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "bharathiyar road": [
+      {
+        "entity_type": "street",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "பாரதியார் ரோடு": [
+      {
+        "entity_type": "street",
+        "entity_id": 14,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "race course road": [
+      {
+        "entity_type": "street",
+        "entity_id": 15,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "racecourse promenade": [
+      {
+        "entity_type": "street",
+        "entity_id": 15,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ரேஸ் கோர்ஸ் ரோடு": [
+      {
+        "entity_type": "street",
+        "entity_id": 15,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "oppanakara street": [
+      {
+        "entity_type": "street",
+        "entity_id": 16,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "oppanakkara street": [
+      {
+        "entity_type": "street",
+        "entity_id": 16,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ஒப்பணக்கார வீதி": [
+      {
+        "entity_type": "street",
+        "entity_id": 16,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "oppanakara theru": [
+      {
+        "entity_type": "street",
+        "entity_id": 16,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "big bazaar street": [
+      {
+        "entity_type": "street",
+        "entity_id": 17,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "periya kadai veedhi": [
+      {
+        "entity_type": "street",
+        "entity_id": 17,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "பெரிய கடை வீதி": [
+      {
+        "entity_type": "street",
+        "entity_id": 17,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "raja street": [
+      {
+        "entity_type": "street",
+        "entity_id": 18,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "raja veedhi": [
+      {
+        "entity_type": "street",
+        "entity_id": 18,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ராஜா வீதி": [
+      {
+        "entity_type": "street",
+        "entity_id": 18,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sukrawarpet street": [
+      {
+        "entity_type": "street",
+        "entity_id": 19,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sukrawarpettai": [
+      {
+        "entity_type": "street",
+        "entity_id": 19,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சுக்கிரவார்பேட்டை": [
+      {
+        "entity_type": "street",
+        "entity_id": 19,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kamarajar road": [
+      {
+        "entity_type": "street",
+        "entity_id": 20,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kamaraj road singanallur": [
+      {
+        "entity_type": "street",
+        "entity_id": 20,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "காமராஜர் ரோடு": [
+      {
+        "entity_type": "street",
+        "entity_id": 20,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "1st street": [
+      {
+        "entity_type": "street",
+        "entity_id": 21,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "1th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 21,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 21,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 1th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 21,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "1th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 21,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "1வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 21,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "1வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 21,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "2nd street": [
+      {
+        "entity_type": "street",
+        "entity_id": 22,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "2th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 22,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 22,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 2th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 22,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "2th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 22,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "2வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 22,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "2வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 22,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "3rd street": [
+      {
+        "entity_type": "street",
+        "entity_id": 23,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "3th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 23,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 23,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 3th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 23,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "3th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 23,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "3வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 23,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "3வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 23,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "4th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 24,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 24,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 24,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 4th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 24,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "4th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 24,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "4வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 24,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "4வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 24,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "5th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 5th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "5th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "5வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 25,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "5வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 25,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "6th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 26,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 26,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 26,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 6th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 26,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "6th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 26,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "6வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 26,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "6வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 26,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "7th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 27,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 27,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 27,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 7th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 27,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "7th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 27,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "7வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 27,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "7வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 27,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "8th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 28,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 28,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 28,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 8th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 28,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "8th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 28,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "8வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 28,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "8வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 28,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "9th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 29,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 29,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 29,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 9th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 29,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "9th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 29,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "9வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 29,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "9வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 29,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "10th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 30,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 30,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 30,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 10th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 30,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "10th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 30,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "10வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 30,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "10வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 30,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "11th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 31,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 31,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "street",
+        "entity_id": 31,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram 11th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 31,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "11th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 31,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "11வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 31,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "11வது தெரு காந்திபுரம்": [
+      {
+        "entity_type": "street",
+        "entity_id": 31,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ram nagar 1th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 32,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "1th street ram nagar": [
+      {
+        "entity_type": "street",
+        "entity_id": 32,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ராம் நகர் 1வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 32,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ram nagar 2th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 33,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "2th street ram nagar": [
+      {
+        "entity_type": "street",
+        "entity_id": 33,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ராம் நகர் 2வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 33,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ram nagar 3th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 34,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "3th street ram nagar": [
+      {
+        "entity_type": "street",
+        "entity_id": 34,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ராம் நகர் 3வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 34,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ram nagar 4th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 35,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "4th street ram nagar": [
+      {
+        "entity_type": "street",
+        "entity_id": 35,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ராம் நகர் 4வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 35,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ram nagar 5th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 36,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "5th street ram nagar": [
+      {
+        "entity_type": "street",
+        "entity_id": 36,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ராம் நகர் 5வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 36,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ram nagar 6th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 37,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "6th street ram nagar": [
+      {
+        "entity_type": "street",
+        "entity_id": 37,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ராம் நகர் 6வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 37,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ram nagar 7th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 38,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "7th street ram nagar": [
+      {
+        "entity_type": "street",
+        "entity_id": 38,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ராம் நகர் 7வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 38,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tatabad 1th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 39,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டாடாபாத் 1வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 39,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tatabad 2th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 40,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டாடாபாத் 2வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 40,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tatabad 3th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 41,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டாடாபாத் 3வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 41,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tatabad 4th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 42,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டாடாபாத் 4வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 42,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tatabad 5th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 43,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டாடாபாத் 5வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 43,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tatabad 6th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 44,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டாடாபாத் 6வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 44,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tatabad 7th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 45,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டாடாபாத் 7வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 45,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tatabad 8th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 46,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டாடாபாத் 8வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 46,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tatabad 9th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 47,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டாடாபாத் 9வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 47,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 1th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 48,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 1th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 48,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 1வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 48,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 2th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 49,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 2th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 49,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 2வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 49,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 3th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 50,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 3th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 50,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 3வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 50,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 4th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 51,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 4th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 51,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 4வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 51,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 5th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 52,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 5th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 52,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 5வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 52,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 6th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 53,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 6th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 53,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 6வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 53,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 7th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 54,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 7th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 54,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 7வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 54,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 8th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 55,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 8th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 55,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 8வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 55,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 9th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 56,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 9th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 56,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 9வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 56,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 10th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 57,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 10th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 57,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 10வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 57,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 11th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 58,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 11th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 58,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 11வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 58,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nsr road 12th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 59,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony 12th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 59,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சாயிபாபா காலனி 12வது கிராஸ்": [
+      {
+        "entity_type": "street",
+        "entity_id": 59,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 1th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 60,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 1th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 60,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 2th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 61,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 2th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 61,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 3th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 62,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 3th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 62,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 4th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 63,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 4th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 63,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 5th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 64,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 5th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 64,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 6th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 65,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 6th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 65,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 7th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 66,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 7th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 66,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 8th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 67,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 8th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 67,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 9th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 68,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cross cut 9th cross": [
+      {
+        "entity_type": "street",
+        "entity_id": 68,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "east sambandam road": [
+      {
+        "entity_type": "street",
+        "entity_id": 69,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sambandam road east": [
+      {
+        "entity_type": "street",
+        "entity_id": 69,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "west sambandam road": [
+      {
+        "entity_type": "street",
+        "entity_id": 70,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sambandam road west": [
+      {
+        "entity_type": "street",
+        "entity_id": 70,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "east arokiasamy road": [
+      {
+        "entity_type": "street",
+        "entity_id": 71,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "west arokiasamy road": [
+      {
+        "entity_type": "street",
+        "entity_id": 72,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "lawley road": [
+      {
+        "entity_type": "street",
+        "entity_id": 73,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "lawley road junction": [
+      {
+        "entity_type": "street",
+        "entity_id": 73,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "alagesan road": [
+      {
+        "entity_type": "street",
+        "entity_id": 74,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "alagesan salai": [
+      {
+        "entity_type": "street",
+        "entity_id": 74,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "bharathi park road": [
+      {
+        "entity_type": "street",
+        "entity_id": 75,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "bharathi park": [
+      {
+        "entity_type": "street",
+        "entity_id": 75,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pankaja mill road": [
+      {
+        "entity_type": "street",
+        "entity_id": 76,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "80 feet road": [
+      {
+        "entity_type": "street",
+        "entity_id": 77,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "80 feet road ramanathapuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 77,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sungam bypass": [
+      {
+        "entity_type": "street",
+        "entity_id": 78,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sungam bypass road": [
+      {
+        "entity_type": "street",
+        "entity_id": 78,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sir shanmugam road": [
+      {
+        "entity_type": "street",
+        "entity_id": 79,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "robertson road": [
+      {
+        "entity_type": "street",
+        "entity_id": 80,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "perur main road": [
+      {
+        "entity_type": "street",
+        "entity_id": 81,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "perur road": [
+      {
+        "entity_type": "street",
+        "entity_id": 81,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "siruvani road": [
+      {
+        "entity_type": "street",
+        "entity_id": 82,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "siruvani main road": [
+      {
+        "entity_type": "street",
+        "entity_id": 82,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sathy road saravanampatti": [
+      {
+        "entity_type": "street",
+        "entity_id": 83,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tidel park road": [
+      {
+        "entity_type": "street",
+        "entity_id": 84,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "civil aerodrome road": [
+      {
+        "entity_type": "street",
+        "entity_id": 84,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "codissia road": [
+      {
+        "entity_type": "street",
+        "entity_id": 85,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "hopes codissia road": [
+      {
+        "entity_type": "street",
+        "entity_id": 85,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cheran ma nagar road": [
+      {
+        "entity_type": "street",
+        "entity_id": 86,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "maniakarampalayam road": [
+      {
+        "entity_type": "street",
+        "entity_id": 87,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "athipalayam pirivu road": [
+      {
+        "entity_type": "street",
+        "entity_id": 88,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "sivanandapuram road": [
+      {
+        "entity_type": "street",
+        "entity_id": 89,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thiruvalluvar nagar road": [
+      {
+        "entity_type": "street",
+        "entity_id": 90,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nava india road": [
+      {
+        "entity_type": "street",
+        "entity_id": 91,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nava india salai": [
+      {
+        "entity_type": "street",
+        "entity_id": 91,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "peelamedu pudur road": [
+      {
+        "entity_type": "street",
+        "entity_id": 92,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "variety hall road": [
+      {
+        "entity_type": "street",
+        "entity_id": 93,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "v.h. road": [
+      {
+        "entity_type": "street",
+        "entity_id": 93,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "mill road": [
+      {
+        "entity_type": "street",
+        "entity_id": 94,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "mill salai": [
+      {
+        "entity_type": "street",
+        "entity_id": 94,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "geetha hall road": [
+      {
+        "entity_type": "street",
+        "entity_id": 95,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "goods shed road": [
+      {
+        "entity_type": "street",
+        "entity_id": 96,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "balasundaram road": [
+      {
+        "entity_type": "street",
+        "entity_id": 97,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "balasundaram salai": [
+      {
+        "entity_type": "street",
+        "entity_id": 97,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gokhale street": [
+      {
+        "entity_type": "street",
+        "entity_id": 98,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gokhale road": [
+      {
+        "entity_type": "street",
+        "entity_id": 98,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "dr. nanjappa road": [
+      {
+        "entity_type": "street",
+        "entity_id": 99,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "nanjappa road": [
+      {
+        "entity_type": "street",
+        "entity_id": 99,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "brooke bond road": [
+      {
+        "entity_type": "street",
+        "entity_id": 100,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "brookefields road": [
+      {
+        "entity_type": "street",
+        "entity_id": 100,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kovaipudur main road": [
+      {
+        "entity_type": "street",
+        "entity_id": 101,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kovaipudur road": [
+      {
+        "entity_type": "street",
+        "entity_id": 101,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "vlb college road": [
+      {
+        "entity_type": "street",
+        "entity_id": 102,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kuniyamuthur bypass": [
+      {
+        "entity_type": "street",
+        "entity_id": 103,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "podanur chettipalayam road": [
+      {
+        "entity_type": "street",
+        "entity_id": 104,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thondamuthur road vadavalli": [
+      {
+        "entity_type": "street",
+        "entity_id": 105,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram bus stand": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "landmark",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "central bus stand": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "காந்திபுரம் பஸ் ஸ்டாண்ட்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 1,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "town bus stand gandhipuram": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 2,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "city bus stand gandhipuram": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 2,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "omni bus stand": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 3,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "setc bus stand gandhipuram": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 3,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saravanampatti bus stand": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "landmark",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saravanampatti bus stop": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
+      {
+        "entity_type": "landmark",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சரவணம்பட்டி பஸ் ஸ்டாண்ட்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 4,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "singanallur bus stand": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 5,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "சிங்காநல்லூர் பஸ் ஸ்டாண்ட்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 5,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "உக்கடம் பஸ் ஸ்டாண்ட்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 6,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "saibaba colony bus stop": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 7,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "coimbatore railway station": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 8,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "coimbatore junction": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 8,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kovai junction": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 8,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ரயில்வே ஸ்டேஷன்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 8,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "coimbatore north station": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 9,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "north railway station": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 9,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "peelamedu station": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 10,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "podanur station": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 11,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "podanur junction": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 11,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "coimbatore airport": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 12,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cjb airport": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 12,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "peelamedu airport": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 12,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "விமான நிலையம்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 12,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "coimbatore gh": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 13,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gh coimbatore": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 13,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "government hospital coimbatore": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 13,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "அரசு மருத்துவமனை": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 13,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kmch": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kmch hospital": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kovai medical center": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "psg hospital": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 15,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "psg imsr": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 15,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ganga hospital mtp road": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 16,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ganga ortho": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 16,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ramakrishna hospital": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 17,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "siddhapudur hospital": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 17,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gknm hospital": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 18,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gknm": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 18,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pappanaickenpalayam hospital": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 18,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "royal care hospital neelambur": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 19,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "psg tech": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 20,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "psg college of technology": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 20,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cit college": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 21,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cit coimbatore": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 21,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gct college": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 22,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gct coimbatore": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 22,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "thadagam road gct": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 22,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tnau": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 23,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "agri university coimbatore": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 23,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "வேளாண்மைப் பல்கலைக்கழகம்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 23,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "bharathiar university marudamalai road": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 24,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kct college": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kumaraguru": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "krishna college kuniyamuthur": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 26,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "skcet": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 26,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "arts college coimbatore": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 27,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "govt arts college": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 27,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "brookefields": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 28,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "brookefields mall brooke bond road": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 28,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "புரூக்ஃபீல்ட்ஸ்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 28,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "prozone mall sathy road": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 29,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "prozone": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 29,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "fun mall": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 30,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "fun republic": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 30,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "fun mall avinashi road": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 30,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ஃபன் மால்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 30,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "tidel park": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 31,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "coimbatore it park": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 31,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "டைடல் பார்க்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 31,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "kgisl tech park saravanampatti": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 32,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "chil sez": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 32,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "marudamalai temple": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 33,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "maruthamalai": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 33,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "மருதமலை கோவில்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 33,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "eachanari temple": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 34,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "eachanari vinayagar": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 34,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ஈச்சனாரி கோவில்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 34,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "perur temple": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 35,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "pateeswarar temple": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 35,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "பேரூர் கோவில்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 35,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "puliakulam vinayagar temple": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 36,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "big vinayagar puliakulam": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 36,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "koniamman temple": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 37,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "townhall temple": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 37,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ukkadam big mosque": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 38,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "athar jamath mosque": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 38,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "st michaels church town hall": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 39,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "cathedral church coimbatore": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 39,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "voc park": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 40,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "voc ground": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 40,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "valankulam lake": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 41,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "valankulam smart city park": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 41,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "singanallur lake": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 42,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ukkadam lake": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 43,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "periyakulam lake ukkadam": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 43,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhipuram flyover": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 44,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ukkadam flyover": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 45,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "athupalam flyover": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 45,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "lakshmi mills junction": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 46,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "lakshmi mills signal": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 46,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "லட்சுமி மில்ஸ்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 46,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "chinthamani signal": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 47,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "chinthamani junction": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 47,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "ccmc head office": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 48,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "corporation office coimbatore": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 48,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "town hall office": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 48,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "collector office coimbatore": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 49,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "collectorate": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 49,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "கலெக்டர் ஆபீஸ்": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 49,
+        "language": "Tamil",
+        "alias_type": "phonetic"
+      }
+    ],
+    "gandhi puram la": [
+      {
+        "entity_type": "area",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "gandhipuramla": [
+      {
+        "entity_type": "area",
+        "entity_id": 1,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "காந்தி தம்பியின்": [
+      {
+        "entity_type": "area",
+        "entity_id": 1,
+        "language": "Tamil",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "rs puram db road": [
+      {
+        "entity_type": "street",
+        "entity_id": 11,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "r s puram": [
+      {
+        "entity_type": "area",
+        "entity_id": 2,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "d b road": [
+      {
+        "entity_type": "street",
+        "entity_id": 11,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "peela medu": [
+      {
+        "entity_type": "area",
+        "entity_id": 3,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "saravanampatty bus stand": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 4,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "maruthamalai road": [
+      {
+        "entity_type": "street",
+        "entity_id": 80,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "cross cut": [
+      {
+        "entity_type": "street",
+        "entity_id": 9,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "100 feet": [
+      {
+        "entity_type": "street",
+        "entity_id": 10,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "5 th street": [
+      {
+        "entity_type": "street",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "5 th street gandhipuram": [
+      {
+        "entity_type": "street",
+        "entity_id": 25,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ]
+  }
+}

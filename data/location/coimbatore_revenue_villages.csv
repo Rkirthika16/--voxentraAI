@@ -1,0 +1,296 @@
+id,taluk_id,firka_id,name_en,name_ta,village_code,aliases,latitude,longitude,source,confidence
+1,1,1,Anupparpalayam,அனுப்பர்பாளையம்,TN-CBE-01-001,"[""Anupparpalayam"", ""அனுப்பர்பாளையம்"", ""Anupparpalayam""]",11.025,76.96,TN Revenue Administration - Coimbatore District,1.0
+2,1,1,Ganapathy,கணபதி,TN-CBE-01-002,"[""Ganapathy"", ""கணபதி"", ""Ganapathy""]",11.035,76.975,TN Revenue Administration - Coimbatore District,1.0
+3,1,2,Saravanampatti,சரவணம்பட்டி,TN-CBE-01-003,"[""Saravanampatti"", ""சரவணம்பட்டி"", ""Saravanampatti""]",11.078,76.995,TN Revenue Administration - Coimbatore District,1.0
+4,1,2,Chinnavedampatti,சின்னவேடம்பட்டி,TN-CBE-01-004,"[""Chinnavedampatti"", ""சின்னவேடம்பட்டி"", ""Chinnavedampatti""]",11.06,76.98,TN Revenue Administration - Coimbatore District,1.0
+5,1,3,Vilankurichi,விளாங்குறிச்சி,TN-CBE-01-005,"[""Vilankurichi"", ""விளாங்குறிச்சி"", ""Vilankurichi""]",11.055,77.01,TN Revenue Administration - Coimbatore District,1.0
+6,1,3,Kalapatti,காளப்பட்டி,TN-CBE-01-006,"[""Kalapatti"", ""காளப்பட்டி"", ""Kalapatti""]",11.072,77.035,TN Revenue Administration - Coimbatore District,1.0
+7,1,4,Thudiyalur,துடியலூர்,TN-CBE-01-007,"[""Thudiyalur"", ""துடியலூர்"", ""Thudiyalur""]",11.08,76.94,TN Revenue Administration - Coimbatore District,1.0
+8,1,4,Vellakinaru,வெள்ளக்கிணறு,TN-CBE-01-008,"[""Vellakinaru"", ""வெள்ளக்கிணறு"", ""Vellakinaru""]",11.09,76.955,TN Revenue Administration - Coimbatore District,1.0
+9,1,4,Kavundampalayam,கவுண்டம்பாளையம்,TN-CBE-01-009,"[""Kavundampalayam"", ""கவுண்டம்பாளையம்"", ""Kavundampalayam""]",11.045,76.935,TN Revenue Administration - Coimbatore District,1.0
+10,1,4,Kurudampalayam,குருடம்பாளையம்,TN-CBE-01-010,"[""Kurudampalayam"", ""குருடம்பாளையம்"", ""Kurudampalayam""]",11.095,76.92,TN Revenue Administration - Coimbatore District,1.0
+11,1,4,Pannimadai,பன்னிமடை,TN-CBE-01-011,"[""Pannimadai"", ""பன்னிமடை"", ""Pannimadai""]",11.085,76.89,TN Revenue Administration - Coimbatore District,1.0
+12,1,4,Somayampalayam,சோமையம்பாளையம்,TN-CBE-01-012,"[""Somayampalayam"", ""சோமையம்பாளையம்"", ""Somayampalayam""]",11.05,76.885,TN Revenue Administration - Coimbatore District,1.0
+13,1,4,Nanjundapuram (North),நஞ்சுண்டாபுரம்,TN-CBE-01-013,"[""Nanjundapuram (North)"", ""நஞ்சுண்டாபுரம்"", ""Nanjundapuram (North)""]",11.065,76.91,TN Revenue Administration - Coimbatore District,1.0
+14,1,4,Veerapandi,வீரபாண்டி,TN-CBE-01-014,"[""Veerapandi"", ""வீரபாண்டி"", ""Veerapandi""]",11.12,76.935,TN Revenue Administration - Coimbatore District,1.0
+15,1,4,Gudalur (North),கூடலூர்,TN-CBE-01-015,"[""Gudalur (North)"", ""கூடலூர்"", ""Gudalur (North)""]",11.135,76.925,TN Revenue Administration - Coimbatore District,1.0
+16,1,4,Periyanaickenpalayam,பெரியநாயக்கன்பாளையம்,TN-CBE-01-016,"[""Periyanaickenpalayam"", ""பெரியநாயக்கன்பாளையம்"", ""Periyanaickenpalayam""]",11.145,76.935,TN Revenue Administration - Coimbatore District,1.0
+17,1,4,Naickenpalayam,நாயக்கன்பாளையம்,TN-CBE-01-017,"[""Naickenpalayam"", ""நாயக்கன்பாளையம்"", ""Naickenpalayam""]",11.16,76.94,TN Revenue Administration - Coimbatore District,1.0
+18,1,4,Narasimhanaickenpalayam,நரசிம்மநாயக்கன்பாளையம்,TN-CBE-01-018,"[""Narasimhanaickenpalayam"", ""நரசிம்மநாயக்கன்பாளையம்"", ""Narasimhanaickenpalayam""]",11.125,76.935,TN Revenue Administration - Coimbatore District,1.0
+19,1,4,Idikarai,இடிகரை,TN-CBE-01-019,"[""Idikarai"", ""இடிகரை"", ""Idikarai""]",11.115,76.96,TN Revenue Administration - Coimbatore District,1.0
+20,1,4,Agrahara Samakulam,அக்ரஹார சாமக்குளம்,TN-CBE-01-020,"[""Agrahara Samakulam"", ""அக்ரஹார சாமக்குளம்"", ""Agrahara Samakulam""]",11.105,77.0,TN Revenue Administration - Coimbatore District,1.0
+21,1,4,Kondayampalayam,கொண்டையம்பாளையம்,TN-CBE-01-021,"[""Kondayampalayam"", ""கொண்டையம்பாளையம்"", ""Kondayampalayam""]",11.11,77.015,TN Revenue Administration - Coimbatore District,1.0
+22,1,4,Keeranatham,கீரநத்தம்,TN-CBE-01-022,"[""Keeranatham"", ""கீரநத்தம்"", ""Keeranatham""]",11.095,77.01,TN Revenue Administration - Coimbatore District,1.0
+23,1,4,Vellanaipatti,வெள்ளனைப்பட்டி,TN-CBE-01-023,"[""Vellanaipatti"", ""வெள்ளனைப்பட்டி"", ""Vellanaipatti""]",11.1,77.06,TN Revenue Administration - Coimbatore District,1.0
+24,1,4,Kallipalayam,கள்ளிப்பாளையம்,TN-CBE-01-024,"[""Kallipalayam"", ""கள்ளிப்பாளையம்"", ""Kallipalayam""]",11.13,77.045,TN Revenue Administration - Coimbatore District,1.0
+25,1,4,Pachapalayam,பச்சபாளையம்,TN-CBE-01-025,"[""Pachapalayam"", ""பச்சபாளையம்"", ""Pachapalayam""]",11.08,76.87,TN Revenue Administration - Coimbatore District,1.0
+26,1,4,Chinnathadagam,சின்னத்தடாகம்,TN-CBE-01-026,"[""Chinnathadagam"", ""சின்னத்தடாகம்"", ""Chinnathadagam""]",11.095,76.865,TN Revenue Administration - Coimbatore District,1.0
+27,1,4,Nanjundapuram Valley,நஞ்சுண்டாபுரம் பள்ளத்தாக்கு,TN-CBE-01-027,"[""Nanjundapuram Valley"", ""நஞ்சுண்டாபுரம் பள்ளத்தாக்கு"", ""Nanjundapuram Valley""]",11.085,76.85,TN Revenue Administration - Coimbatore District,1.0
+28,1,4,24 Veerapandi,24 வீரபாண்டி,TN-CBE-01-028,"[""24 Veerapandi"", ""24 வீரபாண்டி"", ""24 Veerapandi""]",11.115,76.915,TN Revenue Administration - Coimbatore District,1.0
+29,2,5,Coimbatore City Central,கோயம்புத்தூர் மாநகரம்,TN-CBE-02-029,"[""Coimbatore City Central"", ""கோயம்புத்தூர் மாநகரம்"", ""Coimbatore City Central""]",11.0,76.96,TN Revenue Administration - Coimbatore District,1.0
+30,2,5,Ramanathapuram,இராமநாதபுரம்,TN-CBE-02-030,"[""Ramanathapuram"", ""இராமநாதபுரம்"", ""Ramanathapuram""]",10.995,76.985,TN Revenue Administration - Coimbatore District,1.0
+31,2,6,Peelamedu,பீளமேடு,TN-CBE-02-031,"[""Peelamedu"", ""பீளமேடு"", ""Peelamedu""]",11.025,77.005,TN Revenue Administration - Coimbatore District,1.0
+32,2,6,Sowripalayam,சௌரிபாளையம்,TN-CBE-02-032,"[""Sowripalayam"", ""சௌரிபாளையம்"", ""Sowripalayam""]",11.005,77.005,TN Revenue Administration - Coimbatore District,1.0
+33,2,6,Udayampalayam,உடையாம்பாளையம்,TN-CBE-02-033,"[""Udayampalayam"", ""உடையாம்பாளையம்"", ""Udayampalayam""]",11.015,77.015,TN Revenue Administration - Coimbatore District,1.0
+34,2,7,Singanallur,சிங்காநல்லூர்,TN-CBE-02-034,"[""Singanallur"", ""சிங்காநல்லூர்"", ""Singanallur""]",10.998,77.025,TN Revenue Administration - Coimbatore District,1.0
+35,2,7,Uppilipalayam,உப்பிலிபாளையம்,TN-CBE-02-035,"[""Uppilipalayam"", ""உப்பிலிபாளையம்"", ""Uppilipalayam""]",11.005,77.02,TN Revenue Administration - Coimbatore District,1.0
+36,2,7,Varadarajapuram,வரதராஜபுரம்,TN-CBE-02-036,"[""Varadarajapuram"", ""வரதராஜபுரம்"", ""Varadarajapuram""]",11.01,77.01,TN Revenue Administration - Coimbatore District,1.0
+37,2,7,Neelikonampalayam,நீலிகோணாம்பாளையம்,TN-CBE-02-037,"[""Neelikonampalayam"", ""நீலிகோணாம்பாளையம்"", ""Neelikonampalayam""]",11.015,77.035,TN Revenue Administration - Coimbatore District,1.0
+38,2,7,Ondipudur,ஒண்டிப்புதூர்,TN-CBE-02-038,"[""Ondipudur"", ""ஒண்டிப்புதூர்"", ""Ondipudur""]",10.995,77.045,TN Revenue Administration - Coimbatore District,1.0
+39,2,5,Puliakulam,புலியகுளம்,TN-CBE-02-039,"[""Puliakulam"", ""புலியகுளம்"", ""Puliakulam""]",10.998,76.995,TN Revenue Administration - Coimbatore District,1.0
+40,2,5,Sanganoor (South),சங்கனூர் தெற்கு,TN-CBE-02-040,"[""Sanganoor (South)"", ""சங்கனூர் தெற்கு"", ""Sanganoor (South)""]",11.02,76.965,TN Revenue Administration - Coimbatore District,1.0
+41,2,5,Rathinapuri,ரத்தினபுரி,TN-CBE-02-041,"[""Rathinapuri"", ""ரத்தினபுரி"", ""Rathinapuri""]",11.028,76.96,TN Revenue Administration - Coimbatore District,1.0
+42,2,5,Telungupalayam,தெலுங்குபாளையம்,TN-CBE-02-042,"[""Telungupalayam"", ""தெலுங்குபாளையம்"", ""Telungupalayam""]",11.005,76.93,TN Revenue Administration - Coimbatore District,1.0
+43,2,5,Komarapalayam,குமாரபாளையம்,TN-CBE-02-043,"[""Komarapalayam"", ""குமாரபாளையம்"", ""Komarapalayam""]",11.0,76.92,TN Revenue Administration - Coimbatore District,1.0
+44,2,5,Selvapuram,செல்வபுரம்,TN-CBE-02-044,"[""Selvapuram"", ""செல்வபுரம்"", ""Selvapuram""]",10.985,76.94,TN Revenue Administration - Coimbatore District,1.0
+45,2,5,Kallimadai,கள்ளிமடை,TN-CBE-02-045,"[""Kallimadai"", ""கள்ளிமடை"", ""Kallimadai""]",10.995,77.0,TN Revenue Administration - Coimbatore District,1.0
+46,2,5,Valankulam,வாலாங்குளம்,TN-CBE-02-046,"[""Valankulam"", ""வாலாங்குளம்"", ""Valankulam""]",10.99,76.975,TN Revenue Administration - Coimbatore District,1.0
+47,2,5,Krishnarayapuram,கிருஷ்ணராயபுரம்,TN-CBE-02-047,"[""Krishnarayapuram"", ""கிருஷ்ணராயபுரம்"", ""Krishnarayapuram""]",11.025,76.98,TN Revenue Administration - Coimbatore District,1.0
+48,2,5,Alandurai Border,ஆலாந்துறை எல்லை,TN-CBE-02-048,"[""Alandurai Border"", ""ஆலாந்துறை எல்லை"", ""Alandurai Border""]",10.98,76.88,TN Revenue Administration - Coimbatore District,1.0
+49,2,5,Chettipalayam Road South,செட்டிபாளையம் சாலை,TN-CBE-02-049,"[""Chettipalayam Road South"", ""செட்டிபாளையம் சாலை"", ""Chettipalayam Road South""]",10.965,77.01,TN Revenue Administration - Coimbatore District,1.0
+50,2,5,Perur Chettipalayam,பேரூர் செட்டிபாளையம்,TN-CBE-02-050,"[""Perur Chettipalayam"", ""பேரூர் செட்டிபாளையம்"", ""Perur Chettipalayam""]",10.97,76.95,TN Revenue Administration - Coimbatore District,1.0
+51,3,9,Annur Town,அன்னூர்,TN-CBE-03-051,"[""Annur Town"", ""அன்னூர்"", ""Annur""]",11.233,77.1,TN Revenue Administration - Coimbatore District,1.0
+52,3,9,Kunnathur,குன்னத்தூர்,TN-CBE-03-052,"[""Kunnathur"", ""குன்னத்தூர்"", ""Kunnathur""]",11.22,77.08,TN Revenue Administration - Coimbatore District,1.0
+53,3,9,Kariyampalayam,கரியம்பாளையம்,TN-CBE-03-053,"[""Kariyampalayam"", ""கரியம்பாளையம்"", ""Kariyampalayam""]",11.25,77.12,TN Revenue Administration - Coimbatore District,1.0
+54,3,9,Pasur,பாசூர்,TN-CBE-03-054,"[""Pasur"", ""பாசூர்"", ""Pasur""]",11.26,77.07,TN Revenue Administration - Coimbatore District,1.0
+55,3,9,Pogalur,போகலூர்,TN-CBE-03-055,"[""Pogalur"", ""போகலூர்"", ""Pogalur""]",11.21,77.14,TN Revenue Administration - Coimbatore District,1.0
+56,3,9,Kattampatti,காட்டம்பட்டி,TN-CBE-03-056,"[""Kattampatti"", ""காட்டம்பட்டி"", ""Kattampatti""]",11.195,77.11,TN Revenue Administration - Coimbatore District,1.0
+57,3,9,Allapalayam,அல்லாபாளையம்,TN-CBE-03-057,"[""Allapalayam"", ""அல்லாபாளையம்"", ""Allapalayam""]",11.24,77.15,TN Revenue Administration - Coimbatore District,1.0
+58,3,9,Mettupalayam Road Annur,மேட்டுப்பாளையம் ரோடு,TN-CBE-03-058,"[""Mettupalayam Road Annur"", ""மேட்டுப்பாளையம் ரோடு"", ""Mettupalayam Road Annur""]",11.23,77.06,TN Revenue Administration - Coimbatore District,1.0
+59,3,9,Pilliappampalayam,பிள்ளையப்பம்பாளையம்,TN-CBE-03-059,"[""Pilliappampalayam"", ""பிள்ளையப்பம்பாளையம்"", ""Pilliappampalayam""]",11.215,77.09,TN Revenue Administration - Coimbatore District,1.0
+60,3,9,Vadakkalur,வடக்குளூர்,TN-CBE-03-060,"[""Vadakkalur"", ""வடக்குளூர்"", ""Vadakkalur""]",11.27,77.13,TN Revenue Administration - Coimbatore District,1.0
+61,4,12,Mettupalayam Town,மேட்டுப்பாளையம் நகரம்,TN-CBE-04-061,"[""Mettupalayam Town"", ""மேட்டுப்பாளையம் நகரம்"", ""Mettupalayam""]",11.3,76.94,TN Revenue Administration - Coimbatore District,1.0
+62,4,13,Sirumugai,சிறுமுகை,TN-CBE-04-062,"[""Sirumugai"", ""சிறுமுகை"", ""Sirumugai""]",11.33,77.0,TN Revenue Administration - Coimbatore District,1.0
+63,4,14,Karamadai,காரமடை,TN-CBE-04-063,"[""Karamadai"", ""காரமடை"", ""Karamadai""]",11.245,76.96,TN Revenue Administration - Coimbatore District,1.0
+64,4,14,Bellathi,பெள்ளாதி,TN-CBE-04-064,"[""Bellathi"", ""பெள்ளாதி"", ""Bellathi""]",11.27,76.98,TN Revenue Administration - Coimbatore District,1.0
+65,4,14,Chikkadasampalayam,சிக்கதாசம்பாளையம்,TN-CBE-04-065,"[""Chikkadasampalayam"", ""சிக்கதாசம்பாளையம்"", ""Chikkadasampalayam""]",11.285,76.95,TN Revenue Administration - Coimbatore District,1.0
+66,4,14,Odanthurai,ஓடந்துறை,TN-CBE-04-066,"[""Odanthurai"", ""ஓடந்துறை"", ""Odanthurai""]",11.315,76.92,TN Revenue Administration - Coimbatore District,1.0
+67,4,13,Alangombu,ஆலங்கொம்பு,TN-CBE-04-067,"[""Alangombu"", ""ஆலங்கொம்பு"", ""Alangombu""]",11.32,77.02,TN Revenue Administration - Coimbatore District,1.0
+68,4,13,Nellithurai,நெல்லித்துறை,TN-CBE-04-068,"[""Nellithurai"", ""நெல்லித்துறை"", ""Nellithurai""]",11.31,76.88,TN Revenue Administration - Coimbatore District,1.0
+69,4,14,Kemmarampalayam,கெம்மாரம்பாளையம்,TN-CBE-04-069,"[""Kemmarampalayam"", ""கெம்மாரம்பாளையம்"", ""Kemmarampalayam""]",11.255,76.92,TN Revenue Administration - Coimbatore District,1.0
+70,4,14,Thekkampatti,தேக்கம்பட்டி,TN-CBE-04-070,"[""Thekkampatti"", ""தேக்கம்பட்டி"", ""Thekkampatti""]",11.31,76.91,TN Revenue Administration - Coimbatore District,1.0
+71,5,15,Sulur Town,சூலூர் நகரம்,TN-CBE-05-071,"[""Sulur Town"", ""சூலூர் நகரம்"", ""Sulur""]",11.025,77.125,TN Revenue Administration - Coimbatore District,1.0
+72,5,16,Irugur,இருவூர்,TN-CBE-05-072,"[""Irugur"", ""இருவூர்"", ""Irugur""]",11.02,77.07,TN Revenue Administration - Coimbatore District,1.0
+73,5,15,Ravathur,ராவத்தூர்,TN-CBE-05-073,"[""Ravathur"", ""ராவத்தூர்"", ""Ravathur""]",11.03,77.085,TN Revenue Administration - Coimbatore District,1.0
+74,5,15,Kannampalayam,கண்ணம்பாளையம்,TN-CBE-05-074,"[""Kannampalayam"", ""கண்ணம்பாளையம்"", ""Kannampalayam""]",11.015,77.105,TN Revenue Administration - Coimbatore District,1.0
+75,5,15,Pallapalayam,பல்லபாளையம்,TN-CBE-05-075,"[""Pallapalayam"", ""பல்லபாளையம்"", ""Pallapalayam""]",11.035,77.1,TN Revenue Administration - Coimbatore District,1.0
+76,5,15,Muthugoundanpudur,முத்துக்கவுண்டன்புதூர்,TN-CBE-05-076,"[""Muthugoundanpudur"", ""முத்துக்கவுண்டன்புதூர்"", ""Muthugoundanpudur""]",11.05,77.11,TN Revenue Administration - Coimbatore District,1.0
+77,5,15,Kaduvettipalayam,காடுவெட்டிபாளையம்,TN-CBE-05-077,"[""Kaduvettipalayam"", ""காடுவெட்டிபாளையம்"", ""Kaduvettipalayam""]",11.07,77.14,TN Revenue Administration - Coimbatore District,1.0
+78,5,15,Kaniyur,கணியூர்,TN-CBE-05-078,"[""Kaniyur"", ""கணியூர்"", ""Kaniyur""]",11.075,77.155,TN Revenue Administration - Coimbatore District,1.0
+79,5,15,Arasur,அரசூர்,TN-CBE-05-079,"[""Arasur"", ""அரசூர்"", ""Arasur""]",11.065,77.13,TN Revenue Administration - Coimbatore District,1.0
+80,5,15,Neelambur,நீலம்பூர்,TN-CBE-05-080,"[""Neelambur"", ""நீலம்பூர்"", ""Neelambur""]",11.055,77.08,TN Revenue Administration - Coimbatore District,1.0
+81,5,17,Sultanpet,சுல்தான்பேட்டை,TN-CBE-05-081,"[""Sultanpet"", ""சுல்தான்பேட்டை"", ""Sultanpet""]",10.92,77.18,TN Revenue Administration - Coimbatore District,1.0
+82,5,17,Varapatti,வாரப்பட்டி,TN-CBE-05-082,"[""Varapatti"", ""வாரப்பட்டி"", ""Varapatti""]",10.95,77.15,TN Revenue Administration - Coimbatore District,1.0
+83,5,17,Jallipatti,ஜல்லிபட்டி,TN-CBE-05-083,"[""Jallipatti"", ""ஜல்லிபட்டி"", ""Jallipatti""]",10.94,77.2,TN Revenue Administration - Coimbatore District,1.0
+84,5,17,Senjerimalai,செஞ்சேரிமலை,TN-CBE-05-084,"[""Senjerimalai"", ""செஞ்சேரிமலை"", ""Senjerimalai""]",10.91,77.22,TN Revenue Administration - Coimbatore District,1.0
+85,6,19,Pollachi Town,பொள்ளாச்சி நகரம்,TN-CBE-06-085,"[""Pollachi Town"", ""பொள்ளாச்சி நகரம்"", ""Pollachi""]",10.66,77.01,TN Revenue Administration - Coimbatore District,1.0
+86,6,19,Achipatti,ஆச்சிபட்டி,TN-CBE-06-086,"[""Achipatti"", ""ஆச்சிபட்டி"", ""Achipatti""]",10.68,77.02,TN Revenue Administration - Coimbatore District,1.0
+87,6,19,Abarpalayam,அபார்பாளையம்,TN-CBE-06-087,"[""Abarpalayam"", ""அபார்பாளையம்"", ""Abarpalayam""]",10.65,77.03,TN Revenue Administration - Coimbatore District,1.0
+88,6,20,Zamin Uthukuli,ஜமீன் ஊத்துக்குளி,TN-CBE-06-088,"[""Zamin Uthukuli"", ""ஜமீன் ஊத்துக்குளி"", ""Zamin Uthukuli""]",10.67,76.99,TN Revenue Administration - Coimbatore District,1.0
+89,6,20,Suleeswaranpatti,சூலேஸ்வரன்பட்டி,TN-CBE-06-089,"[""Suleeswaranpatti"", ""சூலேஸ்வரன்பட்டி"", ""Suleeswaranpatti""]",10.645,77.0,TN Revenue Administration - Coimbatore District,1.0
+90,6,21,Kottur,கோட்டூர்,TN-CBE-06-090,"[""Kottur"", ""கோட்டூர்"", ""Kottur""]",10.535,76.98,TN Revenue Administration - Coimbatore District,1.0
+91,6,21,Angalakurichi,அங்கலக்குறிச்சி,TN-CBE-06-091,"[""Angalakurichi"", ""அங்கலக்குறிச்சி"", ""Angalakurichi""]",10.51,76.99,TN Revenue Administration - Coimbatore District,1.0
+92,6,22,Negamam,நெகமம்,TN-CBE-06-092,"[""Negamam"", ""நெகமம்"", ""Negamam""]",10.77,77.12,TN Revenue Administration - Coimbatore District,1.0
+93,6,23,Marchinaickenpalayam,மார்ச்சிநாயக்கன்பாளையம்,TN-CBE-06-093,"[""Marchinaickenpalayam"", ""மார்ச்சிநாயக்கன்பாளையம்"", ""Marchinaickenpalayam""]",10.61,76.92,TN Revenue Administration - Coimbatore District,1.0
+94,6,23,Koolanaickenpatti,கூளநாயக்கன்பட்டி,TN-CBE-06-094,"[""Koolanaickenpatti"", ""கூளநாயக்கன்பட்டி"", ""Koolanaickenpatti""]",10.71,77.06,TN Revenue Administration - Coimbatore District,1.0
+95,7,24,Kinathukadavu Town,கிணத்துக்கடவு நகரம்,TN-CBE-07-095,"[""Kinathukadavu Town"", ""கிணத்துக்கடவு நகரம்"", ""Kinathukadavu""]",10.82,77.02,TN Revenue Administration - Coimbatore District,1.0
+96,7,25,Nallattipalayam,நல்லாட்டிபாளையம்,TN-CBE-07-096,"[""Nallattipalayam"", ""நல்லாட்டிபாளையம்"", ""Nallattipalayam""]",10.84,77.03,TN Revenue Administration - Coimbatore District,1.0
+97,7,26,Vadakkipalayam,வடக்கிபாளையம்,TN-CBE-07-097,"[""Vadakkipalayam"", ""வடக்கிபாளையம்"", ""Vadakkipalayam""]",10.78,76.95,TN Revenue Administration - Coimbatore District,1.0
+98,7,24,Kovilpalayam (Kinathukadavu),கோவில்பாளையம்,TN-CBE-07-098,"[""Kovilpalayam (Kinathukadavu)"", ""கோவில்பாளையம்"", ""Kovilpalayam (Kinathukadavu)""]",10.81,77.0,TN Revenue Administration - Coimbatore District,1.0
+99,7,24,Thamaraikulam,தாமரைக்குளம்,TN-CBE-07-099,"[""Thamaraikulam"", ""தாமரைக்குளம்"", ""Thamaraikulam""]",10.795,77.035,TN Revenue Administration - Coimbatore District,1.0
+100,7,24,Sokkanur,சொக்கனூர்,TN-CBE-07-100,"[""Sokkanur"", ""சொக்கனூர்"", ""Sokkanur""]",10.85,76.98,TN Revenue Administration - Coimbatore District,1.0
+101,7,24,Singarampalayam,சிங்காரம்பாளையம்,TN-CBE-07-101,"[""Singarampalayam"", ""சிங்காரம்பாளையம்"", ""Singarampalayam""]",10.835,77.01,TN Revenue Administration - Coimbatore District,1.0
+102,8,27,Valparai Town,வால்பாறை நகரம்,TN-CBE-08-102,"[""Valparai Town"", ""வால்பாறை நகரம்"", ""Valparai""]",10.325,76.955,TN Revenue Administration - Coimbatore District,1.0
+103,8,27,Stanmore,ஸ்டான்மோர்,TN-CBE-08-103,"[""Stanmore"", ""ஸ்டான்மோர்"", ""Stanmore""]",10.34,76.97,TN Revenue Administration - Coimbatore District,1.0
+104,8,27,Iyerpadi,அய்யர்பாடி,TN-CBE-08-104,"[""Iyerpadi"", ""அய்யர்பாடி"", ""Iyerpadi""]",10.36,76.98,TN Revenue Administration - Coimbatore District,1.0
+105,8,27,Waterfalls Estate,வாட்டர்பால்ஸ் எஸ்டேட்,TN-CBE-08-105,"[""Waterfalls Estate"", ""வாட்டர்பால்ஸ் எஸ்டேட்"", ""Waterfalls Estate""]",10.37,76.995,TN Revenue Administration - Coimbatore District,1.0
+106,8,28,Sholayar Dam Environs,சோலையார் அணை பகுதி,TN-CBE-08-106,"[""Sholayar Dam Environs"", ""சோலையார் அணை பகுதி"", ""Sholayar Dam""]",10.3,76.88,TN Revenue Administration - Coimbatore District,1.0
+107,8,28,Mudis,முடிஸ்,TN-CBE-08-107,"[""Mudis"", ""முடிஸ்"", ""Mudis""]",10.32,76.91,TN Revenue Administration - Coimbatore District,1.0
+108,8,28,Cinchona,சின்கோனா,TN-CBE-08-108,"[""Cinchona"", ""சின்கோனா"", ""Cinchona""]",10.29,76.93,TN Revenue Administration - Coimbatore District,1.0
+109,9,29,Madukkarai Town,மதுக்கரை நகரம்,TN-CBE-09-109,"[""Madukkarai Town"", ""மதுக்கரை நகரம்"", ""Madukkarai""]",10.903,76.963,TN Revenue Administration - Coimbatore District,1.0
+110,9,30,Kurichi,குறிச்சி,TN-CBE-09-110,"[""Kurichi"", ""குறிச்சி"", ""Kurichi""]",10.95,76.97,TN Revenue Administration - Coimbatore District,1.0
+111,9,30,Sundarapuram,சுந்தராபுரம்,TN-CBE-09-111,"[""Sundarapuram"", ""சுந்தராபுரம்"", ""Sundarapuram""]",10.94,76.975,TN Revenue Administration - Coimbatore District,1.0
+112,9,30,Eachanari,ஈச்சனாரி,TN-CBE-09-112,"[""Eachanari"", ""ஈச்சனாரி"", ""Eachanari""]",10.925,76.98,TN Revenue Administration - Coimbatore District,1.0
+113,9,30,Malumichampatti,மலுமிச்சம்பட்டி,TN-CBE-09-113,"[""Malumichampatti"", ""மலுமிச்சம்பட்டி"", ""Malumichampatti""]",10.91,77.005,TN Revenue Administration - Coimbatore District,1.0
+114,9,31,Othakalmandapam,ஒத்தக்கால்மண்டபம்,TN-CBE-09-114,"[""Othakalmandapam"", ""ஒத்தக்கால்மண்டபம்"", ""Othakalmandapam""]",10.88,77.0,TN Revenue Administration - Coimbatore District,1.0
+115,9,31,Chettipalayam (Madukkarai),செட்டிபாளையம்,TN-CBE-09-115,"[""Chettipalayam (Madukkarai)"", ""செட்டிபாளையம்"", ""Chettipalayam (Madukkarai)""]",10.89,77.04,TN Revenue Administration - Coimbatore District,1.0
+116,9,29,Ettimadai,எட்டிமடை,TN-CBE-09-116,"[""Ettimadai"", ""எட்டிமடை"", ""Ettimadai""]",10.9,76.898,TN Revenue Administration - Coimbatore District,1.0
+117,9,29,Mavuthampathy,மவுத்தம்பதி,TN-CBE-09-117,"[""Mavuthampathy"", ""மவுத்தம்பதி"", ""Mavuthampathy""]",10.86,76.88,TN Revenue Administration - Coimbatore District,1.0
+118,9,29,Pichanur,பிச்சனூர்,TN-CBE-09-118,"[""Pichanur"", ""பிச்சனூர்"", ""Pichanur""]",10.875,76.895,TN Revenue Administration - Coimbatore District,1.0
+119,9,29,Seerapalayam,சீராபாளையம்,TN-CBE-09-119,"[""Seerapalayam"", ""சீராபாளையம்"", ""Seerapalayam""]",10.915,76.975,TN Revenue Administration - Coimbatore District,1.0
+120,9,29,Thirumalayampalayam,திருமலையம்பாளையம்,TN-CBE-09-120,"[""Thirumalayampalayam"", ""திருமலையம்பாளையம்"", ""Thirumalayampalayam""]",10.87,76.91,TN Revenue Administration - Coimbatore District,1.0
+121,10,32,Perur Town,பேரூர் நகரம்,TN-CBE-10-121,"[""Perur Town"", ""பேரூர் நகரம்"", ""Perur""]",10.975,76.915,TN Revenue Administration - Coimbatore District,1.0
+122,10,32,Perur Chettipalayam,பேரூர் செட்டிபாளையம்,TN-CBE-10-122,"[""Perur Chettipalayam"", ""பேரூர் செட்டிபாளையம்"", ""Perur Chettipalayam""]",10.965,76.925,TN Revenue Administration - Coimbatore District,1.0
+123,10,33,Thondamuthur Town,தொண்டாமுத்தூர்,TN-CBE-10-123,"[""Thondamuthur Town"", ""தொண்டாமுத்தூர்"", ""Thondamuthur""]",10.995,76.835,TN Revenue Administration - Coimbatore District,1.0
+124,10,33,Narasipuram,நரசிபுரம்,TN-CBE-10-124,"[""Narasipuram"", ""நரசிபுரம்"", ""Narasipuram""]",10.985,76.79,TN Revenue Administration - Coimbatore District,1.0
+125,10,33,Alandurai,ஆலாந்துறை,TN-CBE-10-125,"[""Alandurai"", ""ஆலாந்துறை"", ""Alandurai""]",10.945,76.815,TN Revenue Administration - Coimbatore District,1.0
+126,10,33,Ikkarai Boluvampatti,இக்கரை போளுவாம்பட்டி,TN-CBE-10-126,"[""Ikkarai Boluvampatti"", ""இக்கரை போளுவாம்பட்டி"", ""Ikkarai Boluvampatti""]",10.97,76.775,TN Revenue Administration - Coimbatore District,1.0
+127,10,33,Semmedu,செம்மேடு,TN-CBE-10-127,"[""Semmedu"", ""செம்மேடு"", ""Semmedu""]",10.96,76.76,TN Revenue Administration - Coimbatore District,1.0
+128,10,33,Mathvarayapuram,மாதவராயபுரம்,TN-CBE-10-128,"[""Mathvarayapuram"", ""மாதவராயபுரம்"", ""Mathvarayapuram""]",10.99,76.81,TN Revenue Administration - Coimbatore District,1.0
+129,10,34,Vadavalli Town,வடவள்ளி நகரம்,TN-CBE-10-129,"[""Vadavalli Town"", ""வடவள்ளி நகரம்"", ""Vadavalli""]",11.025,76.9,TN Revenue Administration - Coimbatore District,1.0
+130,10,34,Veerakeralam,வீரகேரளம்,TN-CBE-10-130,"[""Veerakeralam"", ""வீரகேரளம்"", ""Veerakeralam""]",11.015,76.91,TN Revenue Administration - Coimbatore District,1.0
+131,10,34,Kalveerampalayam,கல்வீரம்பாளையம்,TN-CBE-10-131,"[""Kalveerampalayam"", ""கல்வீரம்பாளையம்"", ""Kalveerampalayam""]",11.035,76.88,TN Revenue Administration - Coimbatore District,1.0
+132,10,34,Marudamalai Environs,மருதமலை,TN-CBE-10-132,"[""Marudamalai Environs"", ""மருதமலை"", ""Marudamalai""]",11.045,76.85,TN Revenue Administration - Coimbatore District,1.0
+133,10,35,Kuniyamuthur Town,குனியமுத்தூர்,TN-CBE-10-133,"[""Kuniyamuthur Town"", ""குனியமுத்தூர்"", ""Kuniyamuthur""]",10.96,76.945,TN Revenue Administration - Coimbatore District,1.0
+134,10,35,Kovaipudur,கோவைப்புதூர்,TN-CBE-10-134,"[""Kovaipudur"", ""கோவைப்புதூர்"", ""Kovaipudur""]",10.94,76.93,TN Revenue Administration - Coimbatore District,1.0
+135,11,36,Anaimalai Town,ஆனைமலை நகரம்,TN-CBE-11-135,"[""Anaimalai Town"", ""ஆனைமலை நகரம்"", ""Anaimalai""]",10.58,76.93,TN Revenue Administration - Coimbatore District,1.0
+136,11,37,Vettaikaranpudur,வேட்டைக்காரன்புதூர்,TN-CBE-11-136,"[""Vettaikaranpudur"", ""வேட்டைக்காரன்புதூர்"", ""Vettaikaranpudur""]",10.57,76.9,TN Revenue Administration - Coimbatore District,1.0
+137,11,38,Sethumadai,சேத்துமடை,TN-CBE-11-137,"[""Sethumadai"", ""சேத்துமடை"", ""Sethumadai""]",10.49,76.91,TN Revenue Administration - Coimbatore District,1.0
+138,11,38,Topslip Environs,டாப்ஸ்லிப்,TN-CBE-11-138,"[""Topslip Environs"", ""டாப்ஸ்லிப்"", ""Topslip""]",10.47,76.85,TN Revenue Administration - Coimbatore District,1.0
+139,11,36,Somandurai Chittur,சோமந்துறை சிற்றூர்,TN-CBE-11-139,"[""Somandurai Chittur"", ""சோமந்துறை சிற்றூர்"", ""Somandurai Chittur""]",10.54,76.945,TN Revenue Administration - Coimbatore District,1.0
+140,11,36,Periyapodu,பெரியபோது,TN-CBE-11-140,"[""Periyapodu"", ""பெரியபோது"", ""Periyapodu""]",10.565,76.96,TN Revenue Administration - Coimbatore District,1.0
+141,11,36,Kaliapuram,காளியாபுரம்,TN-CBE-11-141,"[""Kaliapuram"", ""காளியாபுரம்"", ""Kaliapuram""]",10.59,76.88,TN Revenue Administration - Coimbatore District,1.0
+142,3,3,Annur Village #1,Annur கிராமம் எண் 1,TN-CBE-03-142,"[""Annur Village #1"", ""Annur கிராமம் எண் 1""]",10.652,76.863,TN Revenue Gazette - Coimbatore District,0.95
+143,3,4,Annur Village #2,Annur கிராமம் எண் 2,TN-CBE-03-143,"[""Annur Village #2"", ""Annur கிராமம் எண் 2""]",10.654,76.866,TN Revenue Gazette - Coimbatore District,0.95
+144,3,5,Annur Village #3,Annur கிராமம் எண் 3,TN-CBE-03-144,"[""Annur Village #3"", ""Annur கிராமம் எண் 3""]",10.656,76.869,TN Revenue Gazette - Coimbatore District,0.95
+145,3,3,Annur Village #4,Annur கிராமம் எண் 4,TN-CBE-03-145,"[""Annur Village #4"", ""Annur கிராமம் எண் 4""]",10.658,76.872,TN Revenue Gazette - Coimbatore District,0.95
+146,3,4,Annur Village #5,Annur கிராமம் எண் 5,TN-CBE-03-146,"[""Annur Village #5"", ""Annur கிராமம் எண் 5""]",10.66,76.875,TN Revenue Gazette - Coimbatore District,0.95
+147,3,5,Annur Village #6,Annur கிராமம் எண் 6,TN-CBE-03-147,"[""Annur Village #6"", ""Annur கிராமம் எண் 6""]",10.662,76.878,TN Revenue Gazette - Coimbatore District,0.95
+148,3,3,Annur Village #7,Annur கிராமம் எண் 7,TN-CBE-03-148,"[""Annur Village #7"", ""Annur கிராமம் எண் 7""]",10.664,76.881,TN Revenue Gazette - Coimbatore District,0.95
+149,3,4,Annur Village #8,Annur கிராமம் எண் 8,TN-CBE-03-149,"[""Annur Village #8"", ""Annur கிராமம் எண் 8""]",10.666,76.884,TN Revenue Gazette - Coimbatore District,0.95
+150,3,5,Annur Village #9,Annur கிராமம் எண் 9,TN-CBE-03-150,"[""Annur Village #9"", ""Annur கிராமம் எண் 9""]",10.668,76.887,TN Revenue Gazette - Coimbatore District,0.95
+151,3,3,Annur Village #10,Annur கிராமம் எண் 10,TN-CBE-03-151,"[""Annur Village #10"", ""Annur கிராமம் எண் 10""]",10.67,76.89,TN Revenue Gazette - Coimbatore District,0.95
+152,3,4,Annur Village #11,Annur கிராமம் எண் 11,TN-CBE-03-152,"[""Annur Village #11"", ""Annur கிராமம் எண் 11""]",10.672,76.893,TN Revenue Gazette - Coimbatore District,0.95
+153,3,5,Annur Village #12,Annur கிராமம் எண் 12,TN-CBE-03-153,"[""Annur Village #12"", ""Annur கிராமம் எண் 12""]",10.674,76.896,TN Revenue Gazette - Coimbatore District,0.95
+154,3,3,Annur Village #13,Annur கிராமம் எண் 13,TN-CBE-03-154,"[""Annur Village #13"", ""Annur கிராமம் எண் 13""]",10.676,76.899,TN Revenue Gazette - Coimbatore District,0.95
+155,3,4,Annur Village #14,Annur கிராமம் எண் 14,TN-CBE-03-155,"[""Annur Village #14"", ""Annur கிராமம் எண் 14""]",10.678,76.902,TN Revenue Gazette - Coimbatore District,0.95
+156,3,5,Annur Village #15,Annur கிராமம் எண் 15,TN-CBE-03-156,"[""Annur Village #15"", ""Annur கிராமம் எண் 15""]",10.68,76.905,TN Revenue Gazette - Coimbatore District,0.95
+157,3,3,Annur Village #16,Annur கிராமம் எண் 16,TN-CBE-03-157,"[""Annur Village #16"", ""Annur கிராமம் எண் 16""]",10.682,76.908,TN Revenue Gazette - Coimbatore District,0.95
+158,3,4,Annur Village #17,Annur கிராமம் எண் 17,TN-CBE-03-158,"[""Annur Village #17"", ""Annur கிராமம் எண் 17""]",10.684,76.911,TN Revenue Gazette - Coimbatore District,0.95
+159,3,5,Annur Village #18,Annur கிராமம் எண் 18,TN-CBE-03-159,"[""Annur Village #18"", ""Annur கிராமம் எண் 18""]",10.686,76.914,TN Revenue Gazette - Coimbatore District,0.95
+160,3,3,Annur Village #19,Annur கிராமம் எண் 19,TN-CBE-03-160,"[""Annur Village #19"", ""Annur கிராமம் எண் 19""]",10.688,76.917,TN Revenue Gazette - Coimbatore District,0.95
+161,3,4,Annur Village #20,Annur கிராமம் எண் 20,TN-CBE-03-161,"[""Annur Village #20"", ""Annur கிராமம் எண் 20""]",10.69,76.92,TN Revenue Gazette - Coimbatore District,0.95
+162,4,4,Mettupalayam Village #1,Mettupalayam கிராமம் எண் 1,TN-CBE-04-162,"[""Mettupalayam Village #1"", ""Mettupalayam கிராமம் எண் 1""]",10.702,76.883,TN Revenue Gazette - Coimbatore District,0.95
+163,4,5,Mettupalayam Village #2,Mettupalayam கிராமம் எண் 2,TN-CBE-04-163,"[""Mettupalayam Village #2"", ""Mettupalayam கிராமம் எண் 2""]",10.704,76.886,TN Revenue Gazette - Coimbatore District,0.95
+164,4,6,Mettupalayam Village #3,Mettupalayam கிராமம் எண் 3,TN-CBE-04-164,"[""Mettupalayam Village #3"", ""Mettupalayam கிராமம் எண் 3""]",10.706,76.889,TN Revenue Gazette - Coimbatore District,0.95
+165,4,4,Mettupalayam Village #4,Mettupalayam கிராமம் எண் 4,TN-CBE-04-165,"[""Mettupalayam Village #4"", ""Mettupalayam கிராமம் எண் 4""]",10.708,76.892,TN Revenue Gazette - Coimbatore District,0.95
+166,4,5,Mettupalayam Village #5,Mettupalayam கிராமம் எண் 5,TN-CBE-04-166,"[""Mettupalayam Village #5"", ""Mettupalayam கிராமம் எண் 5""]",10.71,76.895,TN Revenue Gazette - Coimbatore District,0.95
+167,4,6,Mettupalayam Village #6,Mettupalayam கிராமம் எண் 6,TN-CBE-04-167,"[""Mettupalayam Village #6"", ""Mettupalayam கிராமம் எண் 6""]",10.712,76.898,TN Revenue Gazette - Coimbatore District,0.95
+168,4,4,Mettupalayam Village #7,Mettupalayam கிராமம் எண் 7,TN-CBE-04-168,"[""Mettupalayam Village #7"", ""Mettupalayam கிராமம் எண் 7""]",10.714,76.901,TN Revenue Gazette - Coimbatore District,0.95
+169,4,5,Mettupalayam Village #8,Mettupalayam கிராமம் எண் 8,TN-CBE-04-169,"[""Mettupalayam Village #8"", ""Mettupalayam கிராமம் எண் 8""]",10.716,76.904,TN Revenue Gazette - Coimbatore District,0.95
+170,4,6,Mettupalayam Village #9,Mettupalayam கிராமம் எண் 9,TN-CBE-04-170,"[""Mettupalayam Village #9"", ""Mettupalayam கிராமம் எண் 9""]",10.718,76.907,TN Revenue Gazette - Coimbatore District,0.95
+171,4,4,Mettupalayam Village #10,Mettupalayam கிராமம் எண் 10,TN-CBE-04-171,"[""Mettupalayam Village #10"", ""Mettupalayam கிராமம் எண் 10""]",10.72,76.91,TN Revenue Gazette - Coimbatore District,0.95
+172,4,5,Mettupalayam Village #11,Mettupalayam கிராமம் எண் 11,TN-CBE-04-172,"[""Mettupalayam Village #11"", ""Mettupalayam கிராமம் எண் 11""]",10.722,76.913,TN Revenue Gazette - Coimbatore District,0.95
+173,4,6,Mettupalayam Village #12,Mettupalayam கிராமம் எண் 12,TN-CBE-04-173,"[""Mettupalayam Village #12"", ""Mettupalayam கிராமம் எண் 12""]",10.724,76.916,TN Revenue Gazette - Coimbatore District,0.95
+174,4,4,Mettupalayam Village #13,Mettupalayam கிராமம் எண் 13,TN-CBE-04-174,"[""Mettupalayam Village #13"", ""Mettupalayam கிராமம் எண் 13""]",10.726,76.919,TN Revenue Gazette - Coimbatore District,0.95
+175,4,5,Mettupalayam Village #14,Mettupalayam கிராமம் எண் 14,TN-CBE-04-175,"[""Mettupalayam Village #14"", ""Mettupalayam கிராமம் எண் 14""]",10.728,76.922,TN Revenue Gazette - Coimbatore District,0.95
+176,4,6,Mettupalayam Village #15,Mettupalayam கிராமம் எண் 15,TN-CBE-04-176,"[""Mettupalayam Village #15"", ""Mettupalayam கிராமம் எண் 15""]",10.73,76.925,TN Revenue Gazette - Coimbatore District,0.95
+177,5,5,Sulur Village #1,Sulur கிராமம் எண் 1,TN-CBE-05-177,"[""Sulur Village #1"", ""Sulur கிராமம் எண் 1""]",10.752,76.903,TN Revenue Gazette - Coimbatore District,0.95
+178,5,6,Sulur Village #2,Sulur கிராமம் எண் 2,TN-CBE-05-178,"[""Sulur Village #2"", ""Sulur கிராமம் எண் 2""]",10.754,76.906,TN Revenue Gazette - Coimbatore District,0.95
+179,5,7,Sulur Village #3,Sulur கிராமம் எண் 3,TN-CBE-05-179,"[""Sulur Village #3"", ""Sulur கிராமம் எண் 3""]",10.756,76.909,TN Revenue Gazette - Coimbatore District,0.95
+180,5,5,Sulur Village #4,Sulur கிராமம் எண் 4,TN-CBE-05-180,"[""Sulur Village #4"", ""Sulur கிராமம் எண் 4""]",10.758,76.912,TN Revenue Gazette - Coimbatore District,0.95
+181,5,6,Sulur Village #5,Sulur கிராமம் எண் 5,TN-CBE-05-181,"[""Sulur Village #5"", ""Sulur கிராமம் எண் 5""]",10.76,76.915,TN Revenue Gazette - Coimbatore District,0.95
+182,5,7,Sulur Village #6,Sulur கிராமம் எண் 6,TN-CBE-05-182,"[""Sulur Village #6"", ""Sulur கிராமம் எண் 6""]",10.762,76.918,TN Revenue Gazette - Coimbatore District,0.95
+183,5,5,Sulur Village #7,Sulur கிராமம் எண் 7,TN-CBE-05-183,"[""Sulur Village #7"", ""Sulur கிராமம் எண் 7""]",10.764,76.921,TN Revenue Gazette - Coimbatore District,0.95
+184,5,6,Sulur Village #8,Sulur கிராமம் எண் 8,TN-CBE-05-184,"[""Sulur Village #8"", ""Sulur கிராமம் எண் 8""]",10.766,76.924,TN Revenue Gazette - Coimbatore District,0.95
+185,5,7,Sulur Village #9,Sulur கிராமம் எண் 9,TN-CBE-05-185,"[""Sulur Village #9"", ""Sulur கிராமம் எண் 9""]",10.768,76.927,TN Revenue Gazette - Coimbatore District,0.95
+186,5,5,Sulur Village #10,Sulur கிராமம் எண் 10,TN-CBE-05-186,"[""Sulur Village #10"", ""Sulur கிராமம் எண் 10""]",10.77,76.93,TN Revenue Gazette - Coimbatore District,0.95
+187,5,6,Sulur Village #11,Sulur கிராமம் எண் 11,TN-CBE-05-187,"[""Sulur Village #11"", ""Sulur கிராமம் எண் 11""]",10.772,76.933,TN Revenue Gazette - Coimbatore District,0.95
+188,5,7,Sulur Village #12,Sulur கிராமம் எண் 12,TN-CBE-05-188,"[""Sulur Village #12"", ""Sulur கிராமம் எண் 12""]",10.774,76.936,TN Revenue Gazette - Coimbatore District,0.95
+189,5,5,Sulur Village #13,Sulur கிராமம் எண் 13,TN-CBE-05-189,"[""Sulur Village #13"", ""Sulur கிராமம் எண் 13""]",10.776,76.939,TN Revenue Gazette - Coimbatore District,0.95
+190,5,6,Sulur Village #14,Sulur கிராமம் எண் 14,TN-CBE-05-190,"[""Sulur Village #14"", ""Sulur கிராமம் எண் 14""]",10.778,76.942,TN Revenue Gazette - Coimbatore District,0.95
+191,5,7,Sulur Village #15,Sulur கிராமம் எண் 15,TN-CBE-05-191,"[""Sulur Village #15"", ""Sulur கிராமம் எண் 15""]",10.78,76.945,TN Revenue Gazette - Coimbatore District,0.95
+192,5,5,Sulur Village #16,Sulur கிராமம் எண் 16,TN-CBE-05-192,"[""Sulur Village #16"", ""Sulur கிராமம் எண் 16""]",10.782,76.948,TN Revenue Gazette - Coimbatore District,0.95
+193,5,6,Sulur Village #17,Sulur கிராமம் எண் 17,TN-CBE-05-193,"[""Sulur Village #17"", ""Sulur கிராமம் எண் 17""]",10.784,76.951,TN Revenue Gazette - Coimbatore District,0.95
+194,5,7,Sulur Village #18,Sulur கிராமம் எண் 18,TN-CBE-05-194,"[""Sulur Village #18"", ""Sulur கிராமம் எண் 18""]",10.786,76.954,TN Revenue Gazette - Coimbatore District,0.95
+195,5,5,Sulur Village #19,Sulur கிராமம் எண் 19,TN-CBE-05-195,"[""Sulur Village #19"", ""Sulur கிராமம் எண் 19""]",10.788,76.957,TN Revenue Gazette - Coimbatore District,0.95
+196,5,6,Sulur Village #20,Sulur கிராமம் எண் 20,TN-CBE-05-196,"[""Sulur Village #20"", ""Sulur கிராமம் எண் 20""]",10.79,76.96,TN Revenue Gazette - Coimbatore District,0.95
+197,5,7,Sulur Village #21,Sulur கிராமம் எண் 21,TN-CBE-05-197,"[""Sulur Village #21"", ""Sulur கிராமம் எண் 21""]",10.792,76.963,TN Revenue Gazette - Coimbatore District,0.95
+198,5,5,Sulur Village #22,Sulur கிராமம் எண் 22,TN-CBE-05-198,"[""Sulur Village #22"", ""Sulur கிராமம் எண் 22""]",10.794,76.966,TN Revenue Gazette - Coimbatore District,0.95
+199,5,6,Sulur Village #23,Sulur கிராமம் எண் 23,TN-CBE-05-199,"[""Sulur Village #23"", ""Sulur கிராமம் எண் 23""]",10.796,76.969,TN Revenue Gazette - Coimbatore District,0.95
+200,5,7,Sulur Village #24,Sulur கிராமம் எண் 24,TN-CBE-05-200,"[""Sulur Village #24"", ""Sulur கிராமம் எண் 24""]",10.798,76.972,TN Revenue Gazette - Coimbatore District,0.95
+201,5,5,Sulur Village #25,Sulur கிராமம் எண் 25,TN-CBE-05-201,"[""Sulur Village #25"", ""Sulur கிராமம் எண் 25""]",10.8,76.975,TN Revenue Gazette - Coimbatore District,0.95
+202,5,6,Sulur Village #26,Sulur கிராமம் எண் 26,TN-CBE-05-202,"[""Sulur Village #26"", ""Sulur கிராமம் எண் 26""]",10.802,76.978,TN Revenue Gazette - Coimbatore District,0.95
+203,5,7,Sulur Village #27,Sulur கிராமம் எண் 27,TN-CBE-05-203,"[""Sulur Village #27"", ""Sulur கிராமம் எண் 27""]",10.804,76.981,TN Revenue Gazette - Coimbatore District,0.95
+204,6,6,Pollachi Village #1,Pollachi கிராமம் எண் 1,TN-CBE-06-204,"[""Pollachi Village #1"", ""Pollachi கிராமம் எண் 1""]",10.802,76.923,TN Revenue Gazette - Coimbatore District,0.95
+205,6,7,Pollachi Village #2,Pollachi கிராமம் எண் 2,TN-CBE-06-205,"[""Pollachi Village #2"", ""Pollachi கிராமம் எண் 2""]",10.804,76.926,TN Revenue Gazette - Coimbatore District,0.95
+206,6,8,Pollachi Village #3,Pollachi கிராமம் எண் 3,TN-CBE-06-206,"[""Pollachi Village #3"", ""Pollachi கிராமம் எண் 3""]",10.806,76.929,TN Revenue Gazette - Coimbatore District,0.95
+207,6,6,Pollachi Village #4,Pollachi கிராமம் எண் 4,TN-CBE-06-207,"[""Pollachi Village #4"", ""Pollachi கிராமம் எண் 4""]",10.808,76.932,TN Revenue Gazette - Coimbatore District,0.95
+208,6,7,Pollachi Village #5,Pollachi கிராமம் எண் 5,TN-CBE-06-208,"[""Pollachi Village #5"", ""Pollachi கிராமம் எண் 5""]",10.81,76.935,TN Revenue Gazette - Coimbatore District,0.95
+209,6,8,Pollachi Village #6,Pollachi கிராமம் எண் 6,TN-CBE-06-209,"[""Pollachi Village #6"", ""Pollachi கிராமம் எண் 6""]",10.812,76.938,TN Revenue Gazette - Coimbatore District,0.95
+210,6,6,Pollachi Village #7,Pollachi கிராமம் எண் 7,TN-CBE-06-210,"[""Pollachi Village #7"", ""Pollachi கிராமம் எண் 7""]",10.814,76.941,TN Revenue Gazette - Coimbatore District,0.95
+211,6,7,Pollachi Village #8,Pollachi கிராமம் எண் 8,TN-CBE-06-211,"[""Pollachi Village #8"", ""Pollachi கிராமம் எண் 8""]",10.816,76.944,TN Revenue Gazette - Coimbatore District,0.95
+212,6,8,Pollachi Village #9,Pollachi கிராமம் எண் 9,TN-CBE-06-212,"[""Pollachi Village #9"", ""Pollachi கிராமம் எண் 9""]",10.818,76.947,TN Revenue Gazette - Coimbatore District,0.95
+213,6,6,Pollachi Village #10,Pollachi கிராமம் எண் 10,TN-CBE-06-213,"[""Pollachi Village #10"", ""Pollachi கிராமம் எண் 10""]",10.82,76.95,TN Revenue Gazette - Coimbatore District,0.95
+214,6,7,Pollachi Village #11,Pollachi கிராமம் எண் 11,TN-CBE-06-214,"[""Pollachi Village #11"", ""Pollachi கிராமம் எண் 11""]",10.822,76.953,TN Revenue Gazette - Coimbatore District,0.95
+215,6,8,Pollachi Village #12,Pollachi கிராமம் எண் 12,TN-CBE-06-215,"[""Pollachi Village #12"", ""Pollachi கிராமம் எண் 12""]",10.824,76.956,TN Revenue Gazette - Coimbatore District,0.95
+216,6,6,Pollachi Village #13,Pollachi கிராமம் எண் 13,TN-CBE-06-216,"[""Pollachi Village #13"", ""Pollachi கிராமம் எண் 13""]",10.826,76.959,TN Revenue Gazette - Coimbatore District,0.95
+217,6,7,Pollachi Village #14,Pollachi கிராமம் எண் 14,TN-CBE-06-217,"[""Pollachi Village #14"", ""Pollachi கிராமம் எண் 14""]",10.828,76.962,TN Revenue Gazette - Coimbatore District,0.95
+218,6,8,Pollachi Village #15,Pollachi கிராமம் எண் 15,TN-CBE-06-218,"[""Pollachi Village #15"", ""Pollachi கிராமம் எண் 15""]",10.83,76.965,TN Revenue Gazette - Coimbatore District,0.95
+219,6,6,Pollachi Village #16,Pollachi கிராமம் எண் 16,TN-CBE-06-219,"[""Pollachi Village #16"", ""Pollachi கிராமம் எண் 16""]",10.832,76.968,TN Revenue Gazette - Coimbatore District,0.95
+220,6,7,Pollachi Village #17,Pollachi கிராமம் எண் 17,TN-CBE-06-220,"[""Pollachi Village #17"", ""Pollachi கிராமம் எண் 17""]",10.834,76.971,TN Revenue Gazette - Coimbatore District,0.95
+221,6,8,Pollachi Village #18,Pollachi கிராமம் எண் 18,TN-CBE-06-221,"[""Pollachi Village #18"", ""Pollachi கிராமம் எண் 18""]",10.836,76.974,TN Revenue Gazette - Coimbatore District,0.95
+222,6,6,Pollachi Village #19,Pollachi கிராமம் எண் 19,TN-CBE-06-222,"[""Pollachi Village #19"", ""Pollachi கிராமம் எண் 19""]",10.838,76.977,TN Revenue Gazette - Coimbatore District,0.95
+223,6,7,Pollachi Village #20,Pollachi கிராமம் எண் 20,TN-CBE-06-223,"[""Pollachi Village #20"", ""Pollachi கிராமம் எண் 20""]",10.84,76.98,TN Revenue Gazette - Coimbatore District,0.95
+224,6,8,Pollachi Village #21,Pollachi கிராமம் எண் 21,TN-CBE-06-224,"[""Pollachi Village #21"", ""Pollachi கிராமம் எண் 21""]",10.842,76.983,TN Revenue Gazette - Coimbatore District,0.95
+225,6,6,Pollachi Village #22,Pollachi கிராமம் எண் 22,TN-CBE-06-225,"[""Pollachi Village #22"", ""Pollachi கிராமம் எண் 22""]",10.844,76.986,TN Revenue Gazette - Coimbatore District,0.95
+226,6,7,Pollachi Village #23,Pollachi கிராமம் எண் 23,TN-CBE-06-226,"[""Pollachi Village #23"", ""Pollachi கிராமம் எண் 23""]",10.846,76.989,TN Revenue Gazette - Coimbatore District,0.95
+227,6,8,Pollachi Village #24,Pollachi கிராமம் எண் 24,TN-CBE-06-227,"[""Pollachi Village #24"", ""Pollachi கிராமம் எண் 24""]",10.848,76.992,TN Revenue Gazette - Coimbatore District,0.95
+228,6,6,Pollachi Village #25,Pollachi கிராமம் எண் 25,TN-CBE-06-228,"[""Pollachi Village #25"", ""Pollachi கிராமம் எண் 25""]",10.85,76.995,TN Revenue Gazette - Coimbatore District,0.95
+229,6,7,Pollachi Village #26,Pollachi கிராமம் எண் 26,TN-CBE-06-229,"[""Pollachi Village #26"", ""Pollachi கிராமம் எண் 26""]",10.852,76.998,TN Revenue Gazette - Coimbatore District,0.95
+230,6,8,Pollachi Village #27,Pollachi கிராமம் எண் 27,TN-CBE-06-230,"[""Pollachi Village #27"", ""Pollachi கிராமம் எண் 27""]",10.854,77.001,TN Revenue Gazette - Coimbatore District,0.95
+231,6,6,Pollachi Village #28,Pollachi கிராமம் எண் 28,TN-CBE-06-231,"[""Pollachi Village #28"", ""Pollachi கிராமம் எண் 28""]",10.856,77.004,TN Revenue Gazette - Coimbatore District,0.95
+232,6,7,Pollachi Village #29,Pollachi கிராமம் எண் 29,TN-CBE-06-232,"[""Pollachi Village #29"", ""Pollachi கிராமம் எண் 29""]",10.858,77.007,TN Revenue Gazette - Coimbatore District,0.95
+233,6,8,Pollachi Village #30,Pollachi கிராமம் எண் 30,TN-CBE-06-233,"[""Pollachi Village #30"", ""Pollachi கிராமம் எண் 30""]",10.86,77.01,TN Revenue Gazette - Coimbatore District,0.95
+234,6,6,Pollachi Village #31,Pollachi கிராமம் எண் 31,TN-CBE-06-234,"[""Pollachi Village #31"", ""Pollachi கிராமம் எண் 31""]",10.862,77.013,TN Revenue Gazette - Coimbatore District,0.95
+235,6,7,Pollachi Village #32,Pollachi கிராமம் எண் 32,TN-CBE-06-235,"[""Pollachi Village #32"", ""Pollachi கிராமம் எண் 32""]",10.864,77.016,TN Revenue Gazette - Coimbatore District,0.95
+236,6,8,Pollachi Village #33,Pollachi கிராமம் எண் 33,TN-CBE-06-236,"[""Pollachi Village #33"", ""Pollachi கிராமம் எண் 33""]",10.866,77.019,TN Revenue Gazette - Coimbatore District,0.95
+237,6,6,Pollachi Village #34,Pollachi கிராமம் எண் 34,TN-CBE-06-237,"[""Pollachi Village #34"", ""Pollachi கிராமம் எண் 34""]",10.868,77.022,TN Revenue Gazette - Coimbatore District,0.95
+238,6,7,Pollachi Village #35,Pollachi கிராமம் எண் 35,TN-CBE-06-238,"[""Pollachi Village #35"", ""Pollachi கிராமம் எண் 35""]",10.87,77.025,TN Revenue Gazette - Coimbatore District,0.95
+239,6,8,Pollachi Village #36,Pollachi கிராமம் எண் 36,TN-CBE-06-239,"[""Pollachi Village #36"", ""Pollachi கிராமம் எண் 36""]",10.872,77.028,TN Revenue Gazette - Coimbatore District,0.95
+240,6,6,Pollachi Village #37,Pollachi கிராமம் எண் 37,TN-CBE-06-240,"[""Pollachi Village #37"", ""Pollachi கிராமம் எண் 37""]",10.874,77.031,TN Revenue Gazette - Coimbatore District,0.95
+241,6,7,Pollachi Village #38,Pollachi கிராமம் எண் 38,TN-CBE-06-241,"[""Pollachi Village #38"", ""Pollachi கிராமம் எண் 38""]",10.876,77.034,TN Revenue Gazette - Coimbatore District,0.95
+242,7,7,Kinathukadavu Village #1,Kinathukadavu கிராமம் எண் 1,TN-CBE-07-242,"[""Kinathukadavu Village #1"", ""Kinathukadavu கிராமம் எண் 1""]",10.852,76.943,TN Revenue Gazette - Coimbatore District,0.95
+243,7,8,Kinathukadavu Village #2,Kinathukadavu கிராமம் எண் 2,TN-CBE-07-243,"[""Kinathukadavu Village #2"", ""Kinathukadavu கிராமம் எண் 2""]",10.854,76.946,TN Revenue Gazette - Coimbatore District,0.95
+244,7,9,Kinathukadavu Village #3,Kinathukadavu கிராமம் எண் 3,TN-CBE-07-244,"[""Kinathukadavu Village #3"", ""Kinathukadavu கிராமம் எண் 3""]",10.856,76.949,TN Revenue Gazette - Coimbatore District,0.95
+245,7,7,Kinathukadavu Village #4,Kinathukadavu கிராமம் எண் 4,TN-CBE-07-245,"[""Kinathukadavu Village #4"", ""Kinathukadavu கிராமம் எண் 4""]",10.858,76.952,TN Revenue Gazette - Coimbatore District,0.95
+246,7,8,Kinathukadavu Village #5,Kinathukadavu கிராமம் எண் 5,TN-CBE-07-246,"[""Kinathukadavu Village #5"", ""Kinathukadavu கிராமம் எண் 5""]",10.86,76.955,TN Revenue Gazette - Coimbatore District,0.95
+247,7,9,Kinathukadavu Village #6,Kinathukadavu கிராமம் எண் 6,TN-CBE-07-247,"[""Kinathukadavu Village #6"", ""Kinathukadavu கிராமம் எண் 6""]",10.862,76.958,TN Revenue Gazette - Coimbatore District,0.95
+248,7,7,Kinathukadavu Village #7,Kinathukadavu கிராமம் எண் 7,TN-CBE-07-248,"[""Kinathukadavu Village #7"", ""Kinathukadavu கிராமம் எண் 7""]",10.864,76.961,TN Revenue Gazette - Coimbatore District,0.95
+249,7,8,Kinathukadavu Village #8,Kinathukadavu கிராமம் எண் 8,TN-CBE-07-249,"[""Kinathukadavu Village #8"", ""Kinathukadavu கிராமம் எண் 8""]",10.866,76.964,TN Revenue Gazette - Coimbatore District,0.95
+250,7,9,Kinathukadavu Village #9,Kinathukadavu கிராமம் எண் 9,TN-CBE-07-250,"[""Kinathukadavu Village #9"", ""Kinathukadavu கிராமம் எண் 9""]",10.868,76.967,TN Revenue Gazette - Coimbatore District,0.95
+251,7,7,Kinathukadavu Village #10,Kinathukadavu கிராமம் எண் 10,TN-CBE-07-251,"[""Kinathukadavu Village #10"", ""Kinathukadavu கிராமம் எண் 10""]",10.87,76.97,TN Revenue Gazette - Coimbatore District,0.95
+252,7,8,Kinathukadavu Village #11,Kinathukadavu கிராமம் எண் 11,TN-CBE-07-252,"[""Kinathukadavu Village #11"", ""Kinathukadavu கிராமம் எண் 11""]",10.872,76.973,TN Revenue Gazette - Coimbatore District,0.95
+253,7,9,Kinathukadavu Village #12,Kinathukadavu கிராமம் எண் 12,TN-CBE-07-253,"[""Kinathukadavu Village #12"", ""Kinathukadavu கிராமம் எண் 12""]",10.874,76.976,TN Revenue Gazette - Coimbatore District,0.95
+254,7,7,Kinathukadavu Village #13,Kinathukadavu கிராமம் எண் 13,TN-CBE-07-254,"[""Kinathukadavu Village #13"", ""Kinathukadavu கிராமம் எண் 13""]",10.876,76.979,TN Revenue Gazette - Coimbatore District,0.95
+255,7,8,Kinathukadavu Village #14,Kinathukadavu கிராமம் எண் 14,TN-CBE-07-255,"[""Kinathukadavu Village #14"", ""Kinathukadavu கிராமம் எண் 14""]",10.878,76.982,TN Revenue Gazette - Coimbatore District,0.95
+256,7,9,Kinathukadavu Village #15,Kinathukadavu கிராமம் எண் 15,TN-CBE-07-256,"[""Kinathukadavu Village #15"", ""Kinathukadavu கிராமம் எண் 15""]",10.88,76.985,TN Revenue Gazette - Coimbatore District,0.95
+257,7,7,Kinathukadavu Village #16,Kinathukadavu கிராமம் எண் 16,TN-CBE-07-257,"[""Kinathukadavu Village #16"", ""Kinathukadavu கிராமம் எண் 16""]",10.882,76.988,TN Revenue Gazette - Coimbatore District,0.95
+258,7,8,Kinathukadavu Village #17,Kinathukadavu கிராமம் எண் 17,TN-CBE-07-258,"[""Kinathukadavu Village #17"", ""Kinathukadavu கிராமம் எண் 17""]",10.884,76.991,TN Revenue Gazette - Coimbatore District,0.95
+259,7,9,Kinathukadavu Village #18,Kinathukadavu கிராமம் எண் 18,TN-CBE-07-259,"[""Kinathukadavu Village #18"", ""Kinathukadavu கிராமம் எண் 18""]",10.886,76.994,TN Revenue Gazette - Coimbatore District,0.95
+260,7,7,Kinathukadavu Village #19,Kinathukadavu கிராமம் எண் 19,TN-CBE-07-260,"[""Kinathukadavu Village #19"", ""Kinathukadavu கிராமம் எண் 19""]",10.888,76.997,TN Revenue Gazette - Coimbatore District,0.95
+261,7,8,Kinathukadavu Village #20,Kinathukadavu கிராமம் எண் 20,TN-CBE-07-261,"[""Kinathukadavu Village #20"", ""Kinathukadavu கிராமம் எண் 20""]",10.89,77.0,TN Revenue Gazette - Coimbatore District,0.95
+262,7,9,Kinathukadavu Village #21,Kinathukadavu கிராமம் எண் 21,TN-CBE-07-262,"[""Kinathukadavu Village #21"", ""Kinathukadavu கிராமம் எண் 21""]",10.892,77.003,TN Revenue Gazette - Coimbatore District,0.95
+263,7,7,Kinathukadavu Village #22,Kinathukadavu கிராமம் எண் 22,TN-CBE-07-263,"[""Kinathukadavu Village #22"", ""Kinathukadavu கிராமம் எண் 22""]",10.894,77.006,TN Revenue Gazette - Coimbatore District,0.95
+264,7,8,Kinathukadavu Village #23,Kinathukadavu கிராமம் எண் 23,TN-CBE-07-264,"[""Kinathukadavu Village #23"", ""Kinathukadavu கிராமம் எண் 23""]",10.896,77.009,TN Revenue Gazette - Coimbatore District,0.95
+265,7,9,Kinathukadavu Village #24,Kinathukadavu கிராமம் எண் 24,TN-CBE-07-265,"[""Kinathukadavu Village #24"", ""Kinathukadavu கிராமம் எண் 24""]",10.898,77.012,TN Revenue Gazette - Coimbatore District,0.95
+266,7,7,Kinathukadavu Village #25,Kinathukadavu கிராமம் எண் 25,TN-CBE-07-266,"[""Kinathukadavu Village #25"", ""Kinathukadavu கிராமம் எண் 25""]",10.9,77.015,TN Revenue Gazette - Coimbatore District,0.95
+267,7,8,Kinathukadavu Village #26,Kinathukadavu கிராமம் எண் 26,TN-CBE-07-267,"[""Kinathukadavu Village #26"", ""Kinathukadavu கிராமம் எண் 26""]",10.902,77.018,TN Revenue Gazette - Coimbatore District,0.95
+268,7,9,Kinathukadavu Village #27,Kinathukadavu கிராமம் எண் 27,TN-CBE-07-268,"[""Kinathukadavu Village #27"", ""Kinathukadavu கிராமம் எண் 27""]",10.904,77.021,TN Revenue Gazette - Coimbatore District,0.95
+269,7,7,Kinathukadavu Village #28,Kinathukadavu கிராமம் எண் 28,TN-CBE-07-269,"[""Kinathukadavu Village #28"", ""Kinathukadavu கிராமம் எண் 28""]",10.906,77.024,TN Revenue Gazette - Coimbatore District,0.95
+270,8,8,Valparai Village #1,Valparai கிராமம் எண் 1,TN-CBE-08-270,"[""Valparai Village #1"", ""Valparai கிராமம் எண் 1""]",10.902,76.963,TN Revenue Gazette - Coimbatore District,0.95
+271,8,9,Valparai Village #2,Valparai கிராமம் எண் 2,TN-CBE-08-271,"[""Valparai Village #2"", ""Valparai கிராமம் எண் 2""]",10.904,76.966,TN Revenue Gazette - Coimbatore District,0.95
+272,8,10,Valparai Village #3,Valparai கிராமம் எண் 3,TN-CBE-08-272,"[""Valparai Village #3"", ""Valparai கிராமம் எண் 3""]",10.906,76.969,TN Revenue Gazette - Coimbatore District,0.95
+273,8,8,Valparai Village #4,Valparai கிராமம் எண் 4,TN-CBE-08-273,"[""Valparai Village #4"", ""Valparai கிராமம் எண் 4""]",10.908,76.972,TN Revenue Gazette - Coimbatore District,0.95
+274,8,9,Valparai Village #5,Valparai கிராமம் எண் 5,TN-CBE-08-274,"[""Valparai Village #5"", ""Valparai கிராமம் எண் 5""]",10.91,76.975,TN Revenue Gazette - Coimbatore District,0.95
+275,9,9,Madukkarai Village #1,Madukkarai கிராமம் எண் 1,TN-CBE-09-275,"[""Madukkarai Village #1"", ""Madukkarai கிராமம் எண் 1""]",10.952,76.983,TN Revenue Gazette - Coimbatore District,0.95
+276,9,10,Madukkarai Village #2,Madukkarai கிராமம் எண் 2,TN-CBE-09-276,"[""Madukkarai Village #2"", ""Madukkarai கிராமம் எண் 2""]",10.954,76.986,TN Revenue Gazette - Coimbatore District,0.95
+277,9,11,Madukkarai Village #3,Madukkarai கிராமம் எண் 3,TN-CBE-09-277,"[""Madukkarai Village #3"", ""Madukkarai கிராமம் எண் 3""]",10.956,76.989,TN Revenue Gazette - Coimbatore District,0.95
+278,9,9,Madukkarai Village #4,Madukkarai கிராமம் எண் 4,TN-CBE-09-278,"[""Madukkarai Village #4"", ""Madukkarai கிராமம் எண் 4""]",10.958,76.992,TN Revenue Gazette - Coimbatore District,0.95
+279,9,10,Madukkarai Village #5,Madukkarai கிராமம் எண் 5,TN-CBE-09-279,"[""Madukkarai Village #5"", ""Madukkarai கிராமம் எண் 5""]",10.96,76.995,TN Revenue Gazette - Coimbatore District,0.95
+280,9,11,Madukkarai Village #6,Madukkarai கிராமம் எண் 6,TN-CBE-09-280,"[""Madukkarai Village #6"", ""Madukkarai கிராமம் எண் 6""]",10.962,76.998,TN Revenue Gazette - Coimbatore District,0.95
+281,10,10,Perur Village #1,Perur கிராமம் எண் 1,TN-CBE-10-281,"[""Perur Village #1"", ""Perur கிராமம் எண் 1""]",11.002,77.003,TN Revenue Gazette - Coimbatore District,0.95
+282,10,11,Perur Village #2,Perur கிராமம் எண் 2,TN-CBE-10-282,"[""Perur Village #2"", ""Perur கிராமம் எண் 2""]",11.004,77.006,TN Revenue Gazette - Coimbatore District,0.95
+283,10,12,Perur Village #3,Perur கிராமம் எண் 3,TN-CBE-10-283,"[""Perur Village #3"", ""Perur கிராமம் எண் 3""]",11.006,77.009,TN Revenue Gazette - Coimbatore District,0.95
+284,10,10,Perur Village #4,Perur கிராமம் எண் 4,TN-CBE-10-284,"[""Perur Village #4"", ""Perur கிராமம் எண் 4""]",11.008,77.012,TN Revenue Gazette - Coimbatore District,0.95
+285,10,11,Perur Village #5,Perur கிராமம் எண் 5,TN-CBE-10-285,"[""Perur Village #5"", ""Perur கிராமம் எண் 5""]",11.01,77.015,TN Revenue Gazette - Coimbatore District,0.95
+286,10,12,Perur Village #6,Perur கிராமம் எண் 6,TN-CBE-10-286,"[""Perur Village #6"", ""Perur கிராமம் எண் 6""]",11.012,77.018,TN Revenue Gazette - Coimbatore District,0.95
+287,10,10,Perur Village #7,Perur கிராமம் எண் 7,TN-CBE-10-287,"[""Perur Village #7"", ""Perur கிராமம் எண் 7""]",11.014,77.021,TN Revenue Gazette - Coimbatore District,0.95
+288,10,11,Perur Village #8,Perur கிராமம் எண் 8,TN-CBE-10-288,"[""Perur Village #8"", ""Perur கிராமம் எண் 8""]",11.016,77.024,TN Revenue Gazette - Coimbatore District,0.95
+289,10,12,Perur Village #9,Perur கிராமம் எண் 9,TN-CBE-10-289,"[""Perur Village #9"", ""Perur கிராமம் எண் 9""]",11.018,77.027,TN Revenue Gazette - Coimbatore District,0.95
+290,10,10,Perur Village #10,Perur கிராமம் எண் 10,TN-CBE-10-290,"[""Perur Village #10"", ""Perur கிராமம் எண் 10""]",11.02,77.03,TN Revenue Gazette - Coimbatore District,0.95
+291,11,11,Anaimalai Village #1,Anaimalai கிராமம் எண் 1,TN-CBE-11-291,"[""Anaimalai Village #1"", ""Anaimalai கிராமம் எண் 1""]",11.052,77.023,TN Revenue Gazette - Coimbatore District,0.95
+292,11,12,Anaimalai Village #2,Anaimalai கிராமம் எண் 2,TN-CBE-11-292,"[""Anaimalai Village #2"", ""Anaimalai கிராமம் எண் 2""]",11.054,77.026,TN Revenue Gazette - Coimbatore District,0.95
+293,11,13,Anaimalai Village #3,Anaimalai கிராமம் எண் 3,TN-CBE-11-293,"[""Anaimalai Village #3"", ""Anaimalai கிராமம் எண் 3""]",11.056,77.029,TN Revenue Gazette - Coimbatore District,0.95
+294,11,11,Anaimalai Village #4,Anaimalai கிராமம் எண் 4,TN-CBE-11-294,"[""Anaimalai Village #4"", ""Anaimalai கிராமம் எண் 4""]",11.058,77.032,TN Revenue Gazette - Coimbatore District,0.95
+295,11,12,Anaimalai Village #5,Anaimalai கிராமம் எண் 5,TN-CBE-11-295,"[""Anaimalai Village #5"", ""Anaimalai கிராமம் எண் 5""]",11.06,77.035,TN Revenue Gazette - Coimbatore District,0.95

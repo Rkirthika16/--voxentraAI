@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-09-26T15:48:30.657829+00:00",
+  "district": "Coimbatore",
+  "administrative_records": 3,
+  "taluks": 11,
+  "firkas": 38,
+  "revenue_villages": 295,
+  "zones": 5,
+  "wards": 100,
+  "areas": 45,
+  "streets": 105,
+  "landmarks": 49,
+  "aliases": 604,
+  "duplicate_records": 0,
+  "missing_relationships": 0,
+  "unresolved_names": 0,
+  "records_by_source": {
+    "Government of Tamil Nadu - Revenue Administration": 344,
+    "Coimbatore City Municipal Corporation (CCMC)": 105,
+    "CCMC Ward Delimitation Gazette": 100,
+    "OpenStreetMap & Survey GIS Coimbatore": 153
+  },
+  "coverage_notes": [
+    "Official TN Revenue Administration: 3 Divisions, 11 Taluks, 38 Firkas, 295 Revenue Villages fully represented.",
+    "CCMC City Corporation: 5 Zones and 100 Wards mapped with delimitation boundaries.",
+    "Street & Landmark Geographic Data: Authoritative municipal roads, commercial arterials, numbered cross grids, and key civic landmarks with GPS coordinates.",
+    "Multi-lingual Coverage: Canonical Tamil names, English names, and phonetic Tanglish aliases populated."
+  ],
+  "last_updated": "2026-09-26 15:48:30 UTC"
+}

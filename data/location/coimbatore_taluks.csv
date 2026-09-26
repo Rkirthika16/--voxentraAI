@@ -1,0 +1,12 @@
+id,division_id,name_en,name_ta,aliases,headquarters,source,confidence
+1,1,Coimbatore North,கோயம்புத்தூர் வடக்கு,"[""Coimbatore North"", ""Kovai North"", ""Coimbatore Vada"", ""கோயம்புத்தூர் வடக்கு""]",Coimbatore,TN Revenue Gazette - Coimbatore District,1.0
+2,2,Coimbatore South,கோயம்புத்தூர் தெற்கு,"[""Coimbatore South"", ""Kovai South"", ""Coimbatore Therku"", ""கோயம்புத்தூர் தெற்கு""]",Coimbatore,TN Revenue Gazette - Coimbatore District,1.0
+3,1,Annur,அன்னூர்,"[""Annur"", ""Annoor"", ""அன்னூர்""]",Annur,TN Revenue Gazette - Coimbatore District,1.0
+4,1,Mettupalayam,மேட்டுப்பாளையம்,"[""Mettupalayam"", ""Mtp"", ""Mettupalaiyam"", ""மேட்டுப்பாளையம்""]",Mettupalayam,TN Revenue Gazette - Coimbatore District,1.0
+5,2,Sulur,சூலூர்,"[""Sulur"", ""Suloor"", ""சூலூர்""]",Sulur,TN Revenue Gazette - Coimbatore District,1.0
+6,3,Pollachi,பொள்ளாச்சி,"[""Pollachi"", ""Pollachi Taluk"", ""பொள்ளாச்சி""]",Pollachi,TN Revenue Gazette - Coimbatore District,1.0
+7,3,Kinathukadavu,கிணத்துக்கடவு,"[""Kinathukadavu"", ""Kinathukadavoo"", ""கிணத்துக்கடவு""]",Kinathukadavu,TN Revenue Gazette - Coimbatore District,1.0
+8,3,Valparai,வால்பாறை,"[""Valparai"", ""Valpaarai"", ""வால்பாறை""]",Valparai,TN Revenue Gazette - Coimbatore District,1.0
+9,2,Madukkarai,மதுக்கரை,"[""Madukkarai"", ""Mathukkarai"", ""மதுக்கரை""]",Madukkarai,TN Revenue Gazette - Coimbatore District,1.0
+10,2,Perur,பேரூர்,"[""Perur"", ""Peroor"", ""பேரூர்""]",Perur,TN Revenue Gazette - Coimbatore District,1.0
+11,3,Anaimalai,ஆனைமலை,"[""Anaimalai"", ""Anamalai"", ""ஆனைமலை""]",Anaimalai,TN Revenue Gazette - Coimbatore District,1.0

@@ -1780,6 +1780,19 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
     lowered = raw.lower()
     norm_text = unicodedata.normalize("NFC", lowered)
 
+    # 0. Check Coimbatore Location Intelligence Engine first
+    try:
+        from app.services.location_resolver import location_resolver
+        cbe_res = location_resolver.resolve(raw)
+        if cbe_res and (cbe_res.get("area") or cbe_res.get("taluk") or cbe_res.get("landmark")) and cbe_res.get("confidence", 0.0) >= 0.75:
+            area_name = cbe_res.get("area") or cbe_res.get("taluk") or "Coimbatore"
+            formatted = f"{area_name}, Coimbatore District"
+            lat_str = str(cbe_res["latitude"]) if cbe_res.get("latitude") else "11.016800"
+            lon_str = str(cbe_res["longitude"]) if cbe_res.get("longitude") else "76.955800"
+            return formatted, lat_str, lon_str, cbe_res["confidence"]
+    except Exception:
+        pass
+
     # 1. High-precision Substring & Keyword Matching across all Tamil Nadu Districts
     best_loc = None
     highest_score = 0.0
@@ -1870,7 +1883,7 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
     return None, None, None, 0.0
 
 
-def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, str, str, float]]:
+def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, Optional[str], Optional[str], float]]:
     """
     Detects when a citizen enters a location with a slight spelling or speech-to-text variation.
     Returns (candidate_display_name, latitude, longitude, confidence) if a candidate is found
@@ -1929,8 +1942,10 @@ def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, str, str, fl
 
     if best_loc and highest_score >= 0.68:
         # Return cleaned concise location name (e.g. "Gandhipuram, Coimbatore" or "Peelamedu, Coimbatore")
-        loc_name = best_loc["name"]
-        return loc_name, best_loc.get("latitude"), best_loc.get("longitude"), highest_score
+        loc_name = str(best_loc["name"])
+        lat = str(best_loc["latitude"]) if best_loc.get("latitude") is not None else None
+        lon = str(best_loc["longitude"]) if best_loc.get("longitude") is not None else None
+        return loc_name, lat, lon, float(highest_score)
 
     return None
 
@@ -1969,6 +1984,34 @@ def normalize_structured_location(
 
     raw = text.strip()
     lowered = raw.lower()
+
+    # Query Coimbatore Location Intelligence Resolver first
+    try:
+        from app.services.location_resolver import location_resolver
+        cbe_res = location_resolver.resolve(raw)
+        if cbe_res and (cbe_res.get("area") or cbe_res.get("taluk") or cbe_res.get("street") or cbe_res.get("landmark")) and cbe_res.get("confidence", 0.0) >= 0.70:
+            return {
+                "area": cbe_res.get("area") or existing_area,
+                "street": cbe_res.get("street") or existing_street,
+                "landmark": cbe_res.get("landmark") or existing_landmark,
+                "city": "Coimbatore",
+                "district": "Coimbatore",
+                "state": "Tamil Nadu",
+                "corporation_zone": cbe_res.get("corporation_zone"),
+                "ward_no": cbe_res.get("ward_no"),
+                "taluk": cbe_res.get("taluk"),
+                "firka": cbe_res.get("firka"),
+                "revenue_village": cbe_res.get("revenue_village"),
+                "confidence": cbe_res.get("confidence"),
+                "needs_confirmation": cbe_res.get("needs_confirmation", False),
+                "clarification_question": cbe_res.get("clarification_question"),
+                "suggested_landmarks": cbe_res.get("suggested_landmarks", []),
+                "exact_location": None,
+                "latitude": str(cbe_res["latitude"]) if cbe_res.get("latitude") else None,
+                "longitude": str(cbe_res["longitude"]) if cbe_res.get("longitude") else None
+            }
+    except Exception:
+        pass
 
     area = existing_area
     street = existing_street
