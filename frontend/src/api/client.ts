@@ -1,13 +1,24 @@
 import axios from 'axios';
 
 export const getApiBaseUrl = (): string => {
-  const envUrl = import.meta.env.VITE_API_BASE_URL;
-  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-    return `${envUrl}/api/v1`;
+  let envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && typeof envUrl === 'string') {
+    let clean = envUrl.trim().replace(/\/+$/, '');
+    if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+      clean = `https://${clean}`;
+    }
+    if (clean.endsWith('/api/v1')) {
+      return clean;
+    }
+    if (clean.endsWith('/api')) {
+      return `${clean}/v1`;
+    }
+    return `${clean}/api/v1`;
   }
   if (typeof window !== 'undefined' && window.location.hostname) {
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      return `http://${window.location.hostname}:8000/api/v1`;
+      const proto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+      return `${proto}//${window.location.hostname}:8000/api/v1`;
     }
   }
   return 'http://127.0.0.1:8000/api/v1';

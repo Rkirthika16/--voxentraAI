@@ -52,8 +52,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount central API router
+# Mount central API router with standard and alias prefixes to eliminate any 404 errors
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix="/api")
+app.include_router(api_router)
 
 
 @app.get("/health", tags=["Health"])
