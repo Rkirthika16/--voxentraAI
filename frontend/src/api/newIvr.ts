@@ -48,6 +48,8 @@ export interface NewIVRTurnResponse {
   spoken_reply: string;
   memory: NewIVRMemory;
   next_field?: string;
+  question_count?: number;
+  max_questions?: number;
   is_confirmation?: boolean;
   complaint_created?: boolean;
   complaint_id?: number;

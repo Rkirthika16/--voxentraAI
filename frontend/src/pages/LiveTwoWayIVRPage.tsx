@@ -28,6 +28,8 @@ export const LiveTwoWayIVRPage: React.FC = () => {
   const [ivrState, setIvrState] = useState<string>('CALL_DISCONNECTED');
   const [callDuration, setCallDuration] = useState<number>(0);
   const [detectedLanguage, setDetectedLanguage] = useState<string>('Auto');
+  const [questionCount, setQuestionCount] = useState<number>(0);
+  const [maxQuestions, setMaxQuestions] = useState<number>(10);
 
   // Messages & Memory State
   const [messages, setMessages] = useState<NewIVRMessage[]>([]);
@@ -69,6 +71,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef<string>('');
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -97,9 +100,54 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Browser Text-to-Speech (TTS) with turn-taking
+  // High Quality Text-to-Speech (TTS) with server audio and browser fallback
   const speakText = (text: string, lang = 'Tanglish', onFinish?: () => void) => {
-    if (ttsMuted || !window.speechSynthesis) {
+    if (ttsMuted) {
+      if (onFinish) onFinish();
+      return;
+    }
+
+    const langCode = lang.toLowerCase().includes('ta') || lang === 'Tamil' ? 'ta' : 'en';
+
+    // 1. Try server-side crystal clear TTS audio stream
+    try {
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.src = '';
+      }
+
+      const ttsUrl = `/api/v1/new-ivr/tts?text=${encodeURIComponent(text)}&lang=${langCode}`;
+      const audio = new Audio(ttsUrl);
+      audioPlayerRef.current = audio;
+
+      setIsAiSpeaking(true);
+      setIvrState('AI_SPEAKING');
+
+      audio.onended = () => {
+        setIsAiSpeaking(false);
+        setIvrState('WAITING_FOR_CITIZEN');
+        if (onFinish) onFinish();
+      };
+
+      audio.onerror = () => {
+        // Fallback to browser Web Speech API
+        playBrowserSpeechFallback(text, lang, onFinish);
+      };
+
+      audio.play().catch(() => {
+        // Fallback to browser Web Speech API if autoplay restricted
+        playBrowserSpeechFallback(text, lang, onFinish);
+      });
+      return;
+    } catch (e) {
+      playBrowserSpeechFallback(text, lang, onFinish);
+    }
+  };
+
+  const playBrowserSpeechFallback = (text: string, lang: string, onFinish?: () => void) => {
+    if (!window.speechSynthesis) {
+      setIsAiSpeaking(false);
+      setIvrState('WAITING_FOR_CITIZEN');
       if (onFinish) onFinish();
       return;
     }
@@ -108,7 +156,6 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
 
-      // Pick appropriate voice
       const voices = window.speechSynthesis.getVoices();
       const tamilVoice = voices.find((v) => v.lang.includes('ta') || v.name.toLowerCase().includes('tamil'));
       const indianEnglishVoice = voices.find((v) => v.lang.includes('en-IN') || v.name.toLowerCase().includes('india'));
@@ -163,6 +210,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       setRegisteredComplaint(null);
       setLiveTranscript('');
       transcriptRef.current = '';
+      setQuestionCount(0);
 
       const chosenLang = langChoice || selectedLanguage || 'Tamil';
       const res = await newIvrApi.createSession('+919843098765', chosenLang);
@@ -384,6 +432,12 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     if (res.state) {
       setIvrState(res.state);
     }
+    if (res.question_count !== undefined) {
+      setQuestionCount(res.question_count);
+    }
+    if (res.max_questions !== undefined) {
+      setMaxQuestions(res.max_questions);
+    }
 
     // Append AI Response
     if (res.ai_reply) {
@@ -536,6 +590,11 @@ export const LiveTwoWayIVRPage: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {callActive && questionCount > 0 && (
+                <div style={{ background: '#2563eb', padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#ffffff' }}>
+                  <HelpCircle size={13} /> Q {questionCount}/{maxQuestions}
+                </div>
+              )}
               <div style={{ background: '#1e293b', padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#38bdf8' }}>
                 <Languages size={14} /> {detectedLanguage}
               </div>

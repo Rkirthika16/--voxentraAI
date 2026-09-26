@@ -3,7 +3,7 @@ import tempfile
 import aiofiles
 import logging
 from typing import Optional, Dict, Any, List
-from fastapi import APIRouter, Depends, UploadFile, File, Form, Body, status, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Body, Query, status, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -285,3 +285,19 @@ def get_ivr_status(
         "complaint_id": session.complaint_id,
         "complaint_number": session.complaint_number
     }
+
+
+@router.get("/tts")
+@router.get("/session/{session_id}/tts")
+def get_new_ivr_tts_audio(
+    text: str = Query(..., description="Text to synthesize to speech"),
+    lang: Optional[str] = Query("ta", description="Language code (ta, en, hi)")
+):
+    """
+    Synthesizes crystal-clear native Tamil, Tanglish, or English audio for IVR playback.
+    """
+    from app.ai.tts_service import synthesize_speech
+    from fastapi import Response
+    audio_bytes = synthesize_speech(text, lang=lang)
+    return Response(content=audio_bytes, media_type="audio/mpeg")
+

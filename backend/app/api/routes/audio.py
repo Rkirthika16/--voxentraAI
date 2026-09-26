@@ -48,3 +48,16 @@ async def transcribe_audio_file(
 def get_speech_engine_status():
     """Returns availability status of the local Whisper speech engine."""
     return speech_service.check_availability()
+
+
+@router.get("/tts")
+def generate_tts_audio(
+    text: str,
+    lang: Optional[str] = "ta"
+):
+    """Generates crystal clear speech audio in Tamil, Hindi, or English."""
+    from app.ai.tts_service import synthesize_speech
+    from fastapi import Response
+    audio_bytes = synthesize_speech(text, lang=lang)
+    return Response(content=audio_bytes, media_type="audio/mpeg")
+

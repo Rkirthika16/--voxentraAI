@@ -177,11 +177,11 @@ class NewIVRService:
         ivr_session.structured_memory = memory
         db.commit()
 
-        # 6. Check missing slots & generate next relevant question (ONE AT A TIME)
+        # 6. Check missing slots & generate next relevant question (ONE AT A TIME, MAX 10 QUESTIONS)
         next_missing = self._get_next_missing_slot(memory)
 
         if next_missing is None:
-            # All essential info collected -> Move to CONFIRMATION
+            # All essential info collected or max questions reached -> Move to CONFIRMATION
             ivr_session.state = IVRState.CONFIRMATION.value
             ivr_session.current_field_prompted = None
             db.commit()
@@ -198,10 +198,17 @@ class NewIVRService:
                 "ai_reply": summary_text,
                 "spoken_reply": spoken_summary,
                 "memory": memory,
+                "question_count": memory.get("questions_asked_count", 0),
+                "max_questions": memory.get("max_questions", 10),
                 "is_confirmation": True,
                 "complaint_created": False
             }
         else:
+            # Increment question count
+            current_q_count = memory.get("questions_asked_count", 0) + 1
+            memory["questions_asked_count"] = current_q_count
+            ivr_session.structured_memory = memory
+
             # Ask the next relevant question based on category and missing slot
             ivr_session.state = IVRState.WAITING_FOR_CITIZEN.value
             ivr_session.current_field_prompted = next_missing
@@ -220,6 +227,8 @@ class NewIVRService:
                 "spoken_reply": spoken_reply,
                 "memory": memory,
                 "next_field": next_missing,
+                "question_count": current_q_count,
+                "max_questions": memory.get("max_questions", 10),
                 "is_confirmation": False,
                 "complaint_created": False
             }
@@ -269,7 +278,16 @@ class NewIVRService:
             if len(cleaned_loc) >= 2:
                 memory["location"] = cleaned_loc
 
-        # 3. Specific Landmark Detection (e.g. near Bus Stand, opposite Temple, near GH Hospital)
+        # 3. Street / Road Name Detection
+        street_match = re.search(r'\b([A-Za-z0-9\s]+(?:street|road|salai|theru|cross|avenue|nagar\s+main\s+road|lane|highway))\b', raw_text, re.IGNORECASE)
+        if street_match and not memory.get("street_road_name"):
+            cand_st = street_match.group(1).strip()
+            if cand_st.lower() not in ["main road", "street", "road", "theru", "salai"]:
+                memory["street_road_name"] = cand_st
+        elif prompted_slot == "street_road_name" and not memory.get("street_road_name"):
+            memory["street_road_name"] = raw_text.strip()
+
+        # 4. Specific Landmark Detection (e.g. near Bus Stand, opposite Temple, near GH Hospital)
         landmark_match = re.search(r'(?:near|opposite|behind|next to|beside|அருகே|அருகில்|பக்கத்தில்|எதிரில்|கிட்ட)\s+([A-Za-z0-9\u0B80-\u0BFF\s]{3,35})', raw_text, re.IGNORECASE)
         if landmark_match and not memory.get("landmark"):
             cand_landmark = landmark_match.group(1).strip()
@@ -278,7 +296,14 @@ class NewIVRService:
         elif prompted_slot == "landmark" and not memory.get("landmark"):
             memory["landmark"] = raw_text.strip()
 
-        # 4. Duration Detection (e.g. "two days", "3 days", "since yesterday", "today morning", "rendu naal", "nethu lendhu")
+        # 5. Exact Location / Door Number / Pole Number Detection
+        exact_match = re.search(r'(?:door\s*(?:no|number)?|d\.no|pole\s*(?:no|number)?|pillar\s*(?:no|number)?|கதவு\s*எண்|மின்\s*கம்பம்|கம்பம்|junction)\s*[:#\-]?\s*([A-Za-z0-9\/\-]+)', raw_text, re.IGNORECASE)
+        if exact_match and not memory.get("exact_location"):
+            memory["exact_location"] = exact_match.group(0).strip()
+        elif prompted_slot == "exact_location" and not memory.get("exact_location"):
+            memory["exact_location"] = raw_text.strip()
+
+        # 6. Duration Detection (e.g. "two days", "3 days", "since yesterday", "today morning", "rendu naal", "nethu lendhu")
         dur_patterns = [
             r'\b(\d+\s*(?:days?|hours?|weeks?|months?)(?:-ah)?)\b',
             r'\b((?:two|three|four|five|six|seven|one|ten)\s*(?:days?|hours?|weeks?)(?:-ah)?)\b',
@@ -298,7 +323,21 @@ class NewIVRService:
         if prompted_slot == "duration" and not memory.get("duration"):
             memory["duration"] = raw_text.strip()
 
-        # 5. Scope / Affected Area (e.g. "whole area", "entire street", "my house only", "full-ah", "aama", "yes")
+        # 7. Frequency Detection (e.g. first time, daily recurring, frequent)
+        freq_patterns = [
+            (r'\b(first\s*time|mudhal\s*murai|முதல்\s*முறை)\b', "First time"),
+            (r'\b(daily|every\s*day|dinamum|thinamum|தினமும்|daily-ah)\b', "Daily recurring"),
+            (r'\b(frequent|often|adikkadi|அடிக்கடி|always|continuous|eppovum)\b', "Frequent / Continuous"),
+            (r'\b(rain|rainy\s*day|mazhai|மழை\s*நேரம்)\b', "Rainy season / Occasional")
+        ]
+        for pat, val in freq_patterns:
+            if re.search(pat, lowered) and not memory.get("frequency"):
+                memory["frequency"] = val
+                break
+        if prompted_slot == "frequency" and not memory.get("frequency"):
+            memory["frequency"] = raw_text.strip()
+
+        # 8. Scope / Affected Area (e.g. "whole area", "entire street", "my house only", "full-ah", "aama", "yes")
         area_wide_indicators = [
             "full", "full-ah", "fulla", "entire", "whole", "area full", "street full", "எல்லா", "முழுவதும்", "முழு தெரு",
             "ellarukum", "all houses", "ellam", "all", "colony full", "area", "street", "perusa"
@@ -320,20 +359,24 @@ class NewIVRService:
             elif not memory.get("affected_scope"):
                 memory["affected_scope"] = raw_text.strip()
 
-        # 6. Severity & Safety Hazards
+        # 9. Severity & Safety Hazards
         hazard_keywords = ["danger", "hazard", "sparking", "live wire", "open wire", "pit", "hole", "fire", "smoke", "accident", "emergency", "flood", "stagnant", "smell", "mosquito", "கசிவு", "ஆபத்து", "விபத்து", "தீ", "துர்நாற்றம்", "கொசு"]
         if any(w in lowered for w in hazard_keywords):
             if not memory.get("severity"):
                 memory["severity"] = "High Public Safety Concern"
                 memory["priority"] = "HIGH"
         elif prompted_slot == "severity" and not memory.get("severity"):
-            if any(w in lowered for w in ["aama", "aamam", "yes", "danger", "ஆமாம்"]):
+            if any(w in lowered for w in ["aama", "aamam", "yes", "danger", "ஆமாம்", "aapathu"]):
                 memory["severity"] = "High Public Safety Concern"
                 memory["priority"] = "HIGH"
             else:
                 memory["severity"] = raw_text.strip()
 
-        # 7. Citizen Name / Identity
+        # 10. Citizen Name / Identity & Phone
+        phone_match = re.search(r'\b[6-9]\d{9}\b', raw_text)
+        if phone_match and not memory.get("citizen_phone"):
+            memory["citizen_phone"] = phone_match.group(0)
+
         name_match = re.search(r'(?:name\s*is|i\s*am|my\s*name\s*is|பெயர்|naan|peyar|en\s*peru)\s*([A-Za-z\u0B80-\u0BFF\s]{2,25})', raw_text, re.IGNORECASE)
         if name_match and not memory.get("citizen_name"):
             cand = name_match.group(1).strip()
@@ -342,7 +385,7 @@ class NewIVRService:
         elif prompted_slot == "citizen_name" and not memory.get("citizen_name"):
             memory["citizen_name"] = raw_text.strip()
 
-        # 8. Priority Assessment
+        # Priority Assessment
         if memory.get("problem"):
             prio, _ = assess_priority(memory["problem"], memory.get("category", "General"))
             if memory.get("severity") == "High Public Safety Concern":
@@ -354,20 +397,46 @@ class NewIVRService:
         """
         Determines the next missing information slot to prompt.
         Ensures AI asks ONE question at a time and never asks for already collected information.
+        Strictly enforces maximum 10 questions limit.
         """
+        questions_count = memory.get("questions_asked_count", 0)
+        max_q = memory.get("max_questions", 10)
+        if questions_count >= max_q:
+            return None
+
+        # 1. Problem
         if not memory.get("problem"):
             return "problem"
+        # 2. Location (District / Area)
         if not memory.get("location"):
             return "location"
+        # 3. Duration
         if not memory.get("duration"):
             return "duration"
+        # 4. Scope / Affected Area
         if not memory.get("affected_scope"):
             return "affected_scope"
+
+        # Detailed auxiliary slots (up to 10 questions max if detailed mode or missing)
+        if memory.get("detailed_intake"):
+            if not memory.get("street_road_name"):
+                return "street_road_name"
+            if not memory.get("landmark"):
+                return "landmark"
+            if not memory.get("exact_location"):
+                return "exact_location"
+            if not memory.get("frequency"):
+                return "frequency"
+            if not memory.get("severity"):
+                return "severity"
+            if not memory.get("citizen_name"):
+                return "citizen_name"
+
         return None
 
     def _generate_slot_question(self, slot: str, memory: Dict[str, Any], lang: str) -> Tuple[str, str]:
         """
-        Generates context-aware, category-specific follow-up questions in the appropriate language.
+        Generates context-aware, category-specific follow-up questions in the appropriate language (Tamil, Tanglish, English).
         """
         cat = memory.get("category", "General")
         loc = memory.get("location") or "your area"
@@ -396,64 +465,100 @@ class NewIVRService:
                 spoken = "In which District or area is this problem located?"
             return text, spoken
 
+        if slot == "street_road_name":
+            if lang == "Tamil":
+                text = f"📍 **{loc}** பகுதியில் பாதிக்கப்பட்ட தெரு அல்லது சாலையின் பெயர் என்ன?"
+                spoken = "பாதிக்கப்பட்ட தெரு அல்லது சாலையின் பெயர் என்ன?"
+            elif lang == "Tanglish":
+                text = f"📍 **{loc}**-la endha street or road affected aagi irukku?"
+                spoken = "Endha street or road affected aagi irukku?"
+            else:
+                text = f"📍 Which street or road in **{loc}** is affected?"
+                spoken = "Which street or road is affected?"
+            return text, spoken
+
         if slot == "landmark":
             if lang == "Tamil":
-                text = f"சரி, **{loc}** பகுதியில் அருகிலுள்ள குறிப்பிட்ட அடையாளம் (Landmark), பேருந்து நிறுத்தம், பள்ளி அல்லது கோவில் ஏதேனும் உள்ளதா?"
+                text = f"🏛️ **{loc}** பகுதியில் அருகிலுள்ள குறிப்பிட்ட அடையாளம் (Landmark), பேருந்து நிறுத்தம், பள்ளி அல்லது கோவில் ஏதேனும் உள்ளதா?"
                 spoken = "அருகிலுள்ள லேண்ட்மார்க் அல்லது அடையாளத்தைக் கூறவும்."
             elif lang == "Tanglish":
-                text = f"Seri, **{loc}**-la nearby landmark (e.g. Bus stand, School, Temple or Cross street) edhavadhu irukka?"
+                text = f"🏛️ **{loc}**-la nearby landmark (e.g. Bus stand, School, Temple or ATM) edhavadhu irukka?"
                 spoken = "Kitta edhavadhu landmark irukka?"
             else:
-                text = f"Could you provide a specific landmark, nearby building, school, or cross street in **{loc}**?"
+                text = f"🏛️ Could you provide a specific landmark, nearby building, school, or cross street in **{loc}**?"
                 spoken = "Could you mention a nearby landmark or cross street?"
+            return text, spoken
+
+        if slot == "exact_location":
+            if lang == "Tamil":
+                text = f"🎯 **{loc}** பகுதியில் குறிப்பிட்ட கதவு எண், மின் கம்ப எண் அல்லது சரியான இடம் எது?"
+                spoken = "குறிப்பிட்ட கதவு எண் அல்லது மின் கம்ப எண் என்ன?"
+            elif lang == "Tanglish":
+                text = f"🎯 **{loc}**-la exact spot details, electric pole number or door number sollunga."
+                spoken = "Specific spot details or door number sollunga."
+            else:
+                text = f"🎯 What is the exact spot detail, electric pole number, or door number in **{loc}**?"
+                spoken = "What is the exact spot detail or door number?"
             return text, spoken
 
         if slot == "duration":
             if lang == "Tamil":
-                text = f"சரி, **{loc}** பகுதியில் இந்தப் பிரச்சினை எப்போது முதல் நீடிக்கிறது? (எ.கா: இரண்டு நாட்களாக, இன்று காலை முதல்)"
+                text = f"⏱️ **{loc}** பகுதியில் இந்தப் பிரச்சினை எப்போது முதல் நீடிக்கிறது? (எ.கா: இரண்டு நாட்களாக, இன்று காலை முதல்)"
                 spoken = f"இந்தப் பிரச்சினை எப்போது முதல் நீடிக்கிறது?"
             elif lang == "Tanglish":
-                text = f"Okay, **{loc}**-la indha problem eppo lendhu irukku? (e.g. 2 days-ah, today morning-ah)"
+                text = f"⏱️ Okay, **{loc}**-la indha problem eppo lendhu irukku? (e.g. 2 days-ah, today morning-ah)"
                 spoken = f"Indha problem eppo lendhu irukku?"
             else:
-                text = f"Since when has this issue been occurring in **{loc}**? (e.g. 2 days, today morning)"
+                text = f"⏱️ Since when has this issue been occurring in **{loc}**? (e.g. 2 days, today morning)"
                 spoken = "Since when has this problem been occurring?"
+            return text, spoken
+
+        if slot == "frequency":
+            if lang == "Tamil":
+                text = f"🔄 இந்தப் பிரச்சினை எத்தனை முறை அல்லது எவ்வளவு அடிக்கடி நிகழ்கிறது? (எ.கா: முதல் முறையாக, தினமும் தொடர்ந்து)"
+                spoken = "இந்தப் பிரச்சினை எவ்வளவு அடிக்கடி நிகழ்கிறது?"
+            elif lang == "Tanglish":
+                text = f"🔄 Indha problem evalo frequency-la varudhu? (e.g. First time, Daily recurring, Adikkadi nadakudhu)"
+                spoken = "Indha problem evalo adikkadi nadakudhu?"
+            else:
+                text = f"🔄 How often does this problem occur? (e.g. Happening for the first time, recurring daily, frequent)"
+                spoken = "How often has this problem occurred?"
             return text, spoken
 
         if slot == "affected_scope":
             if lang == "Tamil":
-                text = f"அந்த பகுதி முழுவதும் பாதிக்கப்பட்டுள்ளதா அல்லது உங்கள் தெருவில் மட்டுமா?"
+                text = f"🏘️ அந்த பகுதி முழுவதும் பாதிக்கப்பட்டுள்ளதா அல்லது உங்கள் தெருவில்/வீட்டில் மட்டுமா?"
                 spoken = "பகுதி முழுவதும் பாதிக்கப்பட்டுள்ளதா?"
             elif lang == "Tanglish":
-                text = f"Seri. **{loc}** area full-ah indha problem irukka, illa unga street mattumaa?"
+                text = f"🏘️ Seri. **{loc}** area full-ah indha problem irukka, illa unga street mattumaa?"
                 spoken = "Area full-ah problem-aa?"
             else:
-                text = f"Is the entire area of **{loc}** affected, or only your specific street/building?"
+                text = f"🏘️ Is the entire area of **{loc}** affected, or only your specific street/building?"
                 spoken = "Is the entire area affected?"
             return text, spoken
 
         if slot == "severity":
             if lang == "Tamil":
-                text = f"இந்தப் பிரச்சினையால் விபத்து அபாயம், சுகாதாரக் கேடு அல்லது உடனடி ஆபத்து ஏதேனும் உள்ளதா?"
+                text = f"🚨 இந்தப் பிரச்சினையால் விபத்து அபாயம், சுகாதாரக் கேடு அல்லது உடனடி ஆபத்து ஏதேனும் உள்ளதா?"
                 spoken = "உடனடி ஆபத்து அல்லது விபத்து அபாயம் ஏதேனும் உள்ளதா?"
             elif lang == "Tanglish":
-                text = f"Indha problem-naala edhavadhu urgent danger, health risk or safety hazard irukka?"
+                text = f"🚨 Indha problem-naala edhavadhu urgent danger, health risk or safety hazard irukka?"
                 spoken = "Edhavadhu urgent danger or hazard irukka?"
             else:
-                text = f"Is there any urgent public safety hazard, health risk, or danger associated with this issue?"
+                text = f"🚨 Is there any urgent public safety hazard, health risk, or danger associated with this issue?"
                 spoken = "Is there any safety hazard or danger involved?"
             return text, spoken
 
         if slot == "citizen_name":
             if lang == "Tamil":
-                text = f"நன்றி. உங்கள் புகார் பதிவிற்காகவும், எஸ்.எம்.எஸ் (SMS) தகவலுக்காகவும் உங்கள் பெயரை கூற முடியுமா?"
-                spoken = "புகார் பதிவிற்காக உங்கள் பெயரைக் கூறவும்."
+                text = f"👤 நன்றி. உங்கள் புகார் பதிவிற்காகவும், எஸ்.எம்.எஸ் (SMS) தகவலுக்காகவும் உங்கள் பெயர் மற்றும் தொடர்பு எண்ணை கூற முடியுமா?"
+                spoken = "புகார் பதிவிற்காக உங்கள் பெயர் மற்றும் தொடர்பு எண்ணைக் கூறவும்."
             elif lang == "Tanglish":
-                text = f"Romba nandri. Unga complaint registration and SMS update-kaaga unga name sollunga?"
-                spoken = "Unga name enna nu sollunga."
+                text = f"👤 Romba nandri. Unga complaint registration and SMS update-kaaga unga name and phone number sollunga?"
+                spoken = "Unga name and phone number enna nu sollunga."
             else:
-                text = f"Thank you. May I please have your name for official registration and SMS status updates?"
-                spoken = "May I please have your name for official registration?"
+                text = f"👤 Thank you. May I please have your name and contact phone number for official registration and SMS status updates?"
+                spoken = "Please provide your name and contact phone number."
             return text, spoken
 
         return "Could you please provide more details?", "Please provide more details."

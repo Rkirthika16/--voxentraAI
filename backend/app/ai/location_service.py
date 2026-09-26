@@ -1793,8 +1793,9 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
         for kw in loc["keywords"]:
             kw_norm = unicodedata.normalize("NFC", kw.lower())
 
-            # Exact keyword occurrence
-            if kw_norm in norm_text or kw_norm in stripped_input:
+            # Exact keyword occurrence with token boundaries
+            token_pattern = r'(?:^|[\s,.\-_\(\)])' + re.escape(kw_norm) + r'(?:$|[\s,.\-_\(\)])'
+            if re.search(token_pattern, norm_text) or re.search(token_pattern, stripped_input):
                 score = 0.99 if (kw_norm == norm_text or kw_norm == stripped_input) else 0.95
                 if score > highest_score:
                     highest_score = score
@@ -1810,11 +1811,13 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
 
             # Tamil suffix matching: e.g. "காந்திபுரத்தில்", "காந்திபுரம்ல", "திருவாரூர்ல", "சென்னையில்", "மதுரையில"
             tamil_base = re.sub(r'(?:ல|இல்|யில்|இடம்|பக்கம்|அருகே|பஸ் ஸ்டாண்ட்)$', '', kw_norm)
-            if len(tamil_base) >= 3 and (tamil_base in norm_text or tamil_base in stripped_input):
-                score = 0.94
-                if score > highest_score:
-                    highest_score = score
-                    best_loc = loc
+            if len(tamil_base) >= 3:
+                tamil_pattern = r'(?:^|[\s,.\-_\(\)])' + re.escape(tamil_base) + r'(?:ல|இல்|யில்|இடம்|பக்கம்|அருகே|த்தில|த்தில்|லேயே|ளில|ளில்|$|[\s,.\-_\(\)])'
+                if re.search(tamil_pattern, norm_text) or re.search(tamil_pattern, stripped_input):
+                    score = 0.94
+                    if score > highest_score:
+                        highest_score = score
+                        best_loc = loc
 
     if best_loc and highest_score >= 0.90:
         return best_loc["name"], best_loc["latitude"], best_loc["longitude"], highest_score
@@ -1827,6 +1830,12 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
         r'([A-Za-z0-9]{3,20})\s+pakkam\b',
         r'([A-Za-z0-9]{3,20})\s+kitta\b',
         r'([\u0B80-\u0BFF]{3,20})(?:ல|யில்|இல்|அருகே)\b'
+    ]
+
+    excluded_prefixes = [
+        "விநியோக", "குடிநீர்", "மின்சார", "மின்வெட்ட", "பிரச்சனை", "பிரச்சினை", "சாலை", "குப்பை",
+        "சாக்கடை", "விளக்கு", "சேத", "தெரு", "ரோடு", "வழங்கு", "வடிநீர்", "தண்ணீர்", "தண்ணி",
+        "water", "power", "electric", "leak", "clean", "overflow", "drainage", "garbage"
     ]
 
     for pattern in location_patterns:
@@ -1844,15 +1853,19 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
                 "இந்த", "அந்த", "எங்கள்", "என்", "இந்த தெரு", "இந்த பகுதி", "இந்த இடம்",
                 "அருக", "அருகி", "அருகில்", "பக்கத்", "பக்கத்தில்", "பக்கம்", "எதிர்", "எதிரில்", "நிலையம்",
                 "பேருந்து", "பேருந்து நிலையம்", "தெரு", "சாலை", "ரோடு", "வழி", "வீதி", "பஸ்", "bus stand",
-                "near", "opposite", "behind", "next", "door no", "plot no", "ward"
+                "near", "opposite", "behind", "next", "door no", "plot no", "ward",
+                "குடிநீர்", "விநியோகம்", "விநியோகத்த", "விநியோகத்தில்", "விநியோகத்தி", "பிரச்சினை", "பிரச்சனை",
+                "மின்சாரம்", "மின்வெட்டு", "குப்பை", "சாக்கடை", "விளக்கு"
             ]
-            if candidate and len(candidate) > 2 and candidate.lower() not in excluded and not any(candidate.lower() == ex for ex in excluded):
+            if candidate and len(candidate) > 2 and candidate.lower() not in excluded and not any(candidate.lower().startswith(p) for p in excluded_prefixes):
                 # Verify if candidate matches a known Tamil Nadu locality
                 is_valid, loc_obj, vconf = is_valid_tamil_nadu_location(candidate)
                 if is_valid and loc_obj:
                     return loc_obj["name"], loc_obj.get("latitude"), loc_obj.get("longitude"), vconf
-                formatted_loc = candidate.title() if candidate.isascii() else candidate
-                return f"{formatted_loc}, Tamil Nadu", None, None, 0.70
+                # If candidate is a specific geographic noun
+                if any(suffix in candidate for suffix in ["நகர்", "தெரு", "சாலை", "ரோடு", "கிராமம்", "மாவட்டம்", "வட்டம்", "nagar", "street", "road", "colony", "layout", "village"]):
+                    formatted_loc = candidate.title() if candidate.isascii() else candidate
+                    return f"{formatted_loc}, Tamil Nadu", None, None, 0.70
 
     return None, None, None, 0.0
 
