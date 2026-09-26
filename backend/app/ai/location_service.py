@@ -1935,5 +1935,142 @@ def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, str, str, fl
     return None
 
 
+def normalize_structured_location(
+    text: str,
+    existing_area: Optional[str] = None,
+    existing_street: Optional[str] = None,
+    existing_landmark: Optional[str] = None,
+    existing_city: Optional[str] = None,
+    existing_district: Optional[str] = None
+) -> Dict[str, Optional[str]]:
+    """
+    Extracts and normalizes informal citizen speech into structured location fields:
+    - Area: (e.g., Gandhipuram, Anna Nagar, Melur)
+    - Street: (e.g., 5th Street, Cross Cut Road, Gandhi Salai)
+    - Landmark: (e.g., Near Bus Stand, Opposite Indian Bank)
+    - City: (e.g., Coimbatore, Chennai, Madurai)
+    - District: (e.g., Coimbatore, Chennai, Madurai)
+    - State: Tamil Nadu
+    
+    Does NOT invent any location the citizen did not provide.
+    """
+    if not text:
+        return {
+            "area": existing_area,
+            "street": existing_street,
+            "landmark": existing_landmark,
+            "city": existing_city or existing_district,
+            "district": existing_district,
+            "state": "Tamil Nadu",
+            "exact_location": None,
+            "latitude": None,
+            "longitude": None
+        }
+
+    raw = text.strip()
+    lowered = raw.lower()
+
+    area = existing_area
+    street = existing_street
+    landmark = existing_landmark
+    city = existing_city
+    district = existing_district
+    lat = None
+    lon = None
+
+    # 1. Extract street name
+    street_patterns = [
+        r'\b(\d+(?:st|nd|rd|th)?\s+(?:street|road|salai|theru|cross|avenue|lane|main\s+road))\b',
+        r'\b([A-Za-z0-9\.\s]+(?:street|road|salai|theru|cross|avenue|lane|main\s+road|highway|boulevard))\b',
+        r'([\u0B80-\u0BFF0-9\s]+(?:தெரு|சாலை|வீதி|நகர்\s*மெயின்\s*ரோடு))'
+    ]
+    for pat in street_patterns:
+        m = re.search(pat, raw, re.IGNORECASE)
+        if m:
+            cand_st = m.group(1).strip()
+            cand_st = re.sub(r'^(?:in\s+the|in\s+this|on\s+the|the|this|that|inda|indha|இந்த|அந்த|எங்கள்|என்)\s+', '', cand_st, flags=re.IGNORECASE).strip()
+            low_st = cand_st.lower()
+            generic_streets = [
+                "our street", "my street", "the street", "in the street", "in our street", "enga theru",
+                "street", "road", "this street", "that street", "in this street", "theru", "salai", "veethi",
+                "எங்கள் தெரு", "என் தெரு", "தெரு", "சாலை", "இந்த தெரு"
+            ]
+            if len(cand_st) >= 3 and low_st not in generic_streets and not any(low_st.startswith(g) for g in ["எங்கள் தெரு", "என் தெரு"]):
+                street = cand_st
+                break
+
+    # 2. Extract landmark
+    landmark_match = re.search(r'\b(?:near|opposite|behind|beside|next to|close to|opp|kitta|pakkam|pakathula)\s+([A-Za-z0-9\s\.\,\-]+?)(?:\.|\,|$|\band\b)', raw, re.IGNORECASE)
+    if landmark_match:
+        cand_lm = landmark_match.group(1).strip()
+        cand_lm = re.sub(r'^(?:the|this|that|a|an|in\s+the|near\s+the|இந்த|அந்த)\s+', '', cand_lm, flags=re.IGNORECASE).strip()
+        if len(cand_lm) >= 3 and cand_lm.lower() not in ["area", "street", "road", "place", "house", "veedu", "theru"]:
+            landmark = f"Near {cand_lm}" if not cand_lm.lower().startswith(("near", "opp")) else cand_lm
+    else:
+        ta_landmark = re.search(r'([\u0B80-\u0BFF\s]+)\s+(?:அருகில்|எதிரில்|பின்னால்|பக்கத்தில்)', raw)
+        if ta_landmark:
+            cand_lm = ta_landmark.group(1).strip()
+            cand_lm = re.sub(r'^(?:இந்த|அந்த)\s+', '', cand_lm).strip()
+            if len(cand_lm) >= 3 and cand_lm not in ["பகுதி", "தெரு", "வீடு", "இடம்"]:
+                landmark = f"{cand_lm} அருகில்"
+
+    # 3. Extract Area / District from geographic dataset
+    loc_name, loc_lat, loc_lon, conf = extract_location(raw)
+    if loc_name and loc_name != "Tamil Nadu":
+        lat = loc_lat
+        lon = loc_lon
+        
+        # Dissect location string like "Gandhipuram, Coimbatore District" or "Anna Nagar, Chennai District"
+        parts = [p.strip() for p in loc_name.split(",")]
+        if len(parts) >= 2:
+            extracted_area = parts[0]
+            extracted_district = parts[1].replace("District", "").strip()
+            if not area:
+                area = extracted_area
+            if not district:
+                district = extracted_district
+            if not city:
+                city = extracted_district
+        elif len(parts) == 1:
+            if not area:
+                area = parts[0].replace("District", "").strip()
+            if not district and "district" in loc_name.lower():
+                district = parts[0].replace("District", "").strip()
+                city = district
+
+    # Specific area check from common colloquial expressions like "Gandhipuram-la", "Peelamedu area", "Anna Nagar pakkathula"
+    if not area:
+        area_match = re.search(r'\b([A-Za-z\u0B80-\u0BFF]+)(?:-la|-le|\s+area|\s+pakkathula|\s+la|\s+பகுதியில்)\b', raw, re.IGNORECASE)
+        if area_match:
+            cand_area = area_match.group(1).strip()
+            if cand_area.lower() not in ["enga", "unga", "inga", "anga", "veetu", "theru", "street", "road", "problem", "thanni", "water"]:
+                is_valid, loc_obj, _ = is_valid_tamil_nadu_location(cand_area)
+                if is_valid and loc_obj:
+                    area = loc_obj.get("name", cand_area).split(",")[0].strip()
+                    district = loc_obj.get("district", district)
+                    city = district
+                    lat = loc_obj.get("latitude", lat)
+                    lon = loc_obj.get("longitude", lon)
+                else:
+                    area = cand_area.title() if cand_area.isascii() else cand_area
+
+    # Specific spot / door / pole details
+    spot_match = re.search(r'\b(?:door\s*(?:no|number)?\.?|pole\s*(?:no|number)?\.?|pillar\s*(?:no|number)?\.?|ward\s*\d+|plot\s*no\.?|கதவு\s*எண்|மின்\s*கம்பம்)\s*[:#\-]?\s*([A-Za-z0-9\/\-]+)', raw, re.IGNORECASE)
+    exact_spot = spot_match.group(0).strip() if spot_match else None
+
+    return {
+        "area": area,
+        "street": street,
+        "landmark": landmark,
+        "city": city or district,
+        "district": district,
+        "state": "Tamil Nadu",
+        "exact_location": exact_spot,
+        "latitude": lat,
+        "longitude": lon
+    }
+
+
+
 
 

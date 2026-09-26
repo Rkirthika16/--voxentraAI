@@ -1,0 +1,22 @@
+{
+  "include": [
+    "backend",
+    "main.py",
+    "test_full_ivr_flow.py"
+  ],
+  "extraPaths": [
+    "backend",
+    "./backend"
+  ],
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": [
+        "backend",
+        "./backend"
+      ]
+    }
+  ],
+  "pythonVersion": "3.11",
+  "reportMissingImports": "none"
+}

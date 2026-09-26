@@ -177,9 +177,9 @@ async def create_ivr_conversational_session(
         "To": "1913"
     })
 
-    welcome_text = "வணக்கம்! VoxentraAI citizen complaint service-ku welcome. Ungaloda complaint-a sollunga."
+    welcome_text = "📞 Call Connected. Listening mode active — please describe your civic problem in Tamil, Tanglish, or English. AI will automatically detect your language and respond."
     welcome_spoken = ""
-    _save_ivr_db_message(db, db_sess, "ai", welcome_text, "Tamil")
+    _save_ivr_db_message(db, db_sess, "ai", welcome_text, "Auto")
 
     return {
         "session_id": sid,
