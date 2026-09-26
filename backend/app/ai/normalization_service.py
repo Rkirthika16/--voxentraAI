@@ -92,8 +92,40 @@ def clean_transcription(text: str) -> str:
     cleaned = re.sub(r'\b(?:umm+|uhh+|ah+|err+|hmm+)\b', '', cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r'^(?:like\s*,?|you\s*know\s*,?|basically\s*,?)\s*', '', cleaned, flags=re.IGNORECASE)
 
-    # Correct STT common acoustic misrecognitions
+    # Correct STT common acoustic misrecognitions in Tamil, Tanglish and English
     stt_corrections = [
+        # Tamil STT phonetic mishearings
+        (r'காந்தி\s*தம்பியின்\s*வரவில்லை', 'காந்திபுரத்தில் தண்ணீர் வரவில்லை'),
+        (r'காந்தி\s*தம்பியின்\s*வரல', 'காந்திபுரத்தில் தண்ணீர் வரவில்லை'),
+        (r'காந்தி\s*தம்பியின்\s*பிரச்சனை', 'காந்திபுரத்தில் தண்ணீர் பிரச்சினை'),
+        (r'காந்தி\s*தம்பியின்', 'காந்திபுரம் தண்ணீர்'),
+        (r'காந்தி\s*தம்பி\s*தண்ணீர்', 'காந்திபுரம் தண்ணீர்'),
+        (r'காந்தி\s*தம்பி', 'காந்திபுரம்'),
+        (r'காந்திபுரம்\s*தம்பியின்', 'காந்திபுரத்தில் தண்ணீர்'),
+        (r'காந்திபுரம்\s*தம்பி', 'காந்திபுரம் தண்ணீர்'),
+        (r'காந்திபுரத்தில\s*தம்பி', 'காந்திபுரத்தில் தண்ணீர்'),
+        (r'காந்திபுரத்தில்\s*தம்பி', 'காந்திபுரத்தில் தண்ணீர்'),
+        (r'காந்தி\s*புரத்தில', 'காந்திபுரத்தில்'),
+        (r'காந்தி\s*புரத்துல', 'காந்திபுரத்தில்'),
+        (r'காந்தி\s*புரம்', 'காந்திபுரம்'),
+        (r'காந்திபுரத்துல', 'காந்திபுரம்'),
+        (r'தம்பியின்\s*வரவில்லை', 'தண்ணீர் வரவில்லை'),
+        (r'தம்பியின்\s*வரல', 'தண்ணீர் வரவில்லை'),
+        (r'தம்பியின்\s*பிரச்சனை', 'தண்ணீர் பிரச்சினை'),
+        (r'தம்பி\s*வரல', 'தண்ணீர் வரவில்லை'),
+        (r'\bதண்ணி\s*வரல\b', 'தண்ணீர் வரவில்லை'),
+        (r'\bதண்ணி\s*வரவில்லை\b', 'தண்ணீர் வரவில்லை'),
+        (r'\bதண்ணி\s*பிரச்சனை\b', 'தண்ணீர் பிரச்சினை'),
+        (r'\bகரண்ட்\s*போச்சு\b', 'மின்சாரம் தடை'),
+        (r'\bகரண்ட்\s*இல்ல\b', 'மின்சாரம் தடை'),
+        (r'\bகுப்ப\s*அள்ளல\b', 'குப்பை அள்ளப்படவில்லை'),
+        (r'\bரோடு\s*டேமேஜ்\b', 'சாலை சேதம்'),
+        (r'\bரோட்ல\s*பள்ளம்\b', 'சாலையில் பள்ளம்'),
+        # Tanglish & English STT corrections
+        (r'\bgandhi\s*thambiyin\b', 'Gandhipuram thanni'),
+        (r'\bgandhi\s*thambi\b', 'Gandhipuram thanni'),
+        (r'\bgandhi\s*puram\b', 'Gandhipuram'),
+        (r'\bgandipuram\b', 'Gandhipuram'),
         (r'\bcross\s*cutting\b', 'Cross Cut Road'),
         (r'\bcross\s*cut\b', 'Cross Cut Road'),
         (r'\bcrosscut\b', 'Cross Cut Road'),

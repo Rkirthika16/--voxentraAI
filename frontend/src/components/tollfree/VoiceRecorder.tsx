@@ -67,7 +67,27 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           for (let i = 0; i < e.results.length; i++) {
             current += e.results[i][0].transcript + ' ';
           }
-          transcriptRef.current = current.trim();
+          let trimmed = current.trim();
+          trimmed = trimmed
+            .replace(/காந்தி\s*தம்பியின்\s*வரவில்லை/gi, 'காந்திபுரத்தில் தண்ணீர் வரவில்லை')
+            .replace(/காந்தி\s*தம்பியின்\s*வரல/gi, 'காந்திபுரத்தில் தண்ணீர் வரவில்லை')
+            .replace(/காந்தி\s*தம்பியின்\s*பிரச்சனை/gi, 'காந்திபுரத்தில் தண்ணீர் பிரச்சினை')
+            .replace(/காந்தி\s*தம்பியின்/gi, 'காந்திபுரம் தண்ணீர்')
+            .replace(/காந்தி\s*தம்பி\s*தண்ணீர்/gi, 'காந்திபுரம் தண்ணீர்')
+            .replace(/காந்தி\s*தம்பி/gi, 'காந்திபுரம்')
+            .replace(/காந்திபுரம்\s*தம்பியின்/gi, 'காந்திபுரத்தில் தண்ணீர்')
+            .replace(/காந்திபுரம்\s*தம்பி/gi, 'காந்திபுரம் தண்ணீர்')
+            .replace(/காந்திபுரத்தில\s*தம்பி/gi, 'காந்திபுரத்தில் தண்ணீர்')
+            .replace(/தம்பியின்\s*வரவில்லை/gi, 'தண்ணீர் வரவில்லை')
+            .replace(/தம்பியின்\s*வரல/gi, 'தண்ணீர் வரவில்லை')
+            .replace(/தம்பி\s*வரல/gi, 'தண்ணீர் வரவில்லை')
+            .replace(/தண்ணி\s*வரல/gi, 'தண்ணீர் வரவில்லை')
+            .replace(/gandhi\s*thambiyin/gi, 'Gandhipuram thanni')
+            .replace(/gandhi\s*thambi/gi, 'Gandhipuram thanni')
+            .replace(/gandipuram/gi, 'Gandhipuram')
+            .replace(/tanni\s*varla/gi, 'thanni varala');
+
+          transcriptRef.current = trimmed;
         };
         recognition.start();
         recognitionRef.current = recognition;
