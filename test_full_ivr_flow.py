@@ -2,10 +2,12 @@ import sys
 import os
 
 if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
+    reconfig = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconfig):
+        try:
+            reconfig(encoding="utf-8")
+        except Exception:
+            pass
 
 # Add backend to sys.path
 backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'backend'))
