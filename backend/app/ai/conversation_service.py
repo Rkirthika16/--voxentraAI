@@ -943,16 +943,21 @@ class ConversationService:
         """Saves confirmed grievance to database and triggers notifications."""
         from app.database.session import SessionLocal
         owns_session = False
-        if db is None:
-            db = SessionLocal()
+        if db is not None:
+            session_db = db
+        else:
+            session_db = SessionLocal()
             owns_session = True
+
+        if session_db is None:
+            raise RuntimeError("Could not establish database session")
 
         try:
             category = ctx.category or "Other"
             priority_val = ComplaintPriority[ctx.priority] if ctx.priority in ComplaintPriority.__members__ else ComplaintPriority.MEDIUM
 
             # Map department
-            dept_obj = db.query(Department).filter(Department.name.ilike(f"%{ctx.department or category}%")).first()
+            dept_obj = session_db.query(Department).filter(Department.name.ilike(f"%{ctx.department or category}%")).first()
             dept_id = dept_obj.id if dept_obj else 1
 
             location_parts = [ctx.landmark, ctx.street, ctx.location]
@@ -978,12 +983,12 @@ class ConversationService:
             )
 
             created_complaint = complaint_service.create_complaint(
-                db=db,
+                db=session_db,
                 complaint_in=complaint_obj
             )
             if ctx.caller_phone:
                 created_complaint.citizen_phone = ctx.caller_phone
-                db.commit()
+                session_db.commit()
 
             # Send SMS confirmation via Twilio integration
             from app.integrations.telephony.twilio_adapter import twilio_adapter
@@ -1000,7 +1005,7 @@ class ConversationService:
             return created_complaint
         finally:
             if owns_session:
-                db.close()
+                session_db.close()
 
 
 conversation_service = ConversationService()

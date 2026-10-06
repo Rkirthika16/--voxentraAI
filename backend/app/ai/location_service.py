@@ -15,6 +15,57 @@ TAMIL_NADU_DISTRICT_LOCATIONS: List[Dict] = [
     # and all official Revenue Villages & Localities.
     # --------------------------------------------------------------------------
 
+    # --- COIMBATORE CITY CORPORATION & CORE URBAN HUBS ---
+    {
+        "name": "Gandhipuram, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.018300",
+        "longitude": "76.967800",
+        "keywords": ["gandhipuram", "காந்திபுரம்", "gandhipuram bus stand", "cross cut road", "100 feet road", "gandhipuram central"]
+    },
+    {
+        "name": "Peelamedu, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.026700",
+        "longitude": "77.012500",
+        "keywords": ["peelamedu", "பீளமேடு", "பீடுமேடு", "psg tech peelamedu", "peelamedu pudur", "peelamedu airport", "hope college peelamedu"]
+    },
+    {
+        "name": "RS Puram, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.008900",
+        "longitude": "76.948600",
+        "keywords": ["rs puram", "r.s. puram", "ஆர்.எஸ்.புரம்", "db road", "thiruvenkatasamy road", "rs puram post office"]
+    },
+    {
+        "name": "Singanallur, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.998600",
+        "longitude": "77.026400",
+        "keywords": ["singanallur", "சிங்கநல்லூர்", "singanallur bus stand", "singanallur lake", "trichy road singanallur"]
+    },
+    {
+        "name": "Ramanathapuram, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.993500",
+        "longitude": "76.994500",
+        "keywords": ["ramanathapuram coimbatore", "ராமநாதபுரம் கோவை", "ramanathapuram 80 feet road", "trichy road ramanathapuram"]
+    },
+    {
+        "name": "Town Hall & Ukkadam, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "10.993000",
+        "longitude": "76.960000",
+        "keywords": ["town hall", "டவுன் ஹால்", "ukkadam", "உக்கடம்", "ukkadam bus stand", "oppanakara street", "big bazaar street", "coimbatore railway station"]
+    },
+    {
+        "name": "Race Course & Red Fields, Coimbatore District",
+        "district": "Coimbatore",
+        "latitude": "11.002000",
+        "longitude": "76.975000",
+        "keywords": ["race course", "ரேஸ் கோர்ஸ்", "red fields", "thomas park", "collector office coimbatore"]
+    },
+
     # --- MADUKKARAI TALUK (மடுக்கரை வட்டம்) ---
     {
         "name": "Madukkarai, Coimbatore District",
@@ -1753,16 +1804,32 @@ def is_valid_tamil_nadu_location(candidate: str) -> Tuple[bool, Optional[Dict], 
     # Exact or keyword check
     for loc in TAMIL_NADU_DISTRICT_LOCATIONS:
         # Check district name
-        if loc["district"].lower() == cleaned or loc["district"].lower() == norm:
+        if loc["district"].lower() == cleaned or loc["district"].lower() == norm or loc["district"].lower() in norm:
             return True, loc, 0.98
         # Check location display name
-        if cleaned in loc["name"].lower() or norm in loc["name"].lower():
+        if cleaned in loc["name"].lower() or norm in loc["name"].lower() or loc["name"].lower().startswith(cleaned):
             return True, loc, 0.95
         # Check keywords
         for kw in loc["keywords"]:
             kw_norm = unicodedata.normalize("NFC", kw.lower())
             if kw_norm == cleaned or kw_norm == norm or (len(kw_norm) >= 4 and (kw_norm in norm or norm in kw_norm)):
                 return True, loc, 0.96
+
+    # Also check Coimbatore Location Resolver
+    try:
+        from app.services.location_resolver import location_resolver
+        cbe_res = location_resolver.resolve(candidate)
+        if cbe_res and (cbe_res.get("area") or cbe_res.get("taluk") or cbe_res.get("landmark")) and cbe_res.get("confidence", 0.0) >= 0.70:
+            area_name = cbe_res.get("area") or cbe_res.get("taluk") or "Coimbatore"
+            loc_obj = {
+                "name": f"{area_name}, Coimbatore District",
+                "district": "Coimbatore",
+                "latitude": str(cbe_res["latitude"]) if cbe_res.get("latitude") else "11.016800",
+                "longitude": str(cbe_res["longitude"]) if cbe_res.get("longitude") else "76.955800"
+            }
+            return True, loc_obj, cbe_res["confidence"]
+    except Exception:
+        pass
 
     return False, None, 0.0
 
@@ -1896,27 +1963,29 @@ def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, Optional[str
     raw = text.strip()
     lowered = raw.lower()
 
-    # 1. If exact/confident match exists in high-precision extractor, no clarification is needed
-    exact_loc, _, _, conf = extract_location(text)
-    if exact_loc and conf >= 0.90:
-        return None
+    # 1. If exact authoritative keyword match exists in text, no spelling clarification is needed
+    for loc in TAMIL_NADU_DISTRICT_LOCATIONS:
+        for kw in loc["keywords"]:
+            kw_norm = unicodedata.normalize("NFC", kw.lower())
+            if len(kw_norm) >= 3 and (kw_norm == lowered or kw_norm in lowered):
+                return None
 
     # Strip common postpositions, fillers, and demonstratives
     cleaned = re.sub(r'^(?:in\s+the|in\s+this|on\s+the|at\s+the|at|in|near|இந்த|அந்த|inda|indha)\s+', '', lowered).strip()
     cleaned = re.sub(r'\b(la|le|kitta|pakkam|pakathula|near|in|at|area|nagar|theru|street|road|district)\b', '', cleaned).strip()
     norm_text = unicodedata.normalize("NFC", cleaned or lowered)
 
-    if len(norm_text) < 3:
+    if len(norm_text) < 3 or len(norm_text.split()) > 3:
         return None
 
-    # Check if exact keyword substring exists
+    # Check if exact keyword substring exists in TAMIL_NADU_DISTRICT_LOCATIONS
     for loc in TAMIL_NADU_DISTRICT_LOCATIONS:
         for kw in loc["keywords"]:
             kw_norm = unicodedata.normalize("NFC", kw.lower())
-            if kw_norm == norm_text or kw_norm == lowered or (len(kw_norm) >= 4 and kw_norm in norm_text):
+            if kw_norm == norm_text or kw_norm == lowered:
                 return None  # Confident exact match
 
-    # Search for fuzzy spelling candidates (ratio between 68 and 94)
+    # Search for fuzzy spelling candidates in TAMIL_NADU_DISTRICT_LOCATIONS
     best_loc = None
     best_kw = None
     highest_score = 0.0
@@ -1924,11 +1993,9 @@ def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, Optional[str
     for loc in TAMIL_NADU_DISTRICT_LOCATIONS:
         for kw in loc["keywords"]:
             kw_norm = unicodedata.normalize("NFC", kw.lower())
-            # Skip very short keywords to avoid spurious matches
             if len(kw_norm) < 4:
                 continue
 
-            # Compare token ratio and standard ratio
             r_ratio = fuzz.ratio(kw_norm, norm_text)
             t_ratio = fuzz.token_sort_ratio(kw_norm, norm_text)
             ratio = max(r_ratio, t_ratio)
@@ -1941,11 +2008,31 @@ def find_fuzzy_location_candidate(text: str) -> Optional[Tuple[str, Optional[str
                     best_kw = kw
 
     if best_loc and highest_score >= 0.68:
-        # Return cleaned concise location name (e.g. "Gandhipuram, Coimbatore" or "Peelamedu, Coimbatore")
         loc_name = str(best_loc["name"])
         lat = str(best_loc["latitude"]) if best_loc.get("latitude") is not None else None
         lon = str(best_loc["longitude"]) if best_loc.get("longitude") is not None else None
         return loc_name, lat, lon, float(highest_score)
+
+    # Search in Coimbatore Location Alias Service
+    try:
+        from app.services.location_alias_service import location_alias_service
+        alias_matches = location_alias_service.lookup_fuzzy(norm_text, threshold=70)
+        if alias_matches:
+            for entity, score in alias_matches:
+                entity_id = entity.get("entity_id")
+                entity_type = entity.get("entity_type", "area")
+                if entity_id is not None:
+                    try:
+                        eid_int = int(entity_id)
+                        det = location_alias_service.get_entity_details(str(entity_type), eid_int)
+                        if det:
+                            name_en = det.get("name_en", "")
+                            if name_en and name_en.lower() != norm_text:
+                                return f"{name_en}, Coimbatore District", str(det.get("latitude")), str(det.get("longitude")), score
+                    except (ValueError, TypeError):
+                        continue
+    except Exception:
+        pass
 
     return None
 

@@ -45,18 +45,18 @@ CATEGORY_TO_DEPARTMENT = {
 # The 14 structured grievance intake slots (in prioritized dynamic evaluation order)
 ORDERED_QUESTION_SLOTS = [
     "problem_description",       # 1. What problem are you facing?
-    "district_area",             # 2. Which area/locality is affected?
-    "street_road_name",          # 3. What is the street name?
-    "exact_location",            # 4. What is the house/building/location if relevant (door no, pole no, spot)?
-    "landmark",                  # 5. Is there a nearby landmark?
-    "start_time",                # 6. When did the problem start?
-    "duration",                  # 7. How long has the problem continued?
-    "affected_scope",            # 8. Is the problem affecting one house or the whole street/area?
-    "frequency",                 # 9. How frequently is the problem occurring?
-    "previous_complaint",        # 10. Has the citizen already reported this problem?
-    "previous_complaint_number", # 11. Was any previous complaint number provided? (if previously reported)
-    "severity",                  # 12. How serious or urgent is the problem?
-    "safety_hazard",             # 13. Is there any safety/emergency issue?
+    "location",                  # 2. Which area/locality is affected?
+    "duration",                  # 3. How long has the problem continued?
+    "street_road_name",          # 4. What is the street name?
+    "affected_scope",            # 5. Is the problem affecting one house or the whole street/area?
+    "severity",                  # 6. How serious or urgent is the problem?
+    "impact",                    # 7. Drinking water/public facility affected?
+    "previous_complaint",        # 8. Has the citizen already reported this problem?
+    "landmark",                  # 9. Is there a nearby landmark?
+    "safety_hazard",             # 10. Is there any safety/emergency issue?
+    "exact_location",            # 11. What is the house/building/location if relevant (door no, pole no, spot)?
+    "frequency",                 # 12. How frequently is the problem occurring?
+    "previous_complaint_number", # 13. Was any previous complaint number provided? (if previously reported)
     "additional_details"         # 14. Is there any additional information?
 ]
 
@@ -92,6 +92,7 @@ class NewIVRService:
             "department": None,
             "district_area": None,
             "area": None,
+            "location": None,
             "street_road_name": None,
             "street": None,
             "exact_location": None,
@@ -107,6 +108,7 @@ class NewIVRService:
             "previous_complaint": None,
             "previous_complaint_number": None,
             "severity": None,
+            "impact": None,
             "safety_hazard": None,
             "additional_details": None,
             "citizen_name": None,
@@ -477,6 +479,21 @@ class NewIVRService:
             if cand.lower() not in ["seri", "ok", "problem", "thanni", "water", "anna", "tamil", "english", "no", "yes", "illa"]:
                 memory["citizen_name"] = cand.title() if cand.isascii() else cand
 
+        # Impact handling
+        if prompted_slot == "impact" and not memory.get("impact"):
+            memory["impact"] = raw_text.strip()
+        elif not memory.get("impact") and any(w in lowered for w in ["drinking water", "hospital", "school", "traffic", "vehicle", "kudineer", "ambulance"]):
+            memory["impact"] = raw_text.strip()
+
+        # Synchronize location alias in memory
+        if memory.get("area") or memory.get("district_area") or memory.get("street"):
+            if memory.get("street") and memory.get("area"):
+                memory["location"] = f"{memory['street']}, {memory['area']}, Coimbatore"
+            else:
+                memory["location"] = memory.get("area") or memory.get("district_area") or memory.get("street")
+        else:
+            memory["location"] = None
+
         # Priority Assessment
         if memory.get("problem_description"):
             prio, _ = assess_priority(memory["problem_description"], memory.get("category", "General"))
@@ -507,15 +524,37 @@ class NewIVRService:
                     memory["street_road_name"] = cand_st
                     memory["street"] = cand_st
 
+    def _is_slot_filled(self, memory: Dict[str, Any], slot: str) -> bool:
+        val = memory.get(slot)
+        if slot == "problem_description":
+            val = val or memory.get("problem")
+        elif slot in ["district_area", "location"]:
+            val = memory.get("area") or memory.get("district_area") or memory.get("location")
+        elif slot in ["street_road_name", "street"]:
+            val = memory.get("street") or memory.get("street_road_name")
+        elif slot in ["affected_scope", "affected_area"]:
+            val = memory.get("affected_scope") or memory.get("affected_area")
+        elif slot in ["duration", "start_time"]:
+            val = memory.get("duration") or memory.get("start_time")
+        return bool(val and str(val).strip())
+
     def _get_next_missing_slot(self, memory: Dict[str, Any]) -> Optional[str]:
         """
         Dynamic Questioning Engine:
         1. Checks whether each of the 14 slots has already been answered.
         2. SKIPS any question whose answer was already provided.
-        3. Returns the next missing question until at least 10 meaningful items/questions are covered.
+        3. Returns the next missing question until all essential items are covered or 10+ interaction points are gathered.
         """
         questions_count = memory.get("questions_asked_count", 0)
         max_q = memory.get("max_questions", 10)
+
+        # If all core slots are populated
+        core_slots = ["problem_description", "location", "duration", "street_road_name", "affected_scope", "severity", "previous_complaint", "landmark"]
+        if all(self._is_slot_filled(memory, s) for s in core_slots):
+            return None
+
+        if questions_count >= max_q:
+            return None
 
         # Check in prioritized order
         for slot in ORDERED_QUESTION_SLOTS:
@@ -525,20 +564,9 @@ class NewIVRService:
                 if not prev_rep or "no" in str(prev_rep).lower() or "first time" in str(prev_rep).lower():
                     continue
 
-            # Check if this slot was already filled
-            val = memory.get(slot)
-            if slot == "district_area":
-                val = val or memory.get("area")
-            elif slot == "street_road_name":
-                val = val or memory.get("street")
-            elif slot == "affected_scope":
-                val = val or memory.get("affected_area")
-
-            if not val or not str(val).strip():
-                # Missing detail found -> Ask this question
+            if not self._is_slot_filled(memory, slot):
                 return slot
 
-        # If at least 10 questions have been asked and all available slots are filled -> Move to confirmation
         return None
 
     def _generate_slot_question(self, slot: str, memory: Dict[str, Any], lang: str) -> Tuple[str, str, List[Dict[str, str]]]:
@@ -583,7 +611,7 @@ class NewIVRService:
                 ]
             return text, spoken, options
 
-        if slot == "district_area":
+        if slot in ["district_area", "location"]:
             if lang == "Tamil":
                 text = f"சரிங்க. இந்தப் பிரச்சினை எந்த பகுதியில் அல்லது மாவட்டத்தில் உள்ளது?"
                 spoken = "இந்தப் பிரச்சினை எந்த பகுதியில் உள்ளது?"
@@ -695,9 +723,10 @@ class NewIVRService:
             return text, spoken, options
 
         if slot == "start_time" or slot == "duration":
+            loc_label = f" {area}" if area and area != "the area" else ""
             if lang == "Tamil":
-                text = f"⏱️ சரி. இந்தப் பிரச்சினை எப்போது முதல் நீடிக்கிறது? (எத்தனை நாட்களாக?)"
-                spoken = "இந்தப் பிரச்சினை எப்போது தொடங்கியது? எத்தனை நாட்களாக நீடிக்கிறது?"
+                text = f"⏱️ சரிங்க.{loc_label} பகுதியில் இந்தப் பிரச்சினை எப்போது முதல் நீடிக்கிறது? (எத்தனை நாட்களாக?)"
+                spoken = f"சரிங்க.{loc_label} பகுதியில் இந்தப் பிரச்சினை எப்போது தொடங்கியது? எத்தனை நாட்களாக உள்ளது?"
                 options = [
                     {"label": "⏱️ 2 நாட்களாக", "text": "2 நாட்களாக"},
                     {"label": "⏱️ இன்று காலை முதல்", "text": "இன்று காலை முதல்"},
@@ -705,8 +734,8 @@ class NewIVRService:
                     {"label": "⏱️ 1 வாரமாக", "text": "கடந்த ஒரு வாரமாக நீடிக்கிறது"}
                 ]
             elif lang == "Tanglish":
-                text = f"⏱️ Seri. Indha problem eppo lendhu irukku? (Evalo naala?)"
-                spoken = "Seri. Indha problem eppo lendhu irukku?"
+                text = f"⏱️ Seri.{loc_label}-la indha problem eppo lendhu irukku? (Evalo naala?)"
+                spoken = f"Seri.{loc_label}-la indha problem eppo lendhu irukku?"
                 options = [
                     {"label": "⏱️ Rendu naala (2 days)", "text": "Rendu naala"},
                     {"label": "⏱️ Today morning", "text": "Today morning lendhu"},
@@ -714,8 +743,8 @@ class NewIVRService:
                     {"label": "⏱️ 1 week-ah", "text": "Past 1 week-ah irukku"}
                 ]
             else:
-                text = "⏱️ When did the problem start, and how long has it continued?"
-                spoken = "How long has this problem continued?"
+                text = f"⏱️ In{loc_label}, when did the problem start and how long has it continued?"
+                spoken = f"In{loc_label}, how long has this problem continued?"
                 options = [
                     {"label": "⏱️ For 2 days", "text": "For the past 2 days"},
                     {"label": "⏱️ Since today morning", "text": "Since today morning"},
@@ -889,6 +918,30 @@ class NewIVRService:
                         {"label": "🚨 Very serious", "text": "Very serious issue"},
                         {"label": "ℹ️ Standard priority", "text": "Standard priority issue"}
                     ]
+            return text, spoken, options
+
+        if slot == "impact":
+            if lang == "Tamil":
+                text = "🚰 குடிநீர் விநியோகம் அல்லது பொது வசதிகள் ஏதேனும் பாதிக்கப்பட்டுள்ளதா?"
+                spoken = "குடிநீர் அல்லது பொது வசதிகள் பாதிக்கப்பட்டுள்ளதா?"
+                options = [
+                    {"label": "🚰 குடிநீர் பாதிப்பு", "text": "குடிநீர் பாதிக்கப்பட்டுள்ளது"},
+                    {"label": "ℹ️ பாதிப்பு இல்லை", "text": "பொது வசதி பாதிப்பு இல்லை"}
+                ]
+            elif lang == "Tanglish":
+                text = "🚰 Drinking water illa public facilities edhavadhu affect aayirukkaa?"
+                spoken = "Drinking water illa public facilities affect aayirukkaa?"
+                options = [
+                    {"label": "🚰 Drinking water affected", "text": "Drinking water affect aachu"},
+                    {"label": "ℹ️ No impact", "text": "Public facility impact illa"}
+                ]
+            else:
+                text = "🚰 Is drinking water supply or any public facility affected?"
+                spoken = "Is drinking water supply or any public facility affected?"
+                options = [
+                    {"label": "🚰 Drinking water affected", "text": "Drinking water supply is affected"},
+                    {"label": "ℹ️ No impact", "text": "No public facility is affected"}
+                ]
             return text, spoken, options
 
         if slot == "safety_hazard":

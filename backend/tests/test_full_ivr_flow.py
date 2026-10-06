@@ -2,10 +2,12 @@ import sys
 import os
 
 if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
+    reconfig = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconfig):
+        try:
+            reconfig(encoding="utf-8")
+        except Exception:
+            pass
 
 # Add backend to sys.path
 backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -14,12 +16,12 @@ if backend_path not in sys.path:
 
 try:
     from app.database.session import SessionLocal
-    from app.services.new_ivr_service import new_ivr_service
+    from app.services.conversation_manager import conversation_manager as new_ivr_service
     from app.models.ivr import IVRState
     from app.models.complaint import Complaint
 except ImportError:
     from backend.app.database.session import SessionLocal
-    from backend.app.services.new_ivr_service import new_ivr_service
+    from backend.app.services.conversation_manager import conversation_manager as new_ivr_service
     from backend.app.models.ivr import IVRState
     from backend.app.models.complaint import Complaint
 

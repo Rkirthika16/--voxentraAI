@@ -16,7 +16,7 @@ if backend_path not in sys.path:
 
 import importlib
 SessionLocal = importlib.import_module("app.database.session").SessionLocal
-new_ivr_service = importlib.import_module("app.services.new_ivr_service").new_ivr_service
+new_ivr_service = importlib.import_module("app.services.conversation_manager").conversation_manager
 IVRState = importlib.import_module("app.models.ivr").IVRState
 Complaint = importlib.import_module("app.models.complaint").Complaint
 
