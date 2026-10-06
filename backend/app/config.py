@@ -32,6 +32,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://voxentraai-prmy.onrender.com",
         "https://voxentra-ai-ecru.vercel.app"
     ]
 
@@ -81,7 +82,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
 
     # Voice Register - Base URL for webhook callbacks
-    VOICE_REGISTER_BASE_URL: str = "http://localhost:8000"
+    VOICE_REGISTER_BASE_URL: str = "https://voxentraai-prmy.onrender.com"
 
 
 settings = Settings()
