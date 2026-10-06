@@ -1,0 +1,10 @@
+{
+  "name": "voxentra-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Enterprise AI-Powered Citizen Grievance Redressal and Municipal Complaint Management Portal",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "cd frontend && npm run dev"
+  }
+}
