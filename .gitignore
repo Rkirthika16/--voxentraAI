@@ -38,6 +38,8 @@ uploads/
 backend/uploads/
 backend/audio_uploads/
 !backend/uploads/.gitkeep
+*.mp3
+*.wav
 
 
 # Environment variables

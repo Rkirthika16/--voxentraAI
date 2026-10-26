@@ -79,6 +79,7 @@ export const LiveComplaintMap: React.FC<LiveComplaintMapProps> = ({
   const [selectedDistrict, setSelectedDistrict] = useState<string>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  const [selectedPriority, setSelectedPriority] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeTileId, setActiveTileId] = useState<string>('carto-voyager');
   const [showDistrictHubs, setShowDistrictHubs] = useState<boolean>(false);
@@ -227,6 +228,8 @@ export const LiveComplaintMap: React.FC<LiveComplaintMapProps> = ({
     // Filter by status
     if (selectedStatus === 'RESOLVED' && c.status !== 'RESOLVED') return false;
     if (selectedStatus === 'ACTIVE' && c.status === 'RESOLVED') return false;
+    // Filter by priority
+    if (selectedPriority !== 'ALL' && c.priority !== selectedPriority) return false;
 
     // Filter by district if selected
     if (selectedDistrict !== 'ALL') {
@@ -637,6 +640,35 @@ export const LiveComplaintMap: React.FC<LiveComplaintMapProps> = ({
                 <option value="ALL">All Statuses</option>
                 <option value="ACTIVE">Active (Unresolved)</option>
                 <option value="RESOLVED">Resolved Only</option>
+              </select>
+
+              <select
+                value={selectedPriority}
+                onChange={(e) => setSelectedPriority(e.target.value)}
+                style={{
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '0.35rem 0.65rem',
+                  fontSize: '0.8rem',
+                  color:
+                    selectedPriority === 'CRITICAL'
+                      ? '#ef4444'
+                      : selectedPriority === 'HIGH'
+                      ? '#f97316'
+                      : selectedPriority === 'MEDIUM'
+                      ? '#eab308'
+                      : selectedPriority === 'LOW'
+                      ? '#10b981'
+                      : 'var(--text-main)',
+                  fontWeight: selectedPriority !== 'ALL' ? 700 : 400,
+                }}
+              >
+                <option value="ALL">All Priorities</option>
+                <option value="CRITICAL">🚨 Critical (24h)</option>
+                <option value="HIGH">⚠️ High (48h)</option>
+                <option value="MEDIUM">ℹ️ Medium (72h)</option>
+                <option value="LOW">🟢 Low (120h)</option>
               </select>
             </div>
           </div>

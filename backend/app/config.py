@@ -66,8 +66,16 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "./uploads"
     MAX_UPLOAD_SIZE_BYTES: int = 25 * 1024 * 1024  # 25 MB
 
-    # Telephony Integrations (Exotel & Twilio)
-    TELEPHONY_PROVIDER: str = "exotel"  # 'exotel' or 'twilio'
+    # Telephony Integrations (Exotel, Twilio, Generic PSTN)
+    TELEPHONY_PROVIDER: str = "twilio"  # 'generic', 'exotel', or 'twilio'
+    TELEPHONY_API_KEY: str = ""
+    TELEPHONY_API_TOKEN: str = ""
+    TELEPHONY_CALLER_ID: str = "+919843098765"
+    TELEPHONY_STREAM_URL: str = ""
+    TELEPHONY_STATUS_CALLBACK: str = ""
+    TELEPHONY_WEBHOOK_VALIDATE_SIGNATURE: bool = False
+    TELEPHONY_IDEMPOTENCY_CACHE_TTL_SEC: int = 86400
+    TELEPHONY_MAX_SILENCE_RETRIES: int = 3
     EXOTEL_ACCOUNT_SID: str = ""
     EXOTEL_API_KEY: str = ""
     EXOTEL_API_TOKEN: str = ""

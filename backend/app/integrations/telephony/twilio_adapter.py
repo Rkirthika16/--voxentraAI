@@ -1,3 +1,6 @@
+import hmac
+import hashlib
+import base64
 import logging
 import uuid
 import httpx
@@ -53,31 +56,25 @@ class TwilioAdapter:
         """
         Builds a bilingual SMS body for complaint registration confirmation.
         lang: 'Tamil' | 'English' | 'Tanglish'
-        Tanglish defaults to English SMS policy.
         """
         dt = created_at or datetime.now(timezone.utc)
         date_str = dt.strftime("%d-%m-%Y %H:%M")
 
-        # Truncate description for SMS character limits
         desc_short = description[:100].strip()
-        loc_short = location[:80].strip() if location else "\u2014"
+        loc_short = location[:80].strip() if location else "—"
 
         if lang == "Tamil":
             return (
-                "VoxentraAI \u0baa\u0bc1\u0b95\u0bbe\u0bb0\u0bcd \u0baa\u0ba4\u0bbf\u0bb5\u0bc1 "
-                "\u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0bc1\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1.\n\n"
-                f"\u0baa\u0bc1\u0b95\u0bbe\u0bb0\u0bcd \u0b8e\u0ba3\u0bcd: {complaint_number}\n"
-                f"\u0baa\u0bbf\u0bb0\u0b9a\u0bcd\u0b9a\u0bbf\u0ba9\u0bc8: {desc_short}\n"
-                f"\u0ba4\u0bc1\u0bb1\u0bc8: {department}\n"
-                f"\u0b87\u0b9f\u0bae\u0bcd: {loc_short}\n"
-                "\u0ba8\u0bbf\u0bb2\u0bc8: \u0baa\u0ba4\u0bbf\u0bb5\u0bc1 \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1\n"
-                f"\u0ba4\u0bc7\u0ba4\u0bbf: {date_str}\n\n"
-                "\u0b89\u0b99\u0bcd\u0b95\u0bb3\u0bcd \u0baa\u0bc1\u0b95\u0bbe\u0bb0\u0bcd \u0b8e\u0ba3\u0bcd\u0ba3\u0bc8\u0baa\u0bcd "
-                "\u0baa\u0baf\u0ba9\u0bcd\u0baa\u0b9f\u0bc1\u0ba4\u0bcd\u0ba4\u0bbf \u0baa\u0bc1\u0b95\u0bbe\u0bb0\u0bc8 "
-                "\u0b95\u0ba3\u0bcd\u0b95\u0bbe\u0ba3\u0bbf\u0b95\u0bcd\u0b95\u0bb2\u0bbe\u0bae\u0bcd."
+                "VoxentraAI புகார் பதிவு செய்யப்பட்டுள்ளது.\n\n"
+                f"புகார் எண்: {complaint_number}\n"
+                f"பிரச்சினை: {desc_short}\n"
+                f"துறை: {department}\n"
+                f"இடம்: {loc_short}\n"
+                "நிலை: பதிவு செய்யப்பட்டது\n"
+                f"தேதி: {date_str}\n\n"
+                "உங்கள் புகார் எண்ணைப் பயன்படுத்தி புகாரைக் கண்காணிக்கலாம்."
             )
         else:
-            # English and Tanglish use English SMS policy
             return (
                 f"VoxentraAI Complaint Registered.\n\n"
                 f"Complaint ID: {complaint_number}\n"
@@ -88,6 +85,97 @@ class TwilioAdapter:
                 f"Date: {date_str}\n\n"
                 f"Track your complaint using the above ID."
             )
+
+    def validate_signature(self, url: str, params: Dict[str, Any], signature: Optional[str]) -> bool:
+        """
+        Validates incoming webhook signature using HMAC-SHA1 with TWILIO_AUTH_TOKEN.
+        If validation is disabled in settings or credentials not set, returns True.
+        """
+        if not settings.TELEPHONY_WEBHOOK_VALIDATE_SIGNATURE:
+            return True
+        if not self.auth_token or not signature:
+            logger.warning("[Twilio] Signature validation requested but auth_token or signature missing")
+            return False
+
+        try:
+            data_str = url
+            for k in sorted(params.keys()):
+                data_str += f"{k}{params[k]}"
+            expected = base64.b64encode(
+                hmac.new(self.auth_token.encode("utf-8"), data_str.encode("utf-8"), hashlib.sha1).digest()
+            ).decode("utf-8")
+            is_valid = hmac.compare_digest(expected, signature)
+            if not is_valid:
+                logger.warning(f"[Twilio] Webhook signature mismatch for URL: {url}")
+            return is_valid
+        except Exception as e:
+            logger.error(f"[Twilio] Error validating signature: {e}")
+            return False
+
+    def build_silent_answer_twiml(self, turn_action_url: str, stream_url: Optional[str] = None) -> str:
+        """
+        TwiML instructing carrier to immediately answer call silently and gather citizen speech.
+        Citizen speaks first. If silence occurs, redirects to turn_action_url with timeout=true.
+        """
+        connect_tag = ""
+        if stream_url:
+            connect_tag = (
+                f'    <Connect>\n'
+                f'        <Stream url="{stream_url}"/>\n'
+                f'    </Connect>\n'
+            )
+        return (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<Response>\n'
+            f'{connect_tag}'
+            f'    <Gather input="speech" action="{turn_action_url}" method="POST" '
+            f'speechTimeout="auto" timeout="6" language="ta-IN,en-IN">\n'
+            f'        <Pause length="1"/>\n'
+            f'    </Gather>\n'
+            f'    <Redirect method="POST">{turn_action_url}?timeout=true</Redirect>\n'
+            '</Response>'
+        )
+
+    def build_turn_twiml(self, play_audio_url: str, turn_action_url: str) -> str:
+        """
+        Plays AI response audio to the phone speaker, then listens for citizen reply.
+        """
+        return (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<Response>\n'
+            f'    <Play>{play_audio_url}</Play>\n'
+            f'    <Gather input="speech" action="{turn_action_url}" method="POST" '
+            f'speechTimeout="auto" timeout="6" language="ta-IN,en-IN"/>\n'
+            f'    <Redirect method="POST">{turn_action_url}?timeout=true</Redirect>\n'
+            '</Response>'
+        )
+
+    def build_completion_twiml(self, play_audio_url: str) -> str:
+        """
+        Plays final registration announcement (with Complaint ID aloud) and terminates call politely.
+        """
+        return (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<Response>\n'
+            f'    <Play>{play_audio_url}</Play>\n'
+            f'    <Pause length="1"/>\n'
+            f'    <Hangup/>\n'
+            '</Response>'
+        )
+
+    def build_hangup_twiml(self, message: Optional[str] = None, play_audio_url: Optional[str] = None) -> str:
+        """
+        Politely ends the call due to repeated silence or caller disconnect.
+        """
+        play_tag = f'    <Play>{play_audio_url}</Play>\n' if play_audio_url else ""
+        say_tag = f'    <Say voice="Polly.Aditi" language="ta-IN">{message}</Say>\n' if message and not play_audio_url else ""
+        return (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<Response>\n'
+            f'{play_tag}{say_tag}'
+            f'    <Hangup/>\n'
+            '</Response>'
+        )
 
     def handle_incoming_call(self, payload: Dict[str, Any]) -> str:
         """
@@ -100,32 +188,14 @@ class TwilioAdapter:
 
         logger.info(f"[Twilio] Inbound call from {from_number} -> {to_number} (CallSid: {call_sid})")
 
-        prompt_ta = (
-            "\u0bb5\u0ba3\u0b95\u0bcd\u0b95\u0bae\u0bcd. \u0bb5\u0bbe\u0b95\u0bcd\u0b9a\u0bc6\u0ba9\u0bcd"
-            "\u0b9f\u0bcd\u0bb0\u0bbe \u0ba4\u0bae\u0bbf\u0bb4\u0bcd\u0ba8\u0bbe\u0b9f\u0bc1 \u0b85\u0bb0\u0b9a\u0bc1 "
-            "\u0b8a\u0bb0\u0b95 \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0ba8\u0b95\u0bb0\u0bbe\u0b9f\u0bcd\u0b9a\u0bbf "
-            "\u0baa\u0bcb\u0ba4\u0bc1 \u0b95\u0bc1\u0bb1\u0bc8\u0ba4\u0bc0\u0bb0\u0bcd\u0baa\u0bcd\u0baa\u0bc1 "
-            "\u0b9a\u0bc7\u0bb5\u0bc8\u0b95\u0bcd\u0b95\u0bc1 \u0ba8\u0bb2\u0bcd\u0bb5\u0bb0\u0bb5\u0bc1."
-        )
-        prompt_en = "Welcome to Voxentra Citizen Grievance Helpline. Please state your village problem or grievance clearly after the beep."
+        # Generate standard TwiML XML with bidirectional stream connecting directly with AI silent at start
+        stream_url = settings.TELEPHONY_STREAM_URL or "/api/v1/ivr/stream"
+        if not stream_url.startswith("ws"):
+            stream_url = f"wss://voxentraai-prmy.onrender.com{stream_url if stream_url.startswith('/') else '/' + stream_url}"
 
-        # Generate standard TwiML XML
-        twiml_response = (
-            '<?xml version="1.0" encoding="UTF-8"?>\n'
-            "<Response>\n"
-            f'    <Say voice="Polly.Aditi" language="ta-IN">{prompt_ta}</Say>\n'
-            '    <Pause length="1"/>\n'
-            f'    <Say voice="Polly.Aditi" language="en-IN">{prompt_en}</Say>\n'
-            "    <Record \n"
-            '        action="/api/v1/webhooks/twilio/voice/recording" \n'
-            '        method="POST" \n'
-            '        maxLength="60" \n'
-            '        finishOnKey="#" \n'
-            '        playBeep="true" \n'
-            '        transcribe="true"\n'
-            "    />\n"
-            '    <Say voice="Polly.Aditi" language="en-IN">We did not receive any recording. Goodbye.</Say>\n'
-            "</Response>"
+        twiml_response = self.build_silent_answer_twiml(
+            turn_action_url="/api/v1/telephony/voice/turn",
+            stream_url=stream_url
         )
 
         self._log_event(
@@ -135,7 +205,7 @@ class TwilioAdapter:
             details={
                 "call_sid": call_sid,
                 "to_number": to_number,
-                "action": "twiml_play_and_record"
+                "action": "twiml_silent_gather_and_stream"
             }
         )
 

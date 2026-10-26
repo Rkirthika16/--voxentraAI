@@ -24,7 +24,7 @@ export const LiveMapPage: React.FC = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedComplaintId, setSelectedComplaintId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'critical'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'>('all');
 
   const fetchPins = async () => {
     setIsLoading(true);
@@ -43,6 +43,9 @@ export const LiveMapPage: React.FC = () => {
   }, []);
 
   const criticalComplaints = complaints.filter((c) => c.priority === 'CRITICAL');
+  const highComplaints = complaints.filter((c) => c.priority === 'HIGH');
+  const mediumComplaints = complaints.filter((c) => c.priority === 'MEDIUM');
+  const lowComplaints = complaints.filter((c) => c.priority === 'LOW');
 
   return (
     <div className="page-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1400px' }}>
@@ -105,14 +108,22 @@ export const LiveMapPage: React.FC = () => {
                 <Layers size={16} color="#60a5fa" /> GIS Summary
               </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem', marginBottom: '1rem' }}>
-                <div style={{ background: 'var(--bg-input)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Geolocated</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#38bdf8' }}>{complaints.length}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+                <div style={{ background: 'var(--bg-input)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Geolocated</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#38bdf8' }}>{complaints.length}</div>
                 </div>
-                <div style={{ background: 'var(--bg-input)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Emergency Critical</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f87171' }}>{criticalComplaints.length}</div>
+                <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.25)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#f87171' }}>Critical (24h)</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ef4444' }}>{criticalComplaints.length}</div>
+                </div>
+                <div style={{ background: 'rgba(249, 115, 22, 0.12)', border: '1px solid rgba(249, 115, 22, 0.25)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#fb923c' }}>High (48h)</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f97316' }}>{highComplaints.length}</div>
+                </div>
+                <div style={{ background: 'rgba(234, 179, 8, 0.12)', border: '1px solid rgba(234, 179, 8, 0.25)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#facc15' }}>Medium (72h)</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#eab308' }}>{mediumComplaints.length}</div>
                 </div>
               </div>
 
@@ -137,9 +148,9 @@ export const LiveMapPage: React.FC = () => {
             </div>
 
             {/* Complaint Pin List */}
-            <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', maxHeight: '420px' }}>
+            <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', maxHeight: '460px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => setActiveTab('all')}
                     style={{
@@ -147,8 +158,8 @@ export const LiveMapPage: React.FC = () => {
                       color: activeTab === 'all' ? '#ffffff' : 'var(--text-muted)',
                       border: 'none',
                       borderRadius: 'var(--radius-sm)',
-                      padding: '0.2rem 0.6rem',
-                      fontSize: '0.8rem',
+                      padding: '0.2rem 0.5rem',
+                      fontSize: '0.75rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}
@@ -156,25 +167,79 @@ export const LiveMapPage: React.FC = () => {
                     All ({complaints.length})
                   </button>
                   <button
-                    onClick={() => setActiveTab('critical')}
+                    onClick={() => setActiveTab('CRITICAL')}
                     style={{
-                      background: activeTab === 'critical' ? '#ef4444' : 'transparent',
-                      color: activeTab === 'critical' ? '#ffffff' : 'var(--text-muted)',
+                      background: activeTab === 'CRITICAL' ? '#ef4444' : 'transparent',
+                      color: activeTab === 'CRITICAL' ? '#ffffff' : '#f87171',
                       border: 'none',
                       borderRadius: 'var(--radius-sm)',
-                      padding: '0.2rem 0.6rem',
-                      fontSize: '0.8rem',
+                      padding: '0.2rem 0.5rem',
+                      fontSize: '0.75rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}
                   >
                     Critical ({criticalComplaints.length})
                   </button>
+                  <button
+                    onClick={() => setActiveTab('HIGH')}
+                    style={{
+                      background: activeTab === 'HIGH' ? '#f97316' : 'transparent',
+                      color: activeTab === 'HIGH' ? '#ffffff' : '#fb923c',
+                      border: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '0.2rem 0.5rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    High ({highComplaints.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('MEDIUM')}
+                    style={{
+                      background: activeTab === 'MEDIUM' ? '#eab308' : 'transparent',
+                      color: activeTab === 'MEDIUM' ? '#000000' : '#facc15',
+                      border: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '0.2rem 0.5rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Med ({mediumComplaints.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('LOW')}
+                    style={{
+                      background: activeTab === 'LOW' ? '#10b981' : 'transparent',
+                      color: activeTab === 'LOW' ? '#ffffff' : '#34d399',
+                      border: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '0.2rem 0.5rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Low ({lowComplaints.length})
+                  </button>
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', overflowY: 'auto', paddingRight: '0.25rem' }}>
-                {(activeTab === 'all' ? complaints : criticalComplaints).map((c) => {
+                {(activeTab === 'all'
+                  ? complaints
+                  : activeTab === 'CRITICAL'
+                  ? criticalComplaints
+                  : activeTab === 'HIGH'
+                  ? highComplaints
+                  : activeTab === 'MEDIUM'
+                  ? mediumComplaints
+                  : lowComplaints
+                ).map((c) => {
                   const isSelected = selectedComplaintId === c.id;
                   const conf = CATEGORY_CONFIG[c.category] || CATEGORY_CONFIG['Other'];
 

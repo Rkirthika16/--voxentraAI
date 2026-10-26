@@ -16,7 +16,8 @@ from app.api.routes import (
     ai,
     new_ivr,
     tollfree,
-    location
+    location,
+    telephony
 )
 
 api_router = APIRouter()
@@ -38,5 +39,6 @@ api_router.include_router(voice.router)
 api_router.include_router(new_ivr.router)
 api_router.include_router(tollfree.router)
 api_router.include_router(location.router)
+api_router.include_router(telephony.router)
 
 

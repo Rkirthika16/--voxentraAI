@@ -4,7 +4,16 @@
   "private": true,
   "description": "Enterprise AI-Powered Citizen Grievance Redressal and Municipal Complaint Management Portal",
   "scripts": {
+    "combined": "concurrently -k -n \"BACKEND,FRONTEND\" -c \"cyan.bold,magenta.bold\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev": "npm run combined",
+    "dev:all": "npm run combined",
+    "dev:backend": "cd backend && (venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload || python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload)",
+    "dev:frontend": "cd frontend && npm run dev",
+    "py:combined": "python run_combined.py",
     "build": "cd frontend && npm install && npm run build",
-    "dev": "cd frontend && npm run dev"
+    "start": "npm run combined"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
   }
 }

@@ -71,12 +71,16 @@ class CoimbatoreLocationResolver:
         matched_landmarks = self._extract_landmarks(tanglish_text, tamil_text, area_hint=area_hint)
         matched_streets = self._extract_streets(tanglish_text, tamil_text, area_hint=area_hint)
         matched_taluks = self._extract_taluks(tanglish_text, tamil_text)
+        matched_villages = self._extract_villages(tanglish_text, tamil_text)
+        matched_firkas = self._extract_firkas(tanglish_text, tamil_text)
 
         # 2. Integrate with previous conversation context if available
         area_entity = matched_areas[0] if matched_areas else context.get("area_entity")
         street_entity = matched_streets[0] if matched_streets else context.get("street_entity")
         landmark_entity = matched_landmarks[0] if matched_landmarks else context.get("landmark_entity")
         taluk_entity = matched_taluks[0] if matched_taluks else context.get("taluk_entity")
+        village_entity = matched_villages[0] if matched_villages else context.get("village_entity")
+        firka_entity = matched_firkas[0] if matched_firkas else context.get("firka_entity")
 
         # 3. Check landmark-based resolution (landmark brings area & ward proximity)
         if landmark_entity and not area_entity:
@@ -115,11 +119,13 @@ class CoimbatoreLocationResolver:
             area=area_entity,
             street=street_entity,
             landmark=landmark_entity,
-            taluk=taluk_entity
+            taluk=taluk_entity,
+            village=village_entity,
+            firka=firka_entity
         )
 
         # 6. Compute overall confidence score
-        conf = self._compute_confidence(area_entity, street_entity, landmark_entity, taluk_entity)
+        conf = self._compute_confidence(area_entity, street_entity, landmark_entity, taluk_entity or village_entity)
         hierarchy["confidence"] = conf
 
         # 7. Apply Decision Rules:
@@ -346,12 +352,57 @@ class CoimbatoreLocationResolver:
                 return results
         return results
 
+    def _extract_villages(self, tanglish_text: str, tamil_text: str) -> List[Dict[str, Any]]:
+        candidates = self.normalizer.get_candidate_tokens(tanglish_text) + self.normalizer.get_candidate_tokens(tamil_text)
+        candidates = sorted(list(set(candidates)), key=len, reverse=True)
+        results = []
+        for cand in candidates:
+            exact = self.alias_service.lookup_exact(cand)
+            for m in exact:
+                if m.get("entity_type") == "revenue_village":
+                    det = self.alias_service.get_entity_details("revenue_village", m["entity_id"])
+                    if det:
+                        results.append({
+                            "id": int(m["entity_id"]),
+                            "name_en": det.get("name_en"),
+                            "name_ta": det.get("name_ta"),
+                            "taluk_id": det.get("taluk_id"),
+                            "firka_id": det.get("firka_id"),
+                            "confidence": 1.0
+                        })
+            if results:
+                return results
+        return results
+
+    def _extract_firkas(self, tanglish_text: str, tamil_text: str) -> List[Dict[str, Any]]:
+        candidates = self.normalizer.get_candidate_tokens(tanglish_text) + self.normalizer.get_candidate_tokens(tamil_text)
+        candidates = sorted(list(set(candidates)), key=len, reverse=True)
+        results = []
+        for cand in candidates:
+            exact = self.alias_service.lookup_exact(cand)
+            for m in exact:
+                if m.get("entity_type") == "firka":
+                    det = self.alias_service.get_entity_details("firka", m["entity_id"])
+                    if det:
+                        results.append({
+                            "id": int(m["entity_id"]),
+                            "name_en": det.get("name_en"),
+                            "name_ta": det.get("name_ta"),
+                            "taluk_id": det.get("taluk_id"),
+                            "confidence": 1.0
+                        })
+            if results:
+                return results
+        return results
+
     def _build_hierarchy(
         self,
         area: Optional[Dict[str, Any]],
         street: Optional[Dict[str, Any]],
         landmark: Optional[Dict[str, Any]],
-        taluk: Optional[Dict[str, Any]]
+        taluk: Optional[Dict[str, Any]],
+        village: Optional[Dict[str, Any]] = None,
+        firka: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Assembles the full official hierarchy with strict city vs rural validation."""
         db = SessionLocal()
@@ -408,14 +459,43 @@ class CoimbatoreLocationResolver:
                         if taluk_db:
                             res["taluk"] = taluk_db.name_en
                             res["taluk_id"] = taluk_db.id
+                            if taluk_db.division:
+                                res["revenue_division"] = taluk_db.division.name_en
             elif area:
                 res["area"] = area.get("name_en")
+
+            # Check Village and Firka
+            if village:
+                res["revenue_village"] = village.get("name_en")
+                if village.get("id"):
+                    vil_db = db.query(RevenueVillage).filter_by(id=village["id"]).first()
+                    if vil_db:
+                        if vil_db.firka:
+                            res["firka"] = vil_db.firka.name_en
+                        if vil_db.taluk:
+                            res["taluk"] = vil_db.taluk.name_en
+                            res["taluk_id"] = vil_db.taluk.id
+                            if vil_db.taluk.division:
+                                res["revenue_division"] = vil_db.taluk.division.name_en
+
+            if firka and not res["firka"]:
+                res["firka"] = firka.get("name_en")
+                if firka.get("id"):
+                    fk_db = db.query(Firka).filter_by(id=firka["id"]).first()
+                    if fk_db and fk_db.taluk:
+                        res["taluk"] = fk_db.taluk.name_en
+                        res["taluk_id"] = fk_db.taluk.id
+                        if fk_db.taluk.division:
+                            res["revenue_division"] = fk_db.taluk.division.name_en
 
             # Fallback Taluk if provided explicitly
             if not res["taluk"] and taluk:
                 res["taluk"] = taluk.get("name_en")
                 if taluk.get("id"):
                     res["taluk_id"] = taluk["id"]
+                    t_db = db.query(Taluk).filter_by(id=taluk["id"]).first()
+                    if t_db and t_db.division:
+                        res["revenue_division"] = t_db.division.name_en
 
         except Exception as e:
             logger.error(f"Error building hierarchy: {e}")

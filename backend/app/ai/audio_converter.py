@@ -135,3 +135,98 @@ def convert_audio_to_16k_mono_wav(
     except Exception as e:
         logger.error(f"Exception during FFmpeg conversion: {e}")
         return False, "", AUDIO_CONVERSION_FAILED
+
+
+def mulaw_to_wav_bytes(mulaw_bytes: bytes, in_rate: int = 8000, out_rate: int = 16000) -> bytes:
+    """
+    Converts 8 kHz 8-bit mu-law raw telephony audio stream bytes
+    to standard 16 kHz 16-bit mono PCM WAV bytes for Whisper speech recognition.
+    """
+    if not mulaw_bytes:
+        return b""
+
+    import io
+    import wave
+    try:
+        import audioop
+        pcm_data = audioop.ulaw2lin(mulaw_bytes, 2)
+        if in_rate != out_rate:
+            pcm_data, _ = audioop.ratecv(pcm_data, 2, 1, in_rate, out_rate, None)
+    except Exception:
+        # Software fallback for pure linear decoding
+        bias = 0x84
+        pcm_arr = bytearray()
+        for b in mulaw_bytes:
+            comp = ~b & 0xFF
+            sign = comp & 0x80
+            exponent = (comp >> 4) & 0x07
+            mantissa = comp & 0x0F
+            sample = ((mantissa << 3) + bias) << exponent
+            sample -= bias
+            val = -sample if sign else sample
+            val = max(-32768, min(32767, val))
+            # Resample by 2x repetition if in_rate=8000, out_rate=16000
+            for _ in range(out_rate // in_rate):
+                pcm_arr.extend(val.to_bytes(2, byteorder='little', signed=True))
+        pcm_data = bytes(pcm_arr)
+
+    buf = io.BytesIO()
+    with wave.open(buf, 'wb') as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(out_rate)
+        wav.writeframes(pcm_data)
+    return buf.getvalue()
+
+
+def pcm_or_wav_to_mulaw(audio_bytes: bytes, in_rate: int = 16000, out_rate: int = 8000) -> bytes:
+    """
+    Converts 16 kHz PCM/WAV (or raw PCM) audio bytes to 8 kHz mu-law bytes for telephone audio streaming.
+    """
+    if not audio_bytes:
+        return b""
+
+    import io
+    import wave
+
+    raw_pcm = audio_bytes
+    actual_in_rate = in_rate
+
+    # If header contains RIFF WAV header, extract raw PCM frames
+    if audio_bytes.startswith(b"RIFF"):
+        try:
+            with wave.open(io.BytesIO(audio_bytes), 'rb') as wav:
+                actual_in_rate = wav.getframerate()
+                raw_pcm = wav.readframes(wav.getnframes())
+                if wav.getnchannels() > 1:
+                    import audioop
+                    raw_pcm = audioop.tomono(raw_pcm, 2, 0.5, 0.5)
+        except Exception:
+            raw_pcm = audio_bytes[44:] if len(audio_bytes) > 44 else audio_bytes
+
+    try:
+        import audioop
+        if actual_in_rate != out_rate:
+            raw_pcm, _ = audioop.ratecv(raw_pcm, 2, 1, actual_in_rate, out_rate, None)
+        return audioop.lin2ulaw(raw_pcm, 2)
+    except Exception:
+        # Software fallback
+        res = bytearray()
+        step = 2 * (actual_in_rate // out_rate) if actual_in_rate >= out_rate else 2
+        for i in range(0, len(raw_pcm) - 1, max(2, step)):
+            val = int.from_bytes(raw_pcm[i:i+2], byteorder='little', signed=True)
+            # Encode linear to mu-law
+            sign = 0x80 if val < 0 else 0x00
+            val = abs(val)
+            val += 0x84
+            val = min(val, 0x7FFF)
+            exp = 7
+            for e in range(8):
+                if val < (1 << (e + 8)):
+                    exp = e
+                    break
+            mantissa = (val >> (exp + 3)) & 0x0F
+            mulaw = ~(sign | (exp << 4) | mantissa) & 0xFF
+            res.append(mulaw)
+        return bytes(res)
+

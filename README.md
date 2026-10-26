@@ -70,7 +70,31 @@ VOXENTRAAI/
 
 ---
 
-## 🚀 Step-by-Step Windows VS Code Setup Guide
+## 🚀 Quick Combined Start (One Command)
+
+To run both the **FastAPI Backend** and **React Vite Frontend** concurrently in a single terminal:
+
+```bash
+# Option 1: Via npm (uses concurrently)
+npm run combined
+# or
+npm run dev
+
+# Option 2: Via Python launcher
+python run_combined.py
+
+# Option 3: On Windows
+Double-click start_combined.bat
+```
+
+- **Frontend Application**: [http://localhost:5173](http://localhost:5173)
+- **Toll-Free IVR Simulator**: [http://localhost:5173/ivr](http://localhost:5173/ivr)
+- **Backend API & Swagger**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **API Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+
+---
+
+## 🛠️ Step-by-Step Windows VS Code Setup Guide
 
 ### Step 1: Open Project Folder
 Open VS Code and select the `voxentraAII` root folder:

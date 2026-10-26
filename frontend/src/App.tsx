@@ -42,13 +42,14 @@ export const App: React.FC = () => {
               <Routes>
                 {/* Friction-Free Public Routes (No Login Required) */}
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/tollfree-helpline" element={<TollFreeHelplinePage />} />
                 <Route path="/tollfree-ivr" element={<TollFreeIVRPage />} />
                 <Route path="/toll-free-ivr" element={<TollFreeIVRPage />} />
                 <Route path="/new-ivr" element={<LiveTwoWayIVRPage />} />
                 <Route path="/live-ivr" element={<LiveTwoWayIVRPage />} />
                 <Route path="/ivr" element={<TollFreeIVRPage />} />
                 <Route path="/toll-free" element={<TollFreeIVRPage />} />
-                <Route path="/helpline" element={<TollFreeIVRPage />} />
+                <Route path="/helpline" element={<TollFreeHelplinePage />} />
 
                 <Route path="/voice-assistant" element={<VoiceAssistantPage />} />
                 <Route path="/map" element={<LiveMapPage />} />

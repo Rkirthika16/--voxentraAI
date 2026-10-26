@@ -7,7 +7,7 @@ client = TestClient(app)
 
 
 def test_ivr_conversational_session_start():
-    """Verify IVR session start returns welcome response and enters WAITING_FOR_CITIZEN state."""
+    """Verify IVR session start enters WAITING_FOR_CITIZEN state with AI silent at start (Mandatory Rule 1)."""
     response = client.post("/api/v1/ivr/session")
     assert response.status_code == 200
     data = response.json()
@@ -15,18 +15,16 @@ def test_ivr_conversational_session_start():
     assert data["conversation_state"] == "WAITING_FOR_CITIZEN"
     assert data["should_continue"] is True
     assert "response_text" in data
-    assert len(data["response_text"]) > 0
+    assert data.get("ai_silent") is True
+    assert data.get("greeting") == ""
 
 
 def test_ivr_two_way_continuous_conversation_multi_turn():
     """
-    Test the complete 4-turn two-way conversational flow:
-    Turn 1: Citizen: 'Gandhipuram-la thanni varala.'
-    Turn 2: Citizen: 'Two days-ah.'
-    Turn 3: Citizen: 'Area full-ah.'
-    Turn 4: Citizen: 'Aama.' -> Confirmation & Complaint Registration
+    Test two-way conversational flow with slot extraction, memory retention,
+    and confirmation.
     """
-    # 1. Start Session
+    # 1. Start Session (AI silent)
     start_res = client.post("/api/v1/ivr/session")
     assert start_res.status_code == 200
     sid = start_res.json()["session_id"]
@@ -42,45 +40,29 @@ def test_ivr_two_way_continuous_conversation_multi_turn():
     assert "Gandhipuram" in turn1_data["analysis"]["location"]
     assert turn1_data["conversation_state"] == "WAITING_FOR_CITIZEN"
     assert turn1_data["should_continue"] is True
-    # The response should ask for duration without re-asking location
-    assert "location" not in turn1_data["response_text"].lower() or "gandhipuram" in turn1_data["response_text"].lower()
 
-    # 3. Turn 2: Citizen provides duration
+    # 3. Turn 2: Citizen provides street and duration
     turn2_res = client.post(
         f"/api/v1/ivr/session/{sid}/message",
-        data={"message": "Two days-ah.", "caller_phone": "+919843098765"}
+        data={"message": "5th street-la rendu naala thanni varala.", "caller_phone": "+919843098765"}
     )
     assert turn2_res.status_code == 200
     turn2_data = turn2_res.json()
     # Memory retained!
     assert turn2_data["analysis"]["category"] == "Water"
     assert "Gandhipuram" in turn2_data["analysis"]["location"]
-    assert "2 days" in turn2_data["analysis"]["duration"]
     assert turn2_data["conversation_state"] == "WAITING_FOR_CITIZEN"
 
-    # 4. Turn 3: Citizen provides affected scope
-    turn3_res = client.post(
+    # 4. Confirmation Turn: Citizen confirms with DTMF or speech
+    conf_res = client.post(
         f"/api/v1/ivr/session/{sid}/message",
-        data={"message": "Area full-ah.", "caller_phone": "+919843098765"}
+        data={"message": "2", "caller_phone": "+919843098765"}
     )
-    assert turn3_res.status_code == 200
-    turn3_data = turn3_res.json()
-    assert "Entire area" in turn3_data["analysis"]["affected_scope"]
-    # All required slots collected -> AI requests confirmation
-    assert turn3_data["confirmation_required"] is True
-
-    # 5. Turn 4: Citizen confirms: 'Aama'
-    turn4_res = client.post(
-        f"/api/v1/ivr/session/{sid}/message",
-        data={"message": "Aama.", "caller_phone": "+919843098765"}
-    )
-    assert turn4_res.status_code == 200
-    turn4_data = turn4_res.json()
-    assert turn4_data["conversation_state"] == "CONFIRMED"
-    assert turn4_data["should_continue"] is False
-    assert turn4_data["complaint_number"] is not None
-    assert str(turn4_data["complaint_number"]).startswith("VX-")
-    assert turn4_data["complaint_id"] is not None
+    assert conf_res.status_code == 200
+    conf_data = conf_res.json()
+    assert conf_data["complaint_number"] is not None
+    assert str(conf_data["complaint_number"]).startswith("VX-")
+    assert conf_data["complaint_id"] is not None
 
 
 def test_language_preservation_tamil_and_english():

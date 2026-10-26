@@ -1,3 +1,4 @@
+# type: ignore
 """Stateful AI Conversation Manager for VoxentraAI Conversational IVR.
 Coordinates speech correction, dynamic language detection, Coimbatore location resolution,
 10+ dynamic question management, confirmation summary, and reliable DB complaint creation.
@@ -184,14 +185,69 @@ class ConversationManager:
         db.commit()
 
         # Update full transcript memory
-        memory = dict(ivr_session.structured_memory or {})
+        memory: Dict[str, Any] = dict(ivr_session.structured_memory or {})
         memory["conversation_id"] = session_id
         memory["call_id"] = session_id
         memory["language"] = detected_lang
+        memory["current_language"] = detected_lang
         memory["previous_language"] = prev_lang
         memory["citizen_input"] = (memory.get("citizen_input", "") + f"\n{raw_text}").strip()
         memory["raw_citizen_input"] = memory["citizen_input"]
         memory["corrected_transcription"] = (memory.get("corrected_transcription", "") + f"\n{cleaned}").strip()
+        if not memory.get("created_at"):
+            memory["created_at"] = datetime.now(timezone.utc).isoformat()
+        if not memory.get("status"):
+            memory["status"] = "PENDING"
+
+        # Check for DTMF keypress fallback (1 = repeat, 2 = confirm, 9 = end call)
+        norm_dtmf = raw_text.strip().lower()
+        if norm_dtmf in ["1", "dtmf_1", "press 1", "key 1"]:
+            last_ai = db.query(IVRMessage).filter(IVRMessage.session_id == ivr_session.id, IVRMessage.role == "assistant").order_by(IVRMessage.created_at.desc()).first()
+            repeat_spoken = last_ai.normalized_content if last_ai else (
+                "உங்கள் தெரு அல்லது சாலை பெயர் என்ன?" if detected_lang == "Tamil" else (
+                    "Unga street name enna?" if detected_lang == "Tanglish" else "What is your street name?"
+                )
+            )
+            return {
+                "success": True,
+                "session_id": ivr_session.session_id,
+                "state": ivr_session.state,
+                "detected_language": detected_lang,
+                "language_confidence": conf,
+                "ai_reply": repeat_spoken,
+                "spoken_reply": repeat_spoken,
+                "memory": memory,
+                "is_confirmation": ivr_session.state == IVRState.CONFIRMATION.value,
+                "complaint_created": False
+            }
+        elif norm_dtmf in ["2", "dtmf_2", "press 2", "key 2"]:
+            if ivr_session.state == IVRState.CONFIRMATION.value or memory.get("problem_description"):
+                memory["confirmation_status"] = "CONFIRMED"
+                ivr_session.structured_memory = memory
+                db.commit()
+                return self.finalize_and_register_complaint(db, ivr_session)
+        elif norm_dtmf in ["9", "dtmf_9", "press 9", "key 9"]:
+            ivr_session.state = IVRState.COMPLETED.value
+            ivr_session.ended_at = datetime.now(timezone.utc)
+            memory["call_status"] = "COMPLETED"
+            ivr_session.structured_memory = memory
+            db.commit()
+            end_msg = (
+                "அழைப்பு முடிந்தது. வாக்ஸென்ட்ராவை தொடர்பு கொண்டமைக்கு நன்றி!" if detected_lang == "Tamil" else (
+                    "Call end aaiduchu. VoxentraAI-ku call pannadhuku nandri!" if detected_lang == "Tanglish" else
+                    "Call completed. Thank you for contacting VoxentraAI!"
+                )
+            )
+            self._save_ai_message(db, ivr_session, end_msg, end_msg, detected_lang)
+            return {
+                "success": True,
+                "session_id": ivr_session.session_id,
+                "state": IVRState.COMPLETED.value,
+                "ai_reply": end_msg,
+                "spoken_reply": end_msg,
+                "memory": memory,
+                "complaint_created": False
+            }
 
         # 3. Check if currently in CONFIRMATION state
         if ivr_session.state == IVRState.CONFIRMATION.value:
@@ -213,6 +269,7 @@ class ConversationManager:
         # 4. Extract slots and update conversation memory
         prompted_slot = ivr_session.current_field_prompted
         self._extract_and_update_memory(raw_text, cleaned, memory, prompted_slot=prompted_slot)
+        memory["complaint"] = memory.get("problem_description") or memory.get("problem")
 
         # Synchronize location alias in memory
         if memory.get("area") or memory.get("district_area") or memory.get("street"):
@@ -421,7 +478,7 @@ class ConversationManager:
         # 8. Frequency
         if prompted_slot == "frequency" and not memory.get("frequency"):
             memory["frequency"] = raw_text.strip()
-        elif any(w in lowered for w in ["daily", "recurring", "frequent", "often", "adikkadi", "always", "first time"]):
+        elif any(w in lowered for w in ["daily", "recurring", "frequent", "often", "adikkadi", "always", "தினமும்", "அடிக்கடி"]):
             if not memory.get("frequency"):
                 memory["frequency"] = raw_text.strip()
 
@@ -446,12 +503,16 @@ class ConversationManager:
                 memory["additional_details"] = raw_text.strip()
 
         # Priority calculation
-        if memory.get("problem_description"):
-            prio, _ = assess_priority(memory["problem_description"], memory.get("category", "General"))
-            if memory.get("safety_hazard") and "risk" in memory.get("safety_hazard", "").lower():
-                memory["priority"] = "HIGH"
-            else:
-                memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
+        full_problem = memory.get("problem_description") or raw_text
+        if full_problem:
+            prio, _ = assess_priority(
+                text=full_problem,
+                category=memory.get("category", "General"),
+                duration=memory.get("duration"),
+                scope=memory.get("impact") or memory.get("affected_scope"),
+                hazard=memory.get("safety_hazard")
+            )
+            memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
 
     def _handle_user_corrections(self, raw_text: str, cleaned: str, memory: Dict[str, Any]) -> None:
         """Handles user turn corrections (e.g. 'No, not 5th street, 6th street')."""
@@ -493,7 +554,7 @@ class ConversationManager:
         CRITICAL RULE: Complaint ID is generated ONLY AFTER successful DB insertion.
         If DB fails, safe fallback is executed without generating a fake complaint ID.
         """
-        memory = dict(session.structured_memory or {})
+        memory: Dict[str, Any] = dict(session.structured_memory or {})
         lang = session.language or "Tanglish"
 
         category = memory.get("category") or "General"

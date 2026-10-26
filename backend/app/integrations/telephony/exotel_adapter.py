@@ -42,10 +42,47 @@ class ExotelAdapter:
     def get_logs(self, limit: int = 50) -> List[Dict[str, Any]]:
         return self.telephony_logs[:limit]
 
+    def validate_token(self, token: Optional[str]) -> bool:
+        if not settings.TELEPHONY_WEBHOOK_VALIDATE_SIGNATURE:
+            return True
+        secret = settings.EXOTEL_WEBHOOK_SECRET or self.api_token
+        if not secret:
+            return True
+        return token == secret
+
+    def build_silent_passthru(self, callback_url: str) -> Dict[str, Any]:
+        """
+        Passthru response for silent connect - listens for citizen speech first.
+        """
+        return {
+            "status": "success",
+            "action": "gather_speech",
+            "ai_silent": True,
+            "callback_url": callback_url,
+            "timeout_sec": 6,
+            "finish_on_key": "#"
+        }
+
+    def build_turn_passthru(self, play_audio_url: str, callback_url: str) -> Dict[str, Any]:
+        return {
+            "status": "success",
+            "action": "play_and_gather",
+            "play_audio_url": play_audio_url,
+            "callback_url": callback_url,
+            "timeout_sec": 6
+        }
+
+    def build_completion_passthru(self, play_audio_url: str) -> Dict[str, Any]:
+        return {
+            "status": "success",
+            "action": "play_and_hangup",
+            "play_audio_url": play_audio_url
+        }
+
     def handle_incoming_call(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Processes inbound call webhook from Exotel virtual number.
-        Returns Exotel Passthru XML/JSON instructions to play Tamil/English prompt and record.
+        Returns Exotel Passthru XML/JSON instructions to play prompt and record.
         """
         call_sid = payload.get("CallSid", f"CA_{uuid.uuid4().hex[:16]}")
         from_number = payload.get("From", "+919843098765")
@@ -65,7 +102,7 @@ class ExotelAdapter:
             "record_time_limit_sec": 60,
             "finish_on_key": "#",
             "transcription_requested": True,
-            "callback_url": "/api/v1/webhooks/exotel/voice/recording"
+            "callback_url": "/api/v1/telephony/voice/recording"
         }
 
         self._log_event(

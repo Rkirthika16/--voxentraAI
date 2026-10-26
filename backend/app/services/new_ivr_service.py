@@ -1,3 +1,4 @@
+# type: ignore
 import re
 import uuid
 import logging
@@ -190,7 +191,7 @@ class NewIVRService:
         db.commit()
 
         # Update full transcript records in memory
-        memory = dict(ivr_session.structured_memory or {})
+        memory: Dict[str, Any] = dict(ivr_session.structured_memory or {})
         memory["raw_citizen_input"] = (memory.get("raw_citizen_input", "") + f"\n{raw_text}").strip()
         memory["corrected_transcription"] = (memory.get("corrected_transcription", "") + f"\n{cleaned}").strip()
 
@@ -495,12 +496,16 @@ class NewIVRService:
             memory["location"] = None
 
         # Priority Assessment
-        if memory.get("problem_description"):
-            prio, _ = assess_priority(memory["problem_description"], memory.get("category", "General"))
-            if memory.get("safety_hazard") and "risk" in memory.get("safety_hazard", "").lower():
-                memory["priority"] = "HIGH"
-            else:
-                memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
+        full_problem = memory.get("problem_description") or raw_text
+        if full_problem:
+            prio, _ = assess_priority(
+                text=full_problem,
+                category=memory.get("category", "General"),
+                duration=memory.get("duration"),
+                scope=memory.get("impact") or memory.get("affected_scope"),
+                hazard=memory.get("safety_hazard")
+            )
+            memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
 
     def _check_explicit_corrections(self, raw_text: str, cleaned: str, memory: Dict[str, Any]) -> None:
         """Handles explicit user corrections like 'Change area to Gandhipuram', 'Street is 5th Street'."""
@@ -1057,7 +1062,7 @@ class NewIVRService:
         Creates official Complaint record in DB, generates unique Complaint ID (e.g. VX-2026-00001),
         saves all structured fields, sends Twilio SMS, and returns final spoken response.
         """
-        memory = dict(ivr_session.structured_memory or {})
+        memory: Dict[str, Any] = dict(ivr_session.structured_memory or {})
         problem = memory.get("problem_description") or memory.get("problem") or "Civic grievance reported via AI voice IVR"
         category = memory.get("category") or "Water Supply"
         area = memory.get("area") or memory.get("district_area") or "Tamil Nadu"

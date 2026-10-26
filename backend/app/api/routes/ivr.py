@@ -1,10 +1,11 @@
 import os
+import json
 import uuid
 import base64
 import logging
 import aiofiles
 from typing import Dict, Any, Optional, List
-from fastapi import APIRouter, Request, Depends, UploadFile, File, Form, Query, Response, status
+from fastapi import APIRouter, Request, Depends, UploadFile, File, Form, Query, Response, status, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -29,12 +30,15 @@ from app.schemas.ivr import (
 )
 from app.services.complaint_service import complaint_service
 from app.services.ivr_session_service import ivr_session_service, IVRState
+from app.services.conversation_manager import conversation_manager
+from app.services.speech_correction import speech_correction_service
+from app.services.language_detector import language_detector
 from app.ai.provider import ai_provider
 from app.ai.speech_service import speech_service
 from app.ai.conversation_service import conversation_service, ConversationContext
 from app.ai.tts_service import synthesize_speech
-from app.ai import audio_prediction_service
-from app.ai.audio_converter import convert_audio_to_16k_mono_wav
+from app.ai.audio_prediction_service import audio_prediction_service
+from app.ai.audio_converter import convert_audio_to_16k_mono_wav, mulaw_to_wav_bytes, pcm_or_wav_to_mulaw
 from app.integrations.telephony.exotel_adapter import exotel_adapter
 from app.integrations.telephony.twilio_adapter import twilio_adapter
 from app.utils.validators import validate_audio_file
@@ -48,8 +52,10 @@ router = APIRouter(tags=["Telephony & IVR Toll-Free Helpline (Exotel & Twilio)"]
 def dispatch_sms_notification(to_phone: str, message: str) -> bool:
     """Dispatches SMS using configured telephony provider (Exotel or Twilio)."""
     if settings.TELEPHONY_PROVIDER.lower() == "twilio":
-        return twilio_adapter.send_sms(to_phone, message)
-    return exotel_adapter.send_sms(to_phone, message)
+        res = twilio_adapter.send_sms(to_phone, message)
+        return bool(res.get("success", False)) if isinstance(res, dict) else bool(res)
+    res = exotel_adapter.send_sms(to_phone, message)
+    return bool(res.get("success", False)) if isinstance(res, dict) else bool(res)
 
 
 from datetime import datetime, timezone
@@ -131,82 +137,325 @@ def _save_ivr_db_message(db: Session, db_session: Optional[IVRSession], role: st
 # Unified Two-Way Conversational Voice IVR Session Endpoints
 # -------------------------------------------------------------
 
+# -------------------------------------------------------------
+# Unified Two-Way Conversational Voice IVR Session Endpoints
+# -------------------------------------------------------------
+
+@router.post("/ivr/incoming")
 @router.post("/ivr/session")
 @router.post("/ivr/session/start")
 async def create_ivr_conversational_session(
     request: Request,
     session_id: Optional[str] = Query(None),
     caller_phone: Optional[str] = Query(None),
+    CallSid: Optional[str] = Query(None),
+    From: Optional[str] = Query(None),
+    To: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     """
     Initiates a new two-way conversational voice session for the IVR Toll-Free Helpline.
-    Accepts JSON body, form data, or query params.
-    The citizen hears a welcoming prompt and can speak first in Tamil, English, or Tanglish.
+    MANDATORY RULE 1: AI MUST BE SILENT. No greeting, no welcome prompt, no first question.
+    Citizen speaks first in Tamil, English, or Tanglish.
+    Supports JSON, Form-data, Query params, and Telephony Provider Webhooks (Twilio/Exotel).
     """
     body_sid = None
     body_phone = None
+    is_telephony_form = False
     try:
         content_type = request.headers.get("content-type", "")
         if "application/json" in content_type:
             body = await request.json()
             if isinstance(body, dict):
-                body_sid = body.get("session_id")
-                body_phone = body.get("caller_phone")
+                body_sid = body.get("session_id") or body.get("CallSid")
+                body_phone = body.get("caller_phone") or body.get("From")
         elif "form" in content_type:
             form = await request.form()
-            body_sid = form.get("session_id")
-            body_phone = form.get("caller_phone")
+            body_sid = form.get("session_id") or form.get("CallSid")
+            body_phone = form.get("caller_phone") or form.get("From")
+            is_telephony_form = True
     except Exception:
         pass
 
-    sid = session_id or body_sid or f"IVR_{uuid.uuid4().hex[:12]}"
-    phone = caller_phone or body_phone or "+919843098765"
+    sid = session_id or CallSid or body_sid or f"IVR_{uuid.uuid4().hex[:12]}"
+    phone = caller_phone or From or body_phone or "+919843098765"
 
-    ctx = conversation_service.get_or_create_context(sid, phone)
-    ivr_sess = ivr_session_service.get_or_create_session(sid, phone, provider="ivr_helpline")
-    ivr_sess.transition_to(IVRState.WAITING_FOR_CITIZEN)
+    # Create session with ConversationManager (AI SILENT: greeting_text='', spoken_greeting='')
+    session_obj, greeting_text, greeting_spoken = conversation_manager.create_session(
+        db=db,
+        caller_phone=phone,
+        language_preference="Auto"
+    )
+    sid = session_obj.session_id
 
-    # Persist session to SQLite DB
-    db_sess = _sync_ivr_session_to_db(db, sid, phone, state="WAITING_FOR_CITIZEN")
-
-    # Log incoming call attempt in telephony tracker
-    exotel_adapter.handle_incoming_call({
-        "CallSid": sid,
-        "From": phone,
-        "To": "1913"
-    })
-
-    welcome_text = "📞 Call Connected. Listening mode active — please describe your civic problem in Tamil, Tanglish, or English. AI will automatically detect your language and respond."
-    welcome_spoken = ""
-    _save_ivr_db_message(db, db_sess, "ai", welcome_text, "Auto")
+    # Check if request came from Twilio telephony webhook or expects TwiML XML
+    accept_header = request.headers.get("accept", "")
+    if is_telephony_form or "xml" in accept_header or CallSid or From:
+        host = request.headers.get("host", "localhost:8000")
+        ws_scheme = "wss" if request.url.scheme == "https" else "ws"
+        stream_url = f"{ws_scheme}://{host}/api/v1/ivr/stream"
+        
+        twiml = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            "<Response>\n"
+            f'    <Connect>\n'
+            f'        <Stream url="{stream_url}">\n'
+            f'            <Parameter name="session_id" value="{sid}" />\n'
+            f'            <Parameter name="caller_phone" value="{phone}" />\n'
+            f'        </Stream>\n'
+            f'    </Connect>\n'
+            "</Response>"
+        )
+        return Response(content=twiml, media_type="application/xml")
 
     return {
+        "success": True,
         "session_id": sid,
-        "transcription": "",
-        "language": "Auto-Detecting...",
-        "analysis": {
-            "category": "Other",
-            "location": "",
-            "problem": "",
-            "duration": "",
-            "affected_scope": "",
-            "severity": "normal",
-            "priority": "MEDIUM",
-            "department": "Municipal Administration"
-        },
-        "response_text": welcome_text,
-        "greeting_text": welcome_text,
-        "ai_spoken": welcome_spoken,
-        "audio_base64": None,
+        "caller_phone": phone,
+        "state": "WAITING_FOR_CITIZEN",
         "conversation_state": "WAITING_FOR_CITIZEN",
-        "state": "WAITING_FOR_USER",
         "should_continue": True,
-        "complaint_id": None,
-        "complaint_number": None,
-        "context": ctx.to_dict(),
-        "speech_recognition_available": speech_service.check_availability()["available"]
+        "ai_silent": True,
+        "greeting": "",
+        "response_text": "",
+        "spoken_greeting": "",
+        "language": session_obj.language,
+        "structured_memory": session_obj.structured_memory,
+        "stream_url": "/api/v1/ivr/stream"
     }
+
+
+@router.post("/ivr/status")
+async def handle_ivr_telephony_status(
+    request: Request,
+    CallSid: Optional[str] = Query(None),
+    CallStatus: Optional[str] = Query(None),
+    CallDuration: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Status callback webhook from Telephony Providers (Twilio/Exotel).
+    Updates session state upon call termination or status transitions.
+    """
+    body_sid = None
+    body_status = None
+    body_duration = None
+    try:
+        content_type = request.headers.get("content-type", "")
+        if "application/json" in content_type:
+            body = await request.json()
+            if isinstance(body, dict):
+                body_sid = body.get("CallSid") or body.get("session_id")
+                body_status = body.get("CallStatus") or body.get("status")
+                body_duration = body.get("CallDuration") or body.get("duration")
+        elif "form" in content_type:
+            form = await request.form()
+            body_sid = form.get("CallSid") or form.get("session_id")
+            body_status = form.get("CallStatus") or form.get("status")
+            body_duration = form.get("CallDuration") or form.get("duration")
+    except Exception:
+        pass
+
+    sid = CallSid or body_sid
+    st = (CallStatus or body_status or "completed").lower()
+    duration = CallDuration or body_duration
+
+    if sid:
+        sess = db.query(IVRSession).filter((IVRSession.session_id == sid) | (IVRSession.session_id.contains(sid))).first()
+        if sess:
+            if st in ["completed", "busy", "no-answer", "failed", "canceled"]:
+                sess.ended_at = datetime.now(timezone.utc)
+                if sess.state != "COMPLETED":
+                    sess.state = "CALL_ENDED"
+            sess.updated_at = datetime.now(timezone.utc)
+            db.commit()
+
+    return {"success": True, "call_sid": sid, "status": st, "duration": duration}
+
+
+@router.websocket("/ivr/stream")
+@router.websocket("/ivr/session/{session_id}/stream")
+async def ivr_telephony_websocket_stream(
+    websocket: WebSocket,
+    session_id: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Real-Time Bidirectional Telephony Audio Stream WebSocket Endpoint.
+    Connects normal keypad/button phone PSTN calls through telephony audio streaming.
+    Pipeline:
+      Phone Audio (mu-law/PCM) -> Whisper STT -> Speech Correction -> Language Detection -> AI Turn -> TTS Audio (mu-law) -> Phone Speaker.
+    Supports Twilio Media Streams, Exotel Voice Streams, DTMF digits (1=repeat, 2=confirm, 9=end), and client test packets.
+    """
+    await websocket.accept()
+    logger.info(f"[IVR WebSocket] Telephony stream connected. Session hint: {session_id}")
+
+    active_session_id = session_id or f"IVR_{uuid.uuid4().hex[:12]}"
+    caller_phone = "+919843098765"
+    stream_sid = None
+    audio_buffer = bytearray()
+
+    # Ensure DB session exists (AI silent at start)
+    session_record = conversation_manager.get_session(db, active_session_id)
+    if not session_record:
+        session_record, _, _ = conversation_manager.create_session(db, caller_phone=caller_phone)
+        active_session_id = session_record.session_id
+
+    try:
+        while True:
+            raw_msg = await websocket.receive_text()
+            try:
+                data = json.loads(raw_msg)
+            except Exception:
+                continue
+
+            event_type = data.get("event") or data.get("type", "")
+
+            # 1. Connection Start Event
+            if event_type == "start":
+                stream_sid = data.get("streamSid") or data.get("start", {}).get("streamSid")
+                custom_params = data.get("start", {}).get("customParameters", {})
+                if custom_params.get("session_id"):
+                    active_session_id = custom_params["session_id"]
+                if custom_params.get("caller_phone"):
+                    caller_phone = custom_params["caller_phone"]
+
+                logger.info(f"[IVR WebSocket] Stream started: streamSid={stream_sid}, session_id={active_session_id}")
+                await websocket.send_json({
+                    "event": "started",
+                    "session_id": active_session_id,
+                    "state": "WAITING_FOR_CITIZEN"
+                })
+
+            # 2. Inbound Audio Media Packet from Phone
+            elif event_type in ["media", "audio"]:
+                media_payload = data.get("media", {}).get("payload") or data.get("payload") or data.get("audio")
+                if media_payload:
+                    chunk_bytes = base64.b64decode(media_payload)
+                    audio_buffer.extend(chunk_bytes)
+
+            # 3. Speech Turn Complete or Audio Buffer Flush Event
+            elif event_type in ["turn_end", "speech_end", "process_buffer", "audio_end"]:
+                if len(audio_buffer) >= 160:  # At least 20ms of audio
+                    wav_bytes = mulaw_to_wav_bytes(bytes(audio_buffer))
+                    temp_dir = os.path.join(settings.UPLOAD_DIR, "temp_ivr")
+                    os.makedirs(temp_dir, exist_ok=True)
+                    temp_wav_path = os.path.join(temp_dir, f"stream_{active_session_id}_{uuid.uuid4().hex[:6]}.wav")
+
+                    with open(temp_wav_path, "wb") as f_out:
+                        f_out.write(wav_bytes)
+
+                    try:
+                        stt_res = speech_service.transcribe(temp_wav_path)
+                        transcription = (stt_res.get("transcription") or "").strip()
+
+                        if transcription:
+                            turn_res = conversation_manager.process_citizen_turn(
+                                db=db,
+                                session_id=active_session_id,
+                                speech_text=transcription
+                            )
+
+                            spoken_text = turn_res.get("spoken_reply") or turn_res.get("ai_reply") or ""
+                            t_lang = turn_res.get("detected_language") or "Tanglish"
+
+                            # Synthesize TTS voice
+                            tts_audio = synthesize_speech(spoken_text, t_lang)
+                            mulaw_out = pcm_or_wav_to_mulaw(tts_audio, in_rate=16000, out_rate=8000) if tts_audio else b""
+                            b64_audio = base64.b64encode(mulaw_out).decode("utf-8") if mulaw_out else ""
+
+                            # Stream audio to telephony provider
+                            if stream_sid and b64_audio:
+                                await websocket.send_json({
+                                    "event": "media",
+                                    "streamSid": stream_sid,
+                                    "media": {"payload": b64_audio}
+                                })
+
+                            # Send JSON metadata event
+                            turn_res["audio_base64"] = b64_audio
+                            turn_res["event"] = "turn_complete"
+                            await websocket.send_json(turn_res)
+
+                    finally:
+                        if os.path.exists(temp_wav_path):
+                            try:
+                                os.remove(temp_wav_path)
+                            except Exception:
+                                pass
+                        audio_buffer.clear()
+
+            # 4. Text Utterance Message (for testing or chat bridge)
+            elif event_type in ["message", "text"]:
+                user_msg = data.get("message") or data.get("text") or ""
+                turn_res = conversation_manager.process_citizen_turn(
+                    db=db,
+                    session_id=active_session_id,
+                    speech_text=user_msg
+                )
+                spoken_text = turn_res.get("spoken_reply") or turn_res.get("ai_reply") or ""
+                t_lang = turn_res.get("detected_language") or "Tanglish"
+                tts_audio = synthesize_speech(spoken_text, t_lang)
+                mulaw_out = pcm_or_wav_to_mulaw(tts_audio, in_rate=16000, out_rate=8000) if tts_audio else b""
+                b64_audio = base64.b64encode(mulaw_out).decode("utf-8") if mulaw_out else ""
+
+                if stream_sid and b64_audio:
+                    await websocket.send_json({
+                        "event": "media",
+                        "streamSid": stream_sid,
+                        "media": {"payload": b64_audio}
+                    })
+
+                turn_res["audio_base64"] = b64_audio
+                turn_res["event"] = "turn_complete"
+                await websocket.send_json(turn_res)
+
+            # 5. DTMF Keypress Event
+            elif event_type in ["dtmf", "keypress"]:
+                digit = str(data.get("dtmf", {}).get("digit") or data.get("digit") or "1")
+                turn_res = conversation_manager.process_citizen_turn(
+                    db=db,
+                    session_id=active_session_id,
+                    speech_text=digit
+                )
+                spoken_text = turn_res.get("spoken_reply") or turn_res.get("ai_reply") or ""
+                t_lang = turn_res.get("detected_language") or "Tanglish"
+                tts_audio = synthesize_speech(spoken_text, t_lang)
+                mulaw_out = pcm_or_wav_to_mulaw(tts_audio, in_rate=16000, out_rate=8000) if tts_audio else b""
+                b64_audio = base64.b64encode(mulaw_out).decode("utf-8") if mulaw_out else ""
+
+                if stream_sid and b64_audio:
+                    await websocket.send_json({
+                        "event": "media",
+                        "streamSid": stream_sid,
+                        "media": {"payload": b64_audio}
+                    })
+
+                turn_res["audio_base64"] = b64_audio
+                turn_res["event"] = "dtmf_processed"
+                await websocket.send_json(turn_res)
+
+            # 6. Stop / Call Hangup Event
+            elif event_type in ["stop", "hangup"]:
+                logger.info(f"[IVR WebSocket] Call stopped for session {active_session_id}")
+                sess = conversation_manager.get_session(db, active_session_id)
+                if sess and sess.state != "COMPLETED":
+                    sess.ended_at = datetime.now(timezone.utc)
+                    db.commit()
+                break
+
+            # 7. Ping / Heartbeat
+            elif event_type in ["ping", "keepalive"]:
+                await websocket.send_json({"event": "pong"})
+
+    except WebSocketDisconnect:
+        logger.info(f"[IVR WebSocket] Disconnected: session_id={active_session_id}")
+    except Exception as e:
+        logger.error(f"[IVR WebSocket] Error in session {active_session_id}: {e}")
+        try:
+            await websocket.send_json({"event": "error", "message": str(e)})
+        except Exception:
+            pass
 
 
 @router.post("/ivr/session/{session_id}/audio")
@@ -220,7 +469,7 @@ async def process_ivr_session_audio(
     """
     Receives caller's microphone voice recording, converts audio to 16kHz mono WAV,
     runs Whisper transcription (with browser speech recognition fallback),
-    processes conversational logic, and returns structured analysis and synthesized response voice.
+    processes conversational turn in ConversationManager, and returns structured response and synthesized audio.
     """
     temp_dir = os.path.join(settings.UPLOAD_DIR, "temp_ivr")
     os.makedirs(temp_dir, exist_ok=True)
@@ -242,75 +491,40 @@ async def process_ivr_session_audio(
         )
         transcription = (stt_result.get("transcription") or "").strip()
 
-        # Seamless fallback to browser real-time speech recognition if audio buffer was silent/unclear
         if not transcription and transcription_hint and transcription_hint.strip():
             transcription = transcription_hint.strip()
 
-        ctx = conversation_service.get_or_create_context(session_id, caller_phone)
-
-        if not transcription:
-            lang = ctx.language or "Tamil"
-            unclear_txt, unclear_spk = conversation_service.get_unclear_response(lang)
-            unclear_audio = synthesize_speech(unclear_spk, lang)
-
-            db_sess = _sync_ivr_session_to_db(db, session_id, caller_phone or "+919843098765", state="WAITING_FOR_CITIZEN", memory=ctx.to_dict())
-            _save_ivr_db_message(db, db_sess, "ai", unclear_txt, lang)
-
-            return {
-                "session_id": session_id,
-                "transcription": "",
-                "language": lang,
-                "analysis": {
-                    "category": ctx.category or "Other",
-                    "location": ctx.location or "",
-                    "problem": ctx.problem or "",
-                    "duration": ctx.duration or "",
-                    "affected_scope": ctx.affected_scope or "",
-                    "severity": ctx.severity or "normal",
-                    "priority": ctx.priority or "MEDIUM",
-                    "department": ctx.department or "Municipal Administration"
-                },
-                "response_text": unclear_txt,
-                "ai_spoken": unclear_spk,
-                "audio_base64": base64.b64encode(unclear_audio).decode("utf-8") if unclear_audio else None,
-                "conversation_state": "WAITING_FOR_CITIZEN",
-                "state": "WAITING_FOR_USER",
-                "should_continue": True,
-                "speech_recognition_available": True,
-                "error": None
-            }
-
-        # 2. Process multi-turn conversational dialogue turn
-        turn_res = conversation_service.process_turn(session_id, transcription, db=db, caller_phone=caller_phone)
+        # 2. Process turn via ConversationManager
+        turn_res = conversation_manager.process_citizen_turn(
+            db=db,
+            session_id=session_id,
+            speech_text=transcription,
+            audio_url=f"/api/v1/audio/recording/{os.path.basename(temp_path)}"
+        )
 
         # 3. Synthesize natural TTS voice audio
-        spoken_text = turn_res.get("ai_spoken") or turn_res.get("response_text") or ""
-        tts_lang = turn_res.get("language") or "Tamil"
+        spoken_text = turn_res.get("spoken_reply") or turn_res.get("ai_reply") or ""
+        tts_lang = turn_res.get("detected_language") or "Tanglish"
         audio_bytes = synthesize_speech(spoken_text, tts_lang)
+        mem = turn_res.get("memory", {})
         turn_res["audio_base64"] = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
-
-        # Persist dialogue turn to DB
-        db_sess = _sync_ivr_session_to_db(
-            db,
-            session_id,
-            caller_phone or "+919843098765",
-            state=turn_res.get("state", "WAITING_FOR_CITIZEN"),
-            memory=ctx.to_dict()
-        )
-        _save_ivr_db_message(db, db_sess, "citizen", transcription, ctx.language)
-        _save_ivr_db_message(db, db_sess, "ai", spoken_text, ctx.language)
-
-        # Update in-memory session service state
-        ivr_sess = ivr_session_service.get_session(session_id)
-        if ivr_sess:
-            ivr_sess.add_turn(speaker="citizen", text=transcription)
-            ivr_sess.add_turn(speaker="ivr", text=spoken_text)
-            if turn_res.get("conversation_complete"):
-                ivr_sess.end_call(IVRState.COMPLETED)
-            elif turn_res.get("confirmation_required"):
-                ivr_sess.transition_to(IVRState.CONFIRMING)
-            else:
-                ivr_sess.transition_to(IVRState.WAITING_FOR_RESPONSE)
+        turn_res["transcription"] = transcription
+        turn_res["response_text"] = turn_res.get("ai_reply", "")
+        turn_res["ai_spoken"] = spoken_text
+        turn_res["language"] = tts_lang
+        turn_res["should_continue"] = (turn_res.get("state") != "COMPLETED")
+        turn_res["conversation_state"] = turn_res.get("state")
+        turn_res["confirmation_required"] = turn_res.get("is_confirmation", False)
+        turn_res["analysis"] = {
+            "category": mem.get("category") or "Other",
+            "location": mem.get("location") or mem.get("area") or mem.get("district_area") or "",
+            "problem": mem.get("problem_description") or mem.get("problem") or "",
+            "duration": mem.get("duration") or "",
+            "affected_scope": mem.get("affected_scope") or mem.get("affected_area") or "",
+            "severity": mem.get("severity") or "normal",
+            "priority": mem.get("priority") or "MEDIUM",
+            "department": mem.get("department") or "Municipal Administration"
+        }
 
         return turn_res
 
@@ -331,7 +545,7 @@ async def process_ivr_session_message(
     db: Session = Depends(get_db)
 ):
     """
-    Text-based turn fallback entering the exact same conversation engine.
+    Text-based turn fallback entering the exact same stateful conversation manager.
     Supports JSON, Form, and Query parameters.
     """
     raw_message = (message or "").strip()
@@ -354,50 +568,71 @@ async def process_ivr_session_message(
         except Exception:
             pass
 
-    turn_res = conversation_service.process_turn(
-        session_id=session_id,
-        user_speech=raw_message,
+    turn_res = conversation_manager.process_citizen_turn(
         db=db,
-        caller_phone=phone
+        session_id=session_id,
+        speech_text=raw_message
     )
 
-    spoken_text = turn_res.get("ai_spoken") or turn_res.get("response_text") or ""
-    tts_lang = turn_res.get("language") or "Tamil"
+    spoken_text = turn_res.get("spoken_reply") or turn_res.get("ai_reply") or ""
+    tts_lang = turn_res.get("detected_language") or "Tanglish"
     audio_bytes = synthesize_speech(spoken_text, tts_lang)
+    mem = turn_res.get("memory", {})
     turn_res["audio_base64"] = base64.b64encode(audio_bytes).decode("utf-8") if audio_bytes else None
-
-    # Persist message turn in DB
-    ctx = conversation_service.get_or_create_context(session_id, phone)
-    db_sess = _sync_ivr_session_to_db(
-        db,
-        session_id,
-        phone,
-        state=turn_res.get("state", "WAITING_FOR_CITIZEN"),
-        memory=ctx.to_dict()
-    )
-    _save_ivr_db_message(db, db_sess, "citizen", raw_message, ctx.language)
-    _save_ivr_db_message(db, db_sess, "ai", spoken_text, ctx.language)
-
-    # Update session service state
-    ivr_sess = ivr_session_service.get_session(session_id)
-    if ivr_sess:
-        ivr_sess.add_turn(speaker="citizen", text=raw_message)
-        ivr_sess.add_turn(speaker="ivr", text=spoken_text)
-        if turn_res.get("conversation_complete"):
-            ivr_sess.end_call(IVRState.COMPLETED)
-        elif turn_res.get("confirmation_required"):
-            ivr_sess.transition_to(IVRState.CONFIRMING)
-        else:
-            ivr_sess.transition_to(IVRState.WAITING_FOR_RESPONSE)
+    turn_res["transcription"] = raw_message
+    turn_res["response_text"] = turn_res.get("ai_reply", "")
+    turn_res["ai_spoken"] = spoken_text
+    turn_res["language"] = tts_lang
+    turn_res["should_continue"] = (turn_res.get("state") != "COMPLETED")
+    turn_res["conversation_state"] = turn_res.get("state")
+    turn_res["confirmation_required"] = turn_res.get("is_confirmation", False)
+    turn_res["analysis"] = {
+        "category": mem.get("category") or "Other",
+        "location": mem.get("location") or mem.get("area") or mem.get("district_area") or "",
+        "problem": mem.get("problem_description") or mem.get("problem") or "",
+        "duration": mem.get("duration") or "",
+        "affected_scope": mem.get("affected_scope") or mem.get("affected_area") or "",
+        "severity": mem.get("severity") or "normal",
+        "priority": mem.get("priority") or "MEDIUM",
+        "department": mem.get("department") or "Municipal Administration"
+    }
 
     return turn_res
 
 
 @router.get("/ivr/session/{session_id}")
-def get_ivr_session_state(session_id: str):
+def get_ivr_session_state(session_id: str, db: Session = Depends(get_db)):
     """
     Returns current conversation memory, extracted slots, and state.
     """
+    sess = conversation_manager.get_session(db, session_id)
+    if sess:
+        mem = sess.structured_memory or {}
+        return {
+            "session_id": sess.session_id,
+            "caller_phone": sess.caller_phone,
+            "state": sess.state,
+            "conversation_state": sess.state,
+            "language": sess.language,
+            "analysis": {
+                "category": sess.category or mem.get("category") or "Other",
+                "location": sess.location or mem.get("location") or "",
+                "problem": sess.problem or mem.get("problem_description") or "",
+                "duration": sess.duration or mem.get("duration") or "",
+                "affected_scope": sess.affected_scope or mem.get("affected_scope") or "",
+                "severity": sess.severity or mem.get("severity") or "normal",
+                "priority": sess.priority or mem.get("priority") or "MEDIUM",
+                "department": sess.department or mem.get("department") or "Municipal Administration"
+            },
+            "context": mem,
+            "structured_memory": mem,
+            "should_continue": sess.state != "COMPLETED",
+            "confirmation_required": sess.state == "CONFIRMATION",
+            "conversation_complete": sess.state == "COMPLETED",
+            "complaint_number": sess.complaint_number or mem.get("complaint_number"),
+            "complaint_id": sess.complaint_id or mem.get("complaint_id")
+        }
+
     ctx = conversation_service.get_or_create_context(session_id)
     return {
         "session_id": session_id,
@@ -446,6 +681,10 @@ async def confirm_ivr_session(
                 phone = form.get("caller_phone")
     except Exception:
         pass
+
+    sess = conversation_manager.get_session(db, session_id)
+    if sess:
+        return conversation_manager.finalize_and_register_complaint(db, sess)
 
     ctx = conversation_service.get_or_create_context(session_id, phone)
     ctx.conversation_complete = True
@@ -513,6 +752,12 @@ def cancel_ivr_session(session_id: str, db: Session = Depends(get_db)):
     """
     Cancels active conversational voice session and clears memory.
     """
+    sess = conversation_manager.get_session(db, session_id)
+    if sess:
+        sess.state = "CANCELLED"
+        sess.ended_at = datetime.now(timezone.utc)
+        db.commit()
+
     conversation_service.reset_session(session_id)
     _sync_ivr_session_to_db(db, session_id, "+919843098765", state="CANCELLED", ended=True)
     ivr_sess = ivr_session_service.get_session(session_id)
@@ -1395,35 +1640,23 @@ async def exotel_sms_callback(request: Request, db: Session = Depends(get_db)):
 # -------------------------------------------------------------
 
 @router.post("/webhooks/twilio/voice/incoming")
-async def twilio_incoming_voice_call(request: Request):
+async def twilio_incoming_voice_call(request: Request, db: Session = Depends(get_db)):
     """
     Webhook triggered by Twilio when a citizen dials the helpline virtual number.
-    Returns TwiML XML instructions to play greeting and record grievance.
+    Returns silent answer TwiML and gathers speech.
     """
-    try:
-        payload = await request.json()
-    except Exception:
-        form = await request.form()
-        payload = dict(form)
-
-    twiml_xml = twilio_adapter.handle_incoming_call(payload)
-    return Response(content=twiml_xml, media_type="application/xml")
+    from app.api.routes.telephony import handle_inbound_telephone_call
+    return await handle_inbound_telephone_call(request, db)
 
 
 @router.post("/webhooks/twilio/voice/recording")
 async def twilio_voice_recording_callback(request: Request, db: Session = Depends(get_db)):
     """
     Webhook triggered by Twilio when a citizen finishes speaking their grievance.
-    Processes audio recording, registers the complaint, and returns TwiML confirmation.
+    Processes audio recording through Whisper STT and dialogue turn engine.
     """
-    try:
-        payload = await request.json()
-    except Exception:
-        form = await request.form()
-        payload = dict(form)
-
-    twiml_xml = twilio_adapter.handle_recording_callback(payload)
-    return Response(content=twiml_xml, media_type="application/xml")
+    from app.api.routes.telephony import handle_telephone_recording_callback
+    return await handle_telephone_recording_callback(request, db)
 
 
 @router.post("/webhooks/twilio/sms/incoming")

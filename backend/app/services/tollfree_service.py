@@ -1,3 +1,4 @@
+# type: ignore
 import re
 import uuid
 import logging
@@ -185,7 +186,7 @@ class TollFreeService:
         db.commit()
 
         # Update in-memory transcript
-        memory = dict(session.structured_memory or {})
+        memory: Dict[str, Any] = dict(session.structured_memory or {})
         memory["raw_citizen_input"] = (memory.get("raw_citizen_input", "") + f"\n{raw_text}").strip()
         memory["corrected_transcription"] = (memory.get("corrected_transcription", "") + f"\n{cleaned}").strip()
 
@@ -457,12 +458,16 @@ class TollFreeService:
                 memory["additional_details"] = raw_text.strip()
 
         # Priority Assessment
-        if memory.get("problem_description"):
-            prio, _ = assess_priority(memory["problem_description"], memory.get("category", "General"))
-            if memory.get("safety_hazard") and "risk" in memory.get("safety_hazard", "").lower():
-                memory["priority"] = "HIGH"
-            else:
-                memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
+        full_problem = memory.get("problem_description") or raw_text
+        if full_problem:
+            prio, _ = assess_priority(
+                text=full_problem,
+                category=memory.get("category", "General"),
+                duration=memory.get("duration"),
+                scope=memory.get("impact") or memory.get("affected_scope"),
+                hazard=memory.get("safety_hazard")
+            )
+            memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
 
     def _get_next_missing_slot(self, memory: Dict[str, Any]) -> Optional[str]:
         """Returns the next missing question slot from the prioritized checklist."""
@@ -920,7 +925,7 @@ class TollFreeService:
 
     def _finalize_and_register_complaint(self, db: Session, session: TollFreeCallSession) -> Dict[str, Any]:
         """Creates complaint record in DB, generates unique Complaint ID, and saves all structured fields."""
-        memory = dict(session.structured_memory or {})
+        memory: Dict[str, Any] = dict(session.structured_memory or {})
         problem = memory.get("problem_description") or memory.get("problem") or "Civic grievance reported via Toll-Free Helpline"
         category = memory.get("category") or "Water Supply"
         area = memory.get("area") or memory.get("district_area") or "Tamil Nadu"

@@ -57,15 +57,26 @@ class GenericTelephonyProvider(TelephonyProvider):
     def generate_incoming_call_response(
         self,
         call_session_id: str,
-        greeting_text: str,
-        speech_action_url: str,
+        greeting_text: str = "",
+        speech_action_url: str = "/api/v1/ivr/stream",
         lang: str = "Tanglish"
     ) -> str:
+        # Rule 1: AI Silent on start - connect directly via stream or silent record
+        if speech_action_url.startswith("ws") or "stream" in speech_action_url:
+            return (
+                '<?xml version="1.0" encoding="UTF-8"?>\n'
+                "<Response>\n"
+                f'    <Connect>\n'
+                f'        <Stream url="{speech_action_url}">\n'
+                f'            <Parameter name="session_id" value="{call_session_id}" />\n'
+                f'        </Stream>\n'
+                f'    </Connect>\n'
+                "</Response>"
+            )
         return (
             '<?xml version="1.0" encoding="UTF-8"?>\n'
             "<Response>\n"
-            f'    <Say language="en-IN">{greeting_text}</Say>\n'
-            f'    <Record action="{speech_action_url}" method="POST" maxLength="60" finishOnKey="#" playBeep="true" transcribe="true"/>\n'
+            f'    <Record action="{speech_action_url}" method="POST" maxLength="60" finishOnKey="#" playBeep="false" transcribe="true"/>\n'
             "</Response>"
         )
 

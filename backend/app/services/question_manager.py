@@ -38,15 +38,15 @@ QUESTION_TEMPLATES = {
         "English": "Which area or locality in Coimbatore are you located in?",
         "Tanglish": "Neenga Coimbatore-la endha area-la irukkeenga?"
     },
-    "duration": {
-        "Tamil": "இந்த பிரச்சினை எப்போது ஆரம்பித்தது? எத்தனை நாட்களாக உள்ளது?",
-        "English": "When did this problem start and how long has it continued?",
-        "Tanglish": "Indha problem eppo lendhu irukku? Evvalavu naala aagudhu?"
-    },
     "street_road_name": {
         "Tamil": "உங்கள் தெரு அல்லது சாலை பெயர் என்ன?",
         "English": "What is your street name or road name?",
         "Tanglish": "Unga street name enna?"
+    },
+    "duration": {
+        "Tamil": "இந்த பிரச்சினை எப்போது ஆரம்பித்தது? எத்தனை நாட்களாக உள்ளது?",
+        "English": "When did this problem start and how long has it continued?",
+        "Tanglish": "Indha problem eppo lendhu irukku? Evvalavu naala aagudhu?"
     },
     "affected_scope": {
         "Tamil": "இது உங்கள் வீட்டிற்கு மட்டுமா அல்லது தெரு முழுவதும் உள்ளதா?",
@@ -107,6 +107,11 @@ CATEGORY_QUESTION_OVERRIDES = {
             "Tamil": "குடிநீர் முற்றிலும் வரவில்லையா அல்லது குறைந்த அழுத்தத்தில் வருகிறதா?",
             "English": "Is water completely unavailable or coming at low pressure?",
             "Tanglish": "Thanni completely varalaya illa low pressure-la varudha?"
+        },
+        "impact": {
+            "Tamil": "குடிநீர் விநியோகம் எத்தனை வீடுகளுக்கு பாதிக்கப்பட்டுள்ளது?",
+            "English": "How many houses or families are impacted by this drinking water shortage?",
+            "Tanglish": "Drinking water supply ethanai veedugalukku affect aayirukku?"
         }
     },
     "Electricity": {
@@ -124,22 +129,77 @@ CATEGORY_QUESTION_OVERRIDES = {
     "Roads": {
         "severity": {
             "Tamil": "சாலையில் பெரிய பள்ளம் உள்ளதா அல்லது போக்குவரத்து பாதிக்கப்பட்டுள்ளதா?",
-            "English": "Is there a deep pothole, road blockage, or accident danger?",
+            "English": "Is there a deep pothole, road damage, or traffic blockage?",
             "Tanglish": "Road-la periya pallam irukkaa, traffic block aagudhaa?"
+        },
+        "safety_hazard": {
+            "Tamil": "இந்த சாலை சேதத்தால் விபத்து ஏற்படும் ஆபத்து உள்ளதா?",
+            "English": "Is there an immediate risk of vehicular accidents on this damaged road?",
+            "Tanglish": "Indha road damage naala accident aaga risk irukkaa?"
         }
     },
     "Sanitation": {
         "severity": {
-            "Tamil": "குப்பை நிரம்பி வழிந்து துர்நாற்றம் வீசுகிறதா?",
-            "English": "Is garbage overflowing with severe foul smell in the area?",
-            "Tanglish": "Kuppai overflow aagi bad smell varudhaa?"
+            "Tamil": "குப்பை பல நாட்களாக அள்ளப்படாமல் தேங்கியுள்ளதா?",
+            "English": "Has garbage been left uncollected for days causing severe foul smell?",
+            "Tanglish": "Kuppai pala naala edukama overflow aagi bad smell varudhaa?"
+        },
+        "impact": {
+            "Tamil": "குப்பைத் தொட்டி நிரம்பி தெருவில் சிதறியுள்ளதா?",
+            "English": "Is the municipal waste bin overflowing onto the public street?",
+            "Tanglish": "Dustbin overflow aagi theru full-ah kuppai kedaika?"
+        }
+    },
+    "Garbage": {
+        "severity": {
+            "Tamil": "குப்பை பல நாட்களாக அள்ளப்படாமல் தேங்கியுள்ளதா?",
+            "English": "Has garbage been left uncollected for days causing severe foul smell?",
+            "Tanglish": "Kuppai pala naala edukama overflow aagi bad smell varudhaa?"
         }
     },
     "Drainage": {
         "severity": {
-            "Tamil": "சாக்கடை நீர் சாலையில் தேங்கி வழிந்துள்ளதா?",
-            "English": "Is drainage overflowing onto the road causing water stagnation?",
-            "Tanglish": "Drainage overflow aagi therula thenki nikkudha?"
+            "Tamil": "சாக்கடை அடைப்பு ஏற்பட்டு கழிவுநீர் சாலையில் தேங்கி நிற்கிறதா?",
+            "English": "Is drainage blocked and overflowing with sewage stagnating on the street?",
+            "Tanglish": "Drainage block aagi therula saakkadai thanni thenki nikkudha?"
+        },
+        "impact": {
+            "Tamil": "கழிவுநீர் தேக்கத்தால் கொசு மற்றும் சுகாதார சீர்கேடு ஏற்பட்டுள்ளதா?",
+            "English": "Is sewage stagnation creating health hazards and mosquito breeding?",
+            "Tanglish": "Sewage thanni thenkura naala health hazard and kosu thollai irukkaa?"
+        }
+    },
+    "Sewage": {
+        "severity": {
+            "Tamil": "கழிவுநீர் குழாய் உடைந்து துர்நாற்றத்துடன் சாக்கடை நீர் தெருவில் ஓடுகிறதா?",
+            "English": "Is there a sewage pipe burst causing overflow on the public pathway?",
+            "Tanglish": "Sewage pipe udanju saakkadai thanni therula odundha?"
+        }
+    },
+    "Street Light": {
+        "severity": {
+            "Tamil": "தெரு விளக்கு முற்றிலும் எரியவில்லையா அல்லது விட்டு விட்டு எரிகிறதா?",
+            "English": "Is the street light completely non-functional or flickering?",
+            "Tanglish": "Street light full-ah eriyalaiya illa vittu vittu eriyudha?"
+        },
+        "exact_location": {
+            "Tamil": "தெரு விளக்கு கம்பத்தின் எண் அல்லது கதவு எண் தெரியுமா?",
+            "English": "Do you know the electric pole number or adjacent door number?",
+            "Tanglish": "Street light lamp post number illa nearby door number theriyuma?"
+        }
+    },
+    "Streetlights": {
+        "severity": {
+            "Tamil": "தெரு விளக்கு முற்றிலும் எரியவில்லையா அல்லது விட்டு விட்டு எரிகிறதா?",
+            "English": "Is the street light completely non-functional or flickering?",
+            "Tanglish": "Street light full-ah eriyalaiya illa vittu vittu eriyudha?"
+        }
+    },
+    "Public Transport": {
+        "severity": {
+            "Tamil": "பேருந்து சரியான நேரத்திற்கு வருவதில்லையா அல்லது நிறுத்தம் சேதமடைந்துள்ளதா?",
+            "English": "Are government buses skipping stops, delayed, or is the bus shelter damaged?",
+            "Tanglish": "Bus correct time-ku varalaya illa bus stop shelter damage aayirukka?"
         }
     }
 }
