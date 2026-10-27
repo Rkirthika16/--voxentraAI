@@ -19,8 +19,8 @@ export const LanguageIndicator: React.FC<LanguageIndicatorProps> = ({ language, 
     if (norm === 'tanglish') {
       return { bg: '#F3E8FF', text: '#6B21A8', border: '#A855F7', label: 'Tanglish (தமிழ் + Eng)', isListening: false };
     }
-    if (!norm || norm === 'auto' || norm.includes('auto') || norm.includes('detect')) {
-      return { bg: '#FEF3C7', text: '#92400E', border: '#F59E0B', label: 'தமிழ் (Tamil)', isListening: false };
+    if (!norm || norm === 'auto' || norm.includes('auto') || norm.includes('detect') || norm.includes('listen')) {
+      return { bg: '#EFF6FF', text: '#1E40AF', border: '#3B82F6', label: 'Auto (Listening...)', isListening: true };
     }
     return {
       bg: '#FEF3C7',

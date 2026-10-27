@@ -79,6 +79,10 @@ def detect_language(text: str, current_session_lang: Optional[str] = None) -> Tu
     if tamil_chars > 0:
         return "Tamil", 0.98
 
+    # Normalize Auto language preference
+    if current_session_lang in ["Auto", "Auto-Detecting...", "Listening", "Auto (Listening...)", "", None]:
+        current_session_lang = None
+
     lowered = cleaned.lower()
 
     # 2. Check for explicit switch to English request
@@ -108,13 +112,15 @@ def detect_language(text: str, current_session_lang: Optional[str] = None) -> Tu
 
     # 6. English Grammar & Indicators
     english_matches = sum(1 for w in words if w in ENGLISH_INDICATORS or w in ["two", "days", "day", "one", "three", "four", "five", "six", "seven", "leakage", "water", "garbage", "problem", "broken", "street", "road", "area", "house", "there", "severe", "since", "yesterday"])
+    is_english_complaint = any(w in words for w in ["problem", "complaint", "issue", "leakage", "broken", "damage", "damaged", "cut", "blackout", "overflow", "not", "coming", "burst"])
 
-    if english_matches >= 2 and len(words) >= 3 and tanglish_matches == 0 and not has_tanglish_particles:
+    # If sentence is an English complaint statement (e.g. "water problem", "power cut in my street")
+    if (is_english_complaint or len(words) >= 3 or not current_session_lang) and english_matches >= 2 and tanglish_matches == 0 and not has_tanglish_particles:
         return "English", 0.95
 
-    # 7. Short Response Session Stickiness (preserve ongoing Tamil or Tanglish session for short affirmative/slot replies)
+    # 7. Short Response Session Stickiness (preserve ongoing Tamil or Tanglish session for short affirmative/slot replies like '5th street', 'Two days', 'Aama')
     if current_session_lang and current_session_lang in ["Tamil", "Tanglish"]:
-        if len(words) <= 3 or english_matches <= 1:
+        if not is_english_complaint and (len(words) <= 3 or english_matches <= 1):
             return current_session_lang, 0.92
 
     if english_matches >= 1 and not has_tanglish_particles and tanglish_matches == 0:

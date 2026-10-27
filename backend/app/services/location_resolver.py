@@ -53,6 +53,11 @@ CLARIFICATION_PROMPTS = {
         "Tamil": "உங்கள் இடத்தை தெளிவாக கண்டறிய முடியவில்லை. தயவுசெய்து உங்கள் பகுதி பெயரை சொல்லவும் அல்லது அருகில் உள்ள அடையாளத்தை (Landmark) குறிப்பிடவும்.",
         "English": "We couldn't clearly identify your location. Could you please specify your area name or mention a nearby landmark?",
         "Tanglish": "Unga location sariya puriyala. Unga area peyar solla mudiyuma illana pakkathula edhavadhu landmark sollunga."
+    },
+    "ask_colony_street": {
+        "Tamil": "அண்ணா நகரில் எந்தத் தெரு? தெரு எண் தெரியுமா, இல்ல பக்கத்தில் ஏதாவது முக்கியமான இடம் இருக்கா?",
+        "English": "Which street in Anna Nagar? Do you know the street number, or is there a nearby landmark?",
+        "Tanglish": "Anna Nagar-la endha street? Street number theriyuma, illa pakkathula edhavadhu landmark irukka?"
     }
 }
 
@@ -264,7 +269,9 @@ class CoimbatoreLocationResolver:
             hierarchy["needs_clarification"] = True
             hierarchy["confirmed_location"] = None
             hierarchy["unresolved_location"] = None
-            if len(candidate_locations) >= 2:
+            if any("anna nagar" in (c.get("label") or "").lower() for c in candidate_locations) and not any(w in working_text.lower() for w in ["second", "2nd", "rendu", "இரண்டாவது", "main", "1st"]):
+                hierarchy["clarification_question"] = self._get_prompt("ask_colony_street", detected_lang)
+            elif len(candidate_locations) >= 2:
                 cand1 = candidate_locations[0]["label"]
                 cand2 = candidate_locations[1]["label"]
                 hierarchy["clarification_question"] = self._get_prompt(
@@ -537,50 +544,48 @@ class CoimbatoreLocationResolver:
 
         # 3. Check Anna Nagar multi-candidate matching if "anna nagar" is in text
         if "anna nagar" in tanglish_text.lower():
+            has_street_spec = any(w in tanglish_text.lower() for w in [
+                "second", "2nd", "rendu", "இரண்டாவது", "first", "1st", "mudhal", "3rd", "third", "main", "முதன்மை", "cross"
+            ])
             det_vada = self.alias_service.get_entity_details("street", 107)
             det_town = self.alias_service.get_entity_details("street", 109)
-            if area_hint:
-                hint_name = (area_hint.get("name_en") or "").lower()
-                hint_id = area_hint.get("id") or area_hint.get("area_id")
-                if hint_id == 14 or "vadavalli" in hint_name:
-                    if det_vada:
-                        return [{
-                            "id": 107,
-                            "name_en": det_vada.get("name_en"),
-                            "name_ta": det_vada.get("name_ta"),
-                            "area_id": 14,
-                            "confidence": 0.95
-                        }]
-                elif hint_id == 10 or "town hall" in hint_name:
-                    if det_town:
-                        return [{
-                            "id": 109,
-                            "name_en": det_town.get("name_en"),
-                            "name_ta": det_town.get("name_ta"),
-                            "area_id": 10,
-                            "confidence": 0.95
-                        }]
-            else:
-                if det_vada and not any(r["id"] == 107 for r in results):
-                    results.append({
+            if has_street_spec:
+                if any(w in tanglish_text.lower() for w in ["second", "2nd", "rendu", "இரண்டாவது"]):
+                    return [{
                         "id": 107,
-                        "name_en": det_vada.get("name_en"),
-                        "name_ta": det_vada.get("name_ta"),
-                        "area_id": det_vada.get("area_id"),
-                        "confidence": 0.75,
-                        "is_ambiguous": True
-                    })
-                if det_town and not any(r["id"] == 109 for r in results):
-                    results.append({
+                        "name_en": "Anna Nagar 2nd Street",
+                        "name_ta": "அண்ணா நகர் இரண்டாவது தெரு",
+                        "area_id": 14,
+                        "confidence": 0.95
+                    }]
+                elif any(w in tanglish_text.lower() for w in ["main", "முதன்மை"]):
+                    return [{
                         "id": 109,
-                        "name_en": det_town.get("name_en"),
-                        "name_ta": det_town.get("name_ta"),
-                        "area_id": det_town.get("area_id"),
-                        "confidence": 0.70,
-                        "is_ambiguous": True
-                    })
-                if results:
-                    return results
+                        "name_en": "Anna Nagar Main Street",
+                        "name_ta": "அண்ணா நகர் முதன்மைத் தெரு",
+                        "area_id": 10,
+                        "confidence": 0.95
+                    }]
+            # Citizen ONLY gave colony / locality name ("Anna Nagar") without a street number!
+            # Return ambiguous candidates so question manager asks which street or landmark in Anna Nagar!
+            return [
+                {
+                    "id": 107,
+                    "name_en": "Anna Nagar 2nd Street",
+                    "name_ta": "அண்ணா நகர் இரண்டாவது தெரு",
+                    "area_id": 14,
+                    "confidence": 0.70,
+                    "is_ambiguous": True
+                },
+                {
+                    "id": 109,
+                    "name_en": "Anna Nagar Main Street",
+                    "name_ta": "அண்ணா நகர் முதன்மைத் தெரு",
+                    "area_id": 10,
+                    "confidence": 0.65,
+                    "is_ambiguous": True
+                }
+            ]
 
         if not results:
             fuzzy = self.alias_service.lookup_fuzzy(tanglish_text, threshold=82.0)

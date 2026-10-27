@@ -58,7 +58,7 @@ class ConversationManager:
         Places session in silent LISTENING state (WAITING_FOR_CITIZEN).
         """
         session_id = f"ivr_sess_{uuid.uuid4().hex[:12]}"
-        initial_lang = language_preference if language_preference not in ["Auto", "Auto-Detecting...", None, ""] else "Tamil"
+        initial_lang = language_preference if language_preference not in ["Auto", "Auto-Detecting...", None, ""] else "Auto"
         
         initial_memory = {
             "conversation_id": session_id,
@@ -109,13 +109,13 @@ class ConversationManager:
             "questions_asked": [],
             "questions_answered": [],
             "questions_asked_count": 0,
-            "max_questions": 10,
+            "max_questions": 20,
             "call_status": "ACTIVE",
             "location": None,
             "original_transcript": "",
             "normalized_transcript": "",
             "corrected_transcript": "",
-            "detected_language": language_preference or "Auto",
+            "detected_language": initial_lang,
             "candidate_locations": [],
             "confidence_score": 0.0,
             "confirmed_location": None,
@@ -327,7 +327,7 @@ class ConversationManager:
                 "spoken_reply": spoken_summary,
                 "memory": memory,
                 "question_count": memory.get("questions_asked_count", 0),
-                "max_questions": memory.get("max_questions", 10),
+                "max_questions": memory.get("max_questions", 20),
                 "is_confirmation": True,
                 "complaint_created": False,
                 "options": self._get_confirmation_options(detected_lang)
@@ -367,7 +367,7 @@ class ConversationManager:
                 "memory": memory,
                 "next_field": next_missing,
                 "question_count": current_q_count,
-                "max_questions": memory.get("max_questions", 10),
+                "max_questions": memory.get("max_questions", 20),
                 "is_confirmation": False,
                 "complaint_created": False,
                 "options": options
@@ -535,13 +535,13 @@ class ConversationManager:
 
         if any(w in lowered for w in ["danger", "hazard", "sparking", "live wire", "fire", "smoke", "accident", "emergency", "கசிவு", "ஆபத்து", "விபத்து", "தீ", "aapathu"]):
             memory["safety_hazard"] = "Immediate safety risk reported"
-            memory["priority"] = "HIGH"
+            memory["priority"] = "CRITICAL"
         elif prompted_slot == "safety_hazard" and not memory.get("safety_hazard"):
             if any(w in lowered for w in ["no", "illa", "illai", "nothing", "இல்லை", "ஆபத்து இல்லை"]):
                 memory["safety_hazard"] = "None"
             else:
                 memory["safety_hazard"] = raw_text.strip()
-                memory["priority"] = "HIGH"
+                memory["priority"] = "CRITICAL"
 
         # 7. Impact
         if prompted_slot == "impact" and not memory.get("impact"):
@@ -567,7 +567,26 @@ class ConversationManager:
         if prompted_slot == "previous_complaint_number" and not memory.get("previous_complaint_number"):
             memory["previous_complaint_number"] = raw_text.strip()
 
-        # 10. Additional details
+        # 10. Timing, Contamination, Population, Alternate Source, Contact Details
+        if prompted_slot == "water_supply_timing" and not memory.get("water_supply_timing"):
+            memory["water_supply_timing"] = raw_text.strip()
+
+        if prompted_slot == "leakage_or_contamination" and not memory.get("leakage_or_contamination"):
+            memory["leakage_or_contamination"] = raw_text.strip()
+
+        if prompted_slot == "affected_population" and not memory.get("affected_population"):
+            memory["affected_population"] = raw_text.strip()
+
+        if prompted_slot == "alternate_source" and not memory.get("alternate_source"):
+            memory["alternate_source"] = raw_text.strip()
+
+        if prompted_slot == "contact_person" and not memory.get("contact_person"):
+            memory["contact_person"] = raw_text.strip()
+
+        if prompted_slot == "preferred_contact_time" and not memory.get("preferred_contact_time"):
+            memory["preferred_contact_time"] = raw_text.strip()
+
+        # 11. Additional details
         if prompted_slot == "additional_details" or any(w in lowered for w in ["no other details", "nothing else", "no details", "nothing more", "avvalavuthaan", "avlodhaan", "கூடுதல் தகவல் இல்லை", "அவ்வளவுதான்", "வேறில்லை"]):
             if any(w in lowered for w in ["no", "nothing", "illa", "illai", "none", "இல்லை", "கூடுதல் தகவல் இல்லை", "அவ்வளவுதான்"]):
                 memory["additional_details"] = "None"
@@ -577,8 +596,8 @@ class ConversationManager:
         elif any(p in lowered for p in ["register pannunga", "register it", "register my complaint", "பதிவு பண்ணுங்க", "பதிவு செய்யுங்க", "போதும்", "enough"]) and memory.get("problem_description") and (memory.get("area") or memory.get("location")):
             memory["is_citizen_confirmed_ready"] = True
 
-        # Priority calculation
-        full_problem = memory.get("problem_description") or raw_text
+        # Priority calculation with full conversational context
+        full_problem = f"{memory.get('problem_description', '')} {memory.get('severity', '')} {memory.get('safety_hazard', '')} {raw_text}".strip()
         if full_problem:
             prio, _ = assess_priority(
                 text=full_problem,

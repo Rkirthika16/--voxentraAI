@@ -18,7 +18,7 @@ export const TollFreeIVRPage: React.FC = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [ivrState, setIvrState] = useState<string>('DISCONNECTED');
   const [callDuration, setCallDuration] = useState<number>(0);
-  const [detectedLanguage, setDetectedLanguage] = useState<string>('Tamil');
+  const [detectedLanguage, setDetectedLanguage] = useState<string>('Auto');
   const [languageConfidence, setLanguageConfidence] = useState<number | undefined>(undefined);
 
   // Messages & Memory State
@@ -115,17 +115,17 @@ export const TollFreeIVRPage: React.FC = () => {
         citizen_name: null,
       });
 
-      const data = await tollfreeApi.createSession(callerPhone, tollFreeNumber, 'Tamil');
+      const data = await tollfreeApi.createSession(callerPhone, tollFreeNumber, 'Auto');
       setSessionId(data.session_id);
       setIvrState(data.state || 'WAITING_FOR_CITIZEN');
-      setDetectedLanguage(data.language || 'Tamil');
+      setDetectedLanguage(data.language || 'Auto');
       setCallActive(true);
 
       const systemBannerMsg: TollFreeMessage = {
         id: Date.now(),
         role: 'system',
         content: `📞 Toll-Free Call Connected. Citizen speaks first — please speak your grievance in Tamil (தமிழ்), Tanglish, or English. AI will automatically detect your language and respond.`,
-        language: data.language || 'Tamil',
+        language: data.language || 'Auto',
         created_at: new Date().toISOString(),
       };
       setMessages([systemBannerMsg]);

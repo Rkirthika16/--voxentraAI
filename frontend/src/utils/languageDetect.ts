@@ -48,8 +48,11 @@ export function detectLanguageFromText(text: string): 'Tamil' | 'Tanglish' | 'En
 }
 
 export function formatLanguageDisplay(lang: string | null | undefined): string {
-  if (!lang) return 'தமிழ் (Tamil)';
+  if (!lang) return 'Auto (Listening...)';
   const norm = lang.trim().toLowerCase();
+  if (norm.includes('auto') || norm.includes('detect') || norm.includes('listening')) {
+    return 'Auto (Listening...)';
+  }
   if (norm === 'tamil' || norm === 'ta' || norm === 'ta-in') {
     return 'தமிழ் (Tamil)';
   }
@@ -58,9 +61,6 @@ export function formatLanguageDisplay(lang: string | null | undefined): string {
   }
   if (norm === 'english' || norm === 'en' || norm === 'en-in') {
     return 'English';
-  }
-  if (norm.includes('auto') || norm.includes('detect') || norm.includes('listening')) {
-    return 'தமிழ் (Tamil)';
   }
   return lang;
 }

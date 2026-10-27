@@ -43,12 +43,7 @@ DEPARTMENT_MASTER = {
     "Other": "General Municipal Administration"
 }
 
-ORDERED_QUESTION_SLOTS = [
-    "problem_description",
-    "district_area",
-    "duration",
-    "affected_scope"
-]
+from app.services.question_manager import question_manager, ORDERED_QUESTION_SLOTS
 
 
 class TollFreeService:
@@ -57,6 +52,7 @@ class TollFreeService:
     Enforces strict turn-taking (Citizen speaks first, AI asks one question at a time),
     continuous conversation memory, language adaptation (Tamil, English, Tanglish),
     pre-registration confirmation, and real database complaint generation.
+    Supports asking multiple questions up to a maximum of 20 questions.
     """
 
     def create_call_session(
@@ -64,12 +60,14 @@ class TollFreeService:
         db: Session,
         caller_phone: Optional[str] = "+919843098765",
         provider_call_id: Optional[str] = None,
-        toll_free_number: str = "1800-425-8693"
+        toll_free_number: str = "1800-425-8693",
+        language_preference: str = "Auto"
     ) -> Tuple[TollFreeCallSession, str, str]:
         """
         Creates incoming toll-free call session and places call in silent LISTENING mode (Citizen speaks first).
         """
         session_id = f"tf_sess_{uuid.uuid4().hex[:12]}"
+        initial_lang = language_preference if language_preference not in ["Auto", "Auto-Detecting...", "", None] else "Auto"
 
         initial_memory = {
             "problem_description": None,
@@ -99,9 +97,10 @@ class TollFreeService:
             "citizen_phone": caller_phone or "+919843098765",
             "priority": "MEDIUM",
             "questions_asked_count": 0,
-            "max_questions": 10,
+            "max_questions": 20,
             "raw_citizen_input": "",
-            "corrected_transcription": ""
+            "corrected_transcription": "",
+            "detected_language": initial_lang
         }
 
         session = TollFreeCallSession(
@@ -109,7 +108,7 @@ class TollFreeService:
             provider_call_id=provider_call_id,
             caller_phone=caller_phone or "+919843098765",
             toll_free_number=toll_free_number,
-            language="Tamil",
+            language=initial_lang,
             state=TollFreeState.WAITING_FOR_CITIZEN.value,
             structured_memory=initial_memory,
             raw_transcript="",
@@ -273,7 +272,7 @@ class TollFreeService:
             session.current_field_prompted = next_missing
             db.commit()
 
-            ai_reply, spoken_reply, options = self._generate_slot_question(next_missing, memory, detected_lang)
+            ai_reply, spoken_reply, options = self._generate_slot_question(next_missing, memory, detected_lang, last_raw_text=raw_text)
             self._save_ai_message(db, session, ai_reply, spoken_reply, detected_lang)
 
             return {
@@ -445,7 +444,7 @@ class TollFreeService:
         if any(w in lowered for w in hazard_keywords):
             if not memory.get("safety_hazard"):
                 memory["safety_hazard"] = "Immediate safety risk reported"
-                memory["priority"] = "HIGH"
+                memory["priority"] = "CRITICAL"
         if prompted_slot == "severity" and not memory.get("severity"):
             memory["severity"] = raw_text.strip()
         if prompted_slot == "safety_hazard" and not memory.get("safety_hazard"):
@@ -453,17 +452,43 @@ class TollFreeService:
                 memory["safety_hazard"] = "None (No immediate safety hazard)"
             else:
                 memory["safety_hazard"] = raw_text.strip()
-                memory["priority"] = "HIGH"
+                memory["priority"] = "CRITICAL"
 
-        # 8. Additional details
-        if prompted_slot == "additional_details" and not memory.get("additional_details"):
-            if any(w in lowered for w in ["no", "nothing", "nothing else", "illa", "illai", "none", "வேறு இல்லை", "இல்லை"]):
+        # 8. Impact
+        if prompted_slot == "impact" and not memory.get("impact"):
+            memory["impact"] = raw_text.strip()
+
+        # 9. Additional Slots (Timing, Contamination, Population, Alternate Source, Contact Details)
+        if prompted_slot == "water_supply_timing" and not memory.get("water_supply_timing"):
+            memory["water_supply_timing"] = raw_text.strip()
+
+        if prompted_slot == "leakage_or_contamination" and not memory.get("leakage_or_contamination"):
+            memory["leakage_or_contamination"] = raw_text.strip()
+
+        if prompted_slot == "affected_population" and not memory.get("affected_population"):
+            memory["affected_population"] = raw_text.strip()
+
+        if prompted_slot == "alternate_source" and not memory.get("alternate_source"):
+            memory["alternate_source"] = raw_text.strip()
+
+        if prompted_slot == "contact_person" and not memory.get("contact_person"):
+            memory["contact_person"] = raw_text.strip()
+
+        if prompted_slot == "preferred_contact_time" and not memory.get("preferred_contact_time"):
+            memory["preferred_contact_time"] = raw_text.strip()
+
+        # 10. Additional details
+        if prompted_slot == "additional_details" or any(w in lowered for w in ["no other details", "nothing else", "no details", "nothing more", "avvalavuthaan", "avlodhaan", "கூடுதல் தகவல் இல்லை", "அவ்வளவுதான்", "வேறில்லை"]):
+            if any(w in lowered for w in ["no", "nothing", "nothing else", "illa", "illai", "none", "வேறு இல்லை", "இல்லை", "கூடுதல் தகவல் இல்லை", "அவ்வளவுதான்"]):
                 memory["additional_details"] = "None"
-            else:
+            elif not memory.get("additional_details"):
                 memory["additional_details"] = raw_text.strip()
+            memory["is_citizen_confirmed_ready"] = True
+        elif any(p in lowered for p in ["register pannunga", "register it", "register my complaint", "பதிவு பண்ணுங்க", "பதிவு செய்யுங்க", "போதும்", "enough"]) and memory.get("problem_description") and (memory.get("area") or memory.get("location")):
+            memory["is_citizen_confirmed_ready"] = True
 
-        # Priority Assessment
-        full_problem = memory.get("problem_description") or raw_text
+        # Priority Assessment with full conversational context
+        full_problem = f"{memory.get('problem_description', '')} {memory.get('severity', '')} {memory.get('safety_hazard', '')} {raw_text}".strip()
         if full_problem:
             prio, _ = assess_priority(
                 text=full_problem,
@@ -478,458 +503,16 @@ class TollFreeService:
             memory["priority"] = prio_val
 
     def _get_next_missing_slot(self, memory: Dict[str, Any]) -> Optional[str]:
-        """Returns the next missing question slot from the prioritized checklist."""
-        questions_count = memory.get("questions_asked_count", 0)
-        max_q = memory.get("max_questions", 10)
+        """Returns the next missing question slot from question_manager (supports up to 20 questions)."""
+        return question_manager.get_next_missing_slot(memory, min_questions=10)
 
-        for slot in ORDERED_QUESTION_SLOTS:
-            if slot == "previous_complaint_number":
-                prev_rep = memory.get("previous_complaint", "")
-                if not prev_rep or "no" in str(prev_rep).lower() or "first time" in str(prev_rep).lower():
-                    continue
-
-            val = memory.get(slot)
-            if slot == "district_area":
-                val = val or memory.get("area")
-            elif slot == "street_road_name":
-                val = val or memory.get("street")
-            elif slot == "affected_scope":
-                val = val or memory.get("affected_area")
-
-            if not val or not str(val).strip():
-                return slot
-
-        return None
-
-    def _generate_slot_question(self, slot: str, memory: Dict[str, Any], lang: str) -> Tuple[str, str, List[Dict[str, str]]]:
-        """Generates dynamic, polite follow-up questions in Tamil, Tanglish, or English."""
-        cat = memory.get("category", "General")
-        area = memory.get("area") or memory.get("district_area") or "the area"
-        street = memory.get("street") or memory.get("street_road_name") or area or "your street"
-        dur = memory.get("duration") or ""
-
-        options: List[Dict[str, str]] = []
-
-        if slot == "problem_description":
-            if lang == "Tamil":
-                text = "வணக்கம்! நீங்கள் சந்திக்கும் பொதுப் பிரச்சினை என்ன என்று விளக்கமாகக் கூறுங்கள்."
-                spoken = "நீங்கள் சந்திக்கும் பிரச்சினை என்ன என்று சொல்லுங்கள்."
-                options = [
-                    {"label": "💧 குடிநீர் விநியோகம் தடை", "text": "குடிநீர் விநியோகம் தடைப்பட்டுள்ளது"},
-                    {"label": "⚡ மின் தடை / தீப்பொறி", "text": "மின்சாரம் தடை மற்றும் கம்பத்தில் தீப்பொறி"},
-                    {"label": "🛣️ சாலை பள்ளங்கள்", "text": "சாலையில் பெரிய பள்ளங்கள் உள்ளன"},
-                    {"label": "🗑️ குப்பை தேக்கம்", "text": "குப்பை அள்ளப்படாமல் தேங்கியுள்ளது"}
-                ]
-            elif lang == "Tanglish":
-                text = "Vanakkam! Ungalukku enna civic problem irukku nu sollunga."
-                spoken = "Ungalukku enna problem nu sollunga."
-                options = [
-                    {"label": "💧 Water supply issue", "text": "Water supply varala"},
-                    {"label": "⚡ Power cut / Sparking", "text": "Power cut aaiduchu"},
-                    {"label": "🛣️ Road potholes", "text": "Road-la periya gundu kuli irukku"},
-                    {"label": "🗑️ Garbage accumulation", "text": "Garbage collect pannala"}
-                ]
-            else:
-                text = "Welcome to VoxentraAI Grievance Helpline. What civic problem are you facing?"
-                spoken = "What civic problem are you facing?"
-                options = [
-                    {"label": "💧 Water supply outage", "text": "Water supply is disrupted in our area"},
-                    {"label": "⚡ Power outage", "text": "Power outage and sparking pole"},
-                    {"label": "🛣️ Damaged road", "text": "Road damaged with dangerous potholes"},
-                    {"label": "🗑️ Garbage uncollected", "text": "Garbage not collected"}
-                ]
-            return text, spoken, options
-
-        if slot == "district_area":
-            if lang == "Tamil":
-                text = f"சரிங்க. இந்தப் பிரச்சினை எந்த பகுதியில் அல்லது மாவட்டத்தில் உள்ளது?"
-                spoken = "இந்தப் பிரச்சினை எந்த பகுதியில் உள்ளது?"
-                options = [
-                    {"label": "📍 கோயம்புத்தூர் - காந்திபுரம்", "text": "கோயம்புத்தூர் காந்திபுரம் பகுதியில்"},
-                    {"label": "📍 சென்னை - அண்ணா நகர்", "text": "சென்னை அண்ணா நகர் பகுதியில்"},
-                    {"label": "📍 மதுரை - கே.கே.நகர்", "text": "மதுரை கே.கே.நகர் பகுதியில்"}
-                ]
-            elif lang == "Tanglish":
-                text = f"Seri, indha problem endha area or district-la irukku?"
-                spoken = "Indha problem endha area-la irukku?"
-                options = [
-                    {"label": "📍 Gandhipuram", "text": "Gandhipuram area"},
-                    {"label": "📍 Peelamedu", "text": "Peelamedu area"},
-                    {"label": "📍 Anna Nagar", "text": "Anna Nagar area"}
-                ]
-            else:
-                text = "Which area or locality is affected?"
-                spoken = "Which area or locality is affected?"
-                options = [
-                    {"label": "📍 Gandhipuram, Coimbatore", "text": "Gandhipuram, Coimbatore"},
-                    {"label": "📍 Anna Nagar, Chennai", "text": "Anna Nagar, Chennai"}
-                ]
-            return text, spoken, options
-
-        if slot == "street_road_name":
-            if lang == "Tamil":
-                text = f"📍 **{area}** பகுதியில் பாதிக்கப்பட்ட தெரு அல்லது சாலையின் பெயர் என்ன?"
-                spoken = f"{area} பகுதியில் பாதிக்கப்பட்ட தெரு அல்லது சாலையின் பெயர் என்ன?"
-                options = [
-                    {"label": "📍 5வது தெரு", "text": "5வது தெரு"},
-                    {"label": "📍 கிராஸ் கட் ரோடு", "text": "கிராஸ் கட் ரோடு"},
-                    {"label": "📍 மெயின் ரோடு", "text": "மெயின் ரோடு"}
-                ]
-            elif lang == "Tanglish":
-                text = f"📍 Unga street name enna? ({area}-la endha street?)"
-                spoken = "Unga street name enna?"
-                options = [
-                    {"label": "📍 5th Street", "text": "5th street"},
-                    {"label": "📍 Cross Cut Road", "text": "Cross Cut Road"},
-                    {"label": "📍 Main Road", "text": "Main Road"}
-                ]
-            else:
-                text = f"📍 What is the street name in {area}?"
-                spoken = f"What is the street name in {area}?"
-                options = [
-                    {"label": "📍 5th Street", "text": "5th Street"},
-                    {"label": "📍 Cross Cut Road", "text": "Cross Cut Road"}
-                ]
-            return text, spoken, options
-
-        if slot == "exact_location":
-            if lang == "Tamil":
-                text = f"🎯 **{street}** பகுதியில் உள்ள குறிப்பிட்ட கதவு எண், மின் கம்ப எண் அல்லது இடம் எது?"
-                spoken = "குறிப்பிட்ட கதவு எண் அல்லது மின் கம்ப எண் என்ன?"
-                options = [
-                    {"label": "🚪 கதவு எண் 45", "text": "கதவு எண் 45 எதிரில்"},
-                    {"label": "⚡ மின் கம்பம் எண் 12", "text": "மின் கம்ப எண் 12 அருகில்"}
-                ]
-            elif lang == "Tanglish":
-                text = f"🎯 Specific building, door number, or electric pole number theriyuma?"
-                spoken = "Specific door number or spot details sollunga."
-                options = [
-                    {"label": "🚪 Door No. 45", "text": "Door No 45 opposite"},
-                    {"label": "⚡ Pole No. 12", "text": "Near Electric Pole No 12"}
-                ]
-            else:
-                text = f"🎯 What is the exact house, door number, or pole number on {street}?"
-                spoken = "What is the exact door number or spot detail?"
-                options = [
-                    {"label": "🚪 Door No. 45", "text": "Opposite Door No 45"},
-                    {"label": "⚡ Pole No. 12", "text": "Near Electric Pole No 12"}
-                ]
-            return text, spoken, options
-
-        if slot == "landmark":
-            if lang == "Tamil":
-                text = f"🏛️ அதிகாரிகள் அந்த இடத்தை எளிதாகக் கண்டறிய **{street}** அருகில் உள்ள முக்கிய Landmark அடையாளம் என்ன?"
-                spoken = "அருகிலுள்ள லேண்ட்மார்க் அடையாளம் என்ன?"
-                options = [
-                    {"label": "🚌 பேருந்து நிறுத்தம் அருகில்", "text": "பேருந்து நிறுத்தம் அருகில்"},
-                    {"label": "🏛️ கோவில் அருகில்", "text": "விநாயகர் கோவில் அருகில்"}
-                ]
-            elif lang == "Tanglish":
-                text = f"🏛️ Spot-a identify panna pakkathula irukkura nearby landmark enna?"
-                spoken = "Pakkathula irukkura nearby landmark enna?"
-                options = [
-                    {"label": "🚌 Near Bus Stand", "text": "Near Bus Stand"},
-                    {"label": "🏛️ Near Temple", "text": "Near Temple"}
-                ]
-            else:
-                text = f"🏛️ Is there a nearby landmark near {street}?"
-                spoken = "Is there a nearby landmark to locate the spot?"
-                options = [
-                    {"label": "🚌 Near Bus Stand", "text": "Near Bus Stand"},
-                    {"label": "🏛️ Near Temple", "text": "Near Temple"}
-                ]
-            return text, spoken, options
-
-        if slot == "start_time" or slot == "duration":
-            if lang == "Tamil":
-                text = f"⏱️ சரி. இந்தப் பிரச்சினை எப்போது முதல் நீடிக்கிறது? (எத்தனை நாட்களாக?)"
-                spoken = "இந்தப் பிரச்சினை எப்போது தொடங்கியது? எத்தனை நாட்களாக நீடிக்கிறது?"
-                options = [
-                    {"label": "⏱️ 2 நாட்களாக", "text": "2 நாட்களாக"},
-                    {"label": "⏱️ இன்று காலை முதல்", "text": "இன்று காலை முதல்"}
-                ]
-            elif lang == "Tanglish":
-                text = f"⏱️ Seri. Indha problem eppo lendhu irukku? (Evalo naala?)"
-                spoken = "Seri. Indha problem eppo lendhu irukku?"
-                options = [
-                    {"label": "⏱️ Rendu naala (2 days)", "text": "Rendu naala"},
-                    {"label": "⏱️ Today morning", "text": "Today morning lendhu"}
-                ]
-            else:
-                text = "⏱️ When did the problem start, and how long has it continued?"
-                spoken = "How long has this problem continued?"
-                options = [
-                    {"label": "⏱️ For 2 days", "text": "For the past 2 days"},
-                    {"label": "⏱️ Since today morning", "text": "Since today morning"}
-                ]
-            return text, spoken, options
-
-        if slot == "affected_scope":
-            if lang == "Tamil":
-                text = f"🏘️ இந்தப் பிரச்சினை உங்கள் வீட்டிற்கு மட்டுமா, அல்லது **{street}** தெரு முழுவதும் பாதிக்கப்பட்டுள்ளதா?"
-                spoken = "உங்கள் வீட்டிற்கு மட்டுமா அல்லது தெரு முழுவதும் பாதிக்கப்பட்டுள்ளதா?"
-                options = [
-                    {"label": "🏘️ தெரு முழுவதும்", "text": "தெருவில் உள்ள எல்லா வீடுகளுக்கும்"},
-                    {"label": "🏠 எங்கள் வீடு மட்டும்", "text": "எங்கள் வீட்டிற்கு மட்டும்"}
-                ]
-            elif lang == "Tanglish":
-                text = f"🏘️ {street} full-ah problem-aa illa unga veetukku mattum-aa?"
-                spoken = f"{street} full-ah problem-aa illa unga veetukku mattum-aa?"
-                options = [
-                    {"label": "🏘️ Full street", "text": "Full street problem"},
-                    {"label": "🏠 Enga veetukku mattum", "text": "Enga veetukku mattum dhaan"}
-                ]
-            else:
-                text = f"🏘️ Is the problem affecting only one house or the whole street of {street}?"
-                spoken = "Is this affecting one house or the entire street?"
-                options = [
-                    {"label": "🏘️ Entire street", "text": "Entire street is affected"},
-                    {"label": "🏠 Only my house", "text": "Only my house is affected"}
-                ]
-            return text, spoken, options
-
-        if slot == "frequency":
-            if lang == "Tamil":
-                text = f"🔄 இந்தப் பிரச்சினை எவ்வளவு அடிக்கடி நிகழ்கிறது? (முதல் முறையா அல்லது தினமும் ஏற்படுகிறதா?)"
-                spoken = "இந்தப் பிரச்சினை எவ்வளவு அடிக்கடி நிகழ்கிறது?"
-                options = [
-                    {"label": "🆕 முதல் முறை", "text": "முதல் முறையாக இப்போது தான்"},
-                    {"label": "🔄 தினமும் நிகழ்கிறது", "text": "தினமும் தொடர்ந்து நடக்கிறது"}
-                ]
-            elif lang == "Tanglish":
-                text = f"🔄 Indha problem evalo frequency-la nadakudhu? First time-aa illa daily recurring-aa?"
-                spoken = "Indha problem evalo frequency-la nadakudhu?"
-                options = [
-                    {"label": "🆕 First time", "text": "First time dhaan"},
-                    {"label": "🔄 Daily recurring", "text": "Dinamum continuous-ah nadakudhu"}
-                ]
-            else:
-                text = "🔄 How frequently is this problem occurring? (First time or recurring?)"
-                spoken = "How frequently does this issue occur?"
-                options = [
-                    {"label": "🆕 First time", "text": "This is happening for the first time"},
-                    {"label": "🔄 Daily recurring", "text": "Happening continuously every day"}
-                ]
-            return text, spoken, options
-
-        if slot == "previous_complaint":
-            if lang == "Tamil":
-                text = f"📋 இந்தப் பிரச்சினை பற்றி ஏற்கனவே சம்பந்தப்பட்ட துறையில் புகார் செய்துள்ளீர்களா?"
-                spoken = "இந்தப் பிரச்சினை பற்றி ஏற்கனவே புகார் செய்துள்ளீர்களா?"
-                options = [
-                    {"label": "🆕 முதல் முறை", "text": "இல்லை, இது முதல் முறை புகார்"},
-                    {"label": "📋 ஏற்கனவே புகார் செய்தேன்", "text": "ஏற்கனவே புகார் அளித்துள்ளேன்"}
-                ]
-            elif lang == "Tanglish":
-                text = f"📋 Indha issue pathi already municipality or helpline-la complaint pannirukeengala?"
-                spoken = "Indha issue pathi already complaint pannirukeengala?"
-                options = [
-                    {"label": "🆕 First time report", "text": "Illa, first time report panren"},
-                    {"label": "📋 Already reported", "text": "Aama, already complaint pannitom"}
-                ]
-            else:
-                text = "📋 Have you already reported this problem previously?"
-                spoken = "Have you already reported this problem previously?"
-                options = [
-                    {"label": "🆕 First time reporting", "text": "No, this is the first time I am reporting"},
-                    {"label": "📋 Already reported", "text": "Yes, already reported earlier"}
-                ]
-            return text, spoken, options
-
-        if slot == "previous_complaint_number":
-            if lang == "Tamil":
-                text = f"🔢 ஏற்கனவே அளித்த புகாரின் எண் (Complaint Number) தெரிந்தால் கூறவும்."
-                spoken = "ஏற்கனவே அளித்த புகாரின் எண் உள்ளதா?"
-                options = [
-                    {"label": "ℹ️ எண் இல்லை", "text": "புகார் எண் நினைவில் இல்லை"}
-                ]
-            elif lang == "Tanglish":
-                text = f"🔢 Previous complaint number edhavadhu irukka?"
-                spoken = "Previous complaint number edhavadhu irukka?"
-                options = [
-                    {"label": "ℹ️ No complaint number", "text": "Complaint number illa"}
-                ]
-            else:
-                text = "🔢 Was any previous complaint number provided?"
-                spoken = "Was any previous complaint number provided?"
-                options = [
-                    {"label": "ℹ️ No reference number", "text": "I don't have the reference number"}
-                ]
-            return text, spoken, options
-
-        if slot == "severity":
-            if "water" in cat.lower():
-                if lang == "Tamil":
-                    text = f"💧 தண்ணீர் விநியோகம் முற்றிலும் நின்றுவிட்டதா அல்லது குறைந்த அழுத்தத்தில் வருகிறதா?"
-                    spoken = "தண்ணீர் முற்றிலும் நின்றுவிட்டதா அல்லது குறைவாக வருகிறதா?"
-                    options = [
-                        {"label": "💧 முற்றிலும் வரவில்லை", "text": "தண்ணீர் முற்றிலும் வரவில்லை"},
-                        {"label": "💧 குறைந்த பிரஷர்", "text": "குறைந்த அளவில் வருகிறது"}
-                    ]
-                elif lang == "Tanglish":
-                    text = f"💧 Water completely stop aaiducha illa low pressure-la varudha?"
-                    spoken = "Water completely stop aaiducha illa low pressure-aa?"
-                    options = [
-                        {"label": "💧 Completely stopped", "text": "Completely stopped"},
-                        {"label": "💧 Low pressure", "text": "Low pressure-la varudhu"}
-                    ]
-                else:
-                    text = "💧 Is the water supply completely stopped, or flowing with low pressure?"
-                    spoken = "Is the water supply completely stopped or low pressure?"
-                    options = [
-                        {"label": "💧 Completely stopped", "text": "Water is completely stopped"},
-                        {"label": "💧 Low pressure", "text": "Flowing with low pressure"}
-                    ]
-            elif "power" in cat.lower() or "electric" in cat.lower():
-                if lang == "Tamil":
-                    text = f"⚡ மின் தடை முழுமையாக உள்ளதா அல்லது குறைந்த வோல்டேஜ் பிரச்சினையா?"
-                    spoken = "முழு மின் தடையா அல்லது குறைந்த வோல்டேஜா?"
-                    options = [
-                        {"label": "⚡ முழு மின் தடை", "text": "முழு மின் தடை ஏற்பட்டுள்ளது"},
-                        {"label": "⚡ குறைந்த வோல்டேஜ்", "text": "வோல்டேஜ் மிகக் குறைவாக உள்ளது"}
-                    ]
-                elif lang == "Tanglish":
-                    text = f"⚡ Total power cut-aa illa low voltage problem-aa?"
-                    spoken = "Total power cut-aa illa low voltage-aa?"
-                    options = [
-                        {"label": "⚡ Total power cut", "text": "Total power cut"},
-                        {"label": "⚡ Low voltage", "text": "Low voltage problem"}
-                    ]
-                else:
-                    text = "⚡ Is it a total power outage or a low voltage issue?"
-                    spoken = "Is it a total power outage or low voltage issue?"
-                    options = [
-                        {"label": "⚡ Total power outage", "text": "Total power cut"},
-                        {"label": "⚡ Low voltage", "text": "Low voltage issue"}
-                    ]
-            else:
-                if lang == "Tamil":
-                    text = f"🚨 இந்தப் பிரச்சினை எவ்வளவு தீவிரமானது அல்லது அவசரமானது?"
-                    spoken = "இந்தப் பிரச்சினை எவ்வளவு தீவிரமானது?"
-                    options = [
-                        {"label": "🚨 மிகவும் தீவிரமானது", "text": "மிகவும் தீவிரமான பிரச்சினை"},
-                        {"label": "ℹ️ இயல்பான புகார்", "text": "இயல்பான பொதுப் பிரச்சினை தான்"}
-                    ]
-                elif lang == "Tanglish":
-                    text = f"🚨 Indha problem evalo serious or urgent-ah irukku?"
-                    spoken = "Indha problem evalo serious-ah irukku?"
-                    options = [
-                        {"label": "🚨 Very serious", "text": "Romba serious problem"},
-                        {"label": "ℹ️ Normal issue", "text": "Normal issue dhaan"}
-                    ]
-                else:
-                    text = "🚨 How serious or urgent is this problem?"
-                    spoken = "How serious or urgent is this problem?"
-                    options = [
-                        {"label": "🚨 Very serious", "text": "Very serious issue"},
-                        {"label": "ℹ️ Medium priority", "text": "Medium priority issue"}
-                    ]
-            return text, spoken, options
-
-        if slot == "safety_hazard":
-            if lang == "Tamil":
-                text = f"⚠️ இந்தப் பிரச்சினையால் பொதுமக்கள் பாதுகாப்பு பாதிப்பு அல்லது உடனடி அவசர ஆபத்து ஏதேனும் உள்ளதா?"
-                spoken = "உடனடி பாதுகாப்பு ஆபத்து ஏதேனும் உள்ளதா?"
-                options = [
-                    {"label": "🚨 ஆபத்து உள்ளது", "text": "பொதுமக்களுக்கு நேரடி ஆபத்து உள்ளது"},
-                    {"label": "ℹ️ ஆபத்து இல்லை", "text": "ஆபத்து இல்லை"}
-                ]
-            elif lang == "Tanglish":
-                text = f"⚠️ Indha issue nala public safety risk or immediate danger edhavadhu irukka?"
-                spoken = "Public safety risk edhavadhu irukka?"
-                options = [
-                    {"label": "🚨 Safety hazard exists", "text": "Live danger and safety risk irukku"},
-                    {"label": "ℹ️ No hazard", "text": "No hazard, danger illa"}
-                ]
-            else:
-                text = "⚠️ Is there any public safety hazard or emergency issue?"
-                spoken = "Is there any public safety hazard or emergency issue?"
-                options = [
-                    {"label": "🚨 Safety hazard", "text": "Direct public safety risk"},
-                    {"label": "ℹ️ No hazard", "text": "No immediate safety hazard"}
-                ]
-            return text, spoken, options
-
-        if slot == "additional_details":
-            if lang == "Tamil":
-                text = f"📝 வேறு ஏதேனும் கூடுதல் தகவல்கள் தெரிவிக்க விரும்புகிறீர்களா?"
-                spoken = "வேறு ஏதேனும் கூடுதல் விவரங்கள் உள்ளதா?"
-                options = [
-                    {"label": "ℹ️ வேறு தகவல் இல்லை", "text": "வேறு கூடுதல் தகவல் இல்லை"}
-                ]
-            elif lang == "Tanglish":
-                text = f"📝 Vera edhavadhu additional information or details solla virumbureengala?"
-                spoken = "Vera edhavadhu additional details irukka?"
-                options = [
-                    {"label": "ℹ️ Nothing else", "text": "Nothing else, vera illa"}
-                ]
-            else:
-                text = "📝 Is there any additional information you would like to provide?"
-                spoken = "Is there any additional information you would like to provide?"
-                options = [
-                    {"label": "ℹ️ No additional details", "text": "No additional details"}
-                ]
-            return text, spoken, options
-
-        return "Could you please provide more details?", "Please provide more details.", []
+    def _generate_slot_question(self, slot: str, memory: Dict[str, Any], lang: str, last_raw_text: str = "") -> Tuple[str, str, List[Dict[str, str]]]:
+        """Generates dynamic, polite follow-up questions in Tamil, Tanglish, or English via question_manager."""
+        return question_manager.generate_question(slot, memory, lang, last_raw_text=last_raw_text)
 
     def _build_confirmation_summary(self, memory: Dict[str, Any], lang: str) -> Tuple[str, str]:
-        """Builds confirmation summary in Tamil, Tanglish, or English."""
-        problem = memory.get("problem_description") or memory.get("problem") or "Civic grievance"
-        category = memory.get("category", "General")
-        dept = memory.get("department") or DEPARTMENT_MASTER.get(category, "Municipal Administration")
-        area = memory.get("area") or memory.get("district_area") or "Location"
-        street = memory.get("street") or memory.get("street_road_name") or "Main Street"
-        duration = memory.get("duration") or "2 days"
-        scope = memory.get("affected_scope") or memory.get("affected_area") or "Entire street"
-        landmark = memory.get("landmark") or "Nearby spot"
-
-        if lang == "Tamil":
-            text = (
-                f"சரி, உங்கள் புகார் விவரங்களை உறுதிப்படுத்துகிறேன்:\n\n"
-                f"📍 இடம்: {area}, {street}\n"
-                f"🏛️ துறை: {dept}\n"
-                f"⏱️ கால அளவு: {duration}\n"
-                f"⚠️ பிரச்சினை: {problem}\n"
-                f"🏘️ பரப்பளவு: {scope}\n"
-                f"🏢 அடையாளம் (Landmark): {landmark}\n\n"
-                f"இந்த புகாரை பதிவு செய்யலாமா?"
-            )
-            spoken = (
-                f"சரி, நான் உறுதிப்படுத்துகிறேன். {area} {street} பகுதியில் {duration} {problem}. "
-                f"இது {scope} பிரச்சினை. இந்த புகாரை பதிவு செய்யலாமா?"
-            )
-        elif lang == "Tanglish":
-            text = (
-                f"Seri, naan confirm panren.\n\n"
-                f"📍 Location: {area}, {street}\n"
-                f"🏛️ Department: {dept}\n"
-                f"⏱️ Duration: {duration}\n"
-                f"⚠️ Problem: {problem}\n"
-                f"🏘️ Scope: {scope}\n"
-                f"🏢 Landmark: {landmark}\n\n"
-                f"Indha complaint-a register pannalama?"
-            )
-            spoken = (
-                f"Seri, naan confirm panren. {area} {street}-la {duration} {problem}. "
-                f"Idhu {scope} problem. Indha complaint-a register pannalama?"
-            )
-        else:
-            text = (
-                f"Let me confirm your complaint details:\n\n"
-                f"📍 Location: {street}, {area}\n"
-                f"🏛️ Department: {dept}\n"
-                f"⏱️ Duration: {duration}\n"
-                f"⚠️ Problem: {problem}\n"
-                f"🏘️ Scope: {scope}\n"
-                f"🏢 Landmark: {landmark}\n\n"
-                f"Shall I register this complaint now?"
-            )
-            spoken = (
-                f"Let me confirm your complaint: {problem} at {street}, {area} for {duration}. "
-                f"This affects {scope}. Shall I register this complaint now?"
-            )
-        return text, spoken
+        """Builds confirmation summary in Tamil, Tanglish, or English via question_manager."""
+        return question_manager.build_confirmation_summary(memory, lang)
 
     def _finalize_and_register_complaint(self, db: Session, session: TollFreeCallSession) -> Dict[str, Any]:
         """Creates complaint record in DB, generates unique Complaint ID, and saves all structured fields."""
@@ -1049,7 +632,7 @@ class TollFreeService:
             "success": True,
             "session_id": session.call_session_id,
             "state": TollFreeState.COMPLETED.value,
-            "detected_language": lang,
+            "detected_language": lang_str,
             "ai_reply": reply_text,
             "spoken_reply": spoken_text,
             "complaint_created": True,

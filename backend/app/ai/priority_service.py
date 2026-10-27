@@ -93,14 +93,29 @@ def assess_priority(
         if word in combined:
             return ComplaintPriority.HIGH, 0.88
 
-    # Category-specific High overrides based on duration or scope
-    if any(d in combined for d in ["3 days", "4 days", "three days", "ஒரு வாரம்", "வாரமாக", "மூன்று நாட்கள்"]):
-        if category in ["Water", "Water Supply", "Drainage", "Electricity", "Sanitation"]:
-            return ComplaintPriority.HIGH, 0.85
+    # Direct Safety Hazard check (Immediate Emergency -> CRITICAL)
+    if hazard and str(hazard).strip().lower() not in ["none", "no", "illa", "illai", "nothing", "இல்லை", "ஆபத்து இல்லை"]:
+        if any(w in str(hazard).lower() for w in ["wire", "spark", "shock", "fire", "danger", "risk", "accident", "thee", "aabathu", "aapathu", "தீ", "ஆபத்து", "விபத்து", "கசிவு"]):
+            return ComplaintPriority.CRITICAL, 0.95
 
-    if any(s in combined for s in ["entire locality", "all houses", "full street", "முழு தெரு", "அனைத்து வீடுகளும்"]):
-        if category in ["Water", "Water Supply", "Drainage", "Electricity"]:
-            return ComplaintPriority.HIGH, 0.85
+    # Category-specific High overrides based on duration or scope
+    dur_triggers = [
+        "3 days", "4 days", "5 days", "three days", "four days", "one week", "two weeks", "2 days", "two days",
+        "3 naala", "moonu naala", "2 naala", "rendu naala", "4 naala", "naalu naala", "5 naala",
+        "oru varam", "romba naala", "pala naala", "many days", "several days",
+        "ஒரு வாரம்", "வாரமாக", "மூன்று நாட்கள்", "நான்கு நாட்கள்", "இரண்டு நாட்கள்", "பல நாட்களாக"
+    ]
+    if any(d in combined for d in dur_triggers):
+        if any(cat_match in category.lower() for cat_match in ["water", "drainage", "electric", "power", "sanitation", "garbage", "sewage", "road"]):
+            return ComplaintPriority.HIGH, 0.88
+
+    scope_triggers = [
+        "entire locality", "all houses", "full street", "entire street", "whole street", "full-ah", "fulla",
+        "moththa theru", "ellarukum", "முழு தெரு", "அனைத்து வீடுகளும்", "தெரு முழுவதும்", "ஊர் முழுக்க"
+    ]
+    if any(s in combined for s in scope_triggers):
+        if any(cat_match in category.lower() for cat_match in ["water", "drainage", "electric", "power", "sewage", "road"]):
+            return ComplaintPriority.HIGH, 0.88
 
     # Rule 3: Low Priority (Aesthetic, Suggestions, Non-Urgent Queries - 120h SLA)
     for word in LOW_WORDS:

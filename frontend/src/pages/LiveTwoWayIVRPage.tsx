@@ -29,9 +29,9 @@ export const LiveTwoWayIVRPage: React.FC = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [ivrState, setIvrState] = useState<string>('CALL_DISCONNECTED');
   const [callDuration, setCallDuration] = useState<number>(0);
-  const [detectedLanguage, setDetectedLanguage] = useState<string>('Tamil');
+  const [detectedLanguage, setDetectedLanguage] = useState<string>('Auto');
   const [questionCount, setQuestionCount] = useState<number>(0);
-  const [maxQuestions, setMaxQuestions] = useState<number>(10);
+  const [maxQuestions, setMaxQuestions] = useState<number>(20);
 
   // Messages & Memory State
   const [messages, setMessages] = useState<NewIVRMessage[]>([]);
@@ -154,18 +154,18 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       transcriptRef.current = '';
       setQuestionCount(0);
 
-      const res = await newIvrApi.createSession('+919843098765', 'Tamil');
+      const res = await newIvrApi.createSession('+919843098765', 'Auto');
       setSessionId(res.session_id);
       setCallActive(true);
       setIvrState('WAITING_FOR_CITIZEN');
-      setDetectedLanguage(res.language || 'Tamil');
+      setDetectedLanguage(res.language || 'Auto');
       setMemory(res.structured_memory);
 
       const systemMsg: NewIVRMessage = {
         id: 1,
         role: 'system',
         content: `📞 Call Connected. Citizen speaks first — please speak your civic problem in Tamil (தமிழ்), Tanglish, or English. AI will automatically detect your language and respond.`,
-        language: res.language || 'Tamil',
+        language: res.language || 'Auto',
         created_at: new Date().toISOString(),
       };
       setMessages([systemMsg]);
