@@ -24,6 +24,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ memory }) =>
       case 'HIGH':
         return { bg: '#FFF7ED', text: '#C2410C', border: '#F97316' };
       case 'MEDIUM':
+      case 'STANDARD':
         return { bg: '#FFFBEB', text: '#B45309', border: '#F59E0B' };
       case 'LOW':
         return { bg: '#F0FDF4', text: '#166534', border: '#22C55E' };
@@ -111,7 +112,7 @@ export const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ memory }) =>
               fontWeight: 700,
             }}
           >
-            {memory.priority} PRIORITY
+            {(memory.priority?.toUpperCase() === 'STANDARD' ? 'MEDIUM' : memory.priority)} PRIORITY
           </span>
         )}
       </div>

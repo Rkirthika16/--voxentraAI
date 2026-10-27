@@ -100,7 +100,7 @@ export const ComplaintSuccess: React.FC<ComplaintSuccessProps> = ({ complaint })
         </div>
         <div>
           <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: '0.75rem' }}>Priority Level</span>
-          <strong style={{ color: 'var(--text-main)' }}>{complaint.priority}</strong>
+          <strong style={{ color: 'var(--text-main)' }}>{String(complaint.priority) === 'STANDARD' ? 'MEDIUM' : complaint.priority}</strong>
         </div>
         <div>
           <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: '0.75rem' }}>Submission Time</span>

@@ -121,10 +121,11 @@ class NewIVRService:
             "corrected_transcription": ""
         }
 
+        init_lang = language_preference if (language_preference and language_preference not in ["Auto", "Auto-Detecting..."]) else "Tamil"
         ivr_session = IVRSession(
             session_id=session_id,
             caller_phone=caller_phone or "+919843098765",
-            language=language_preference or "Auto",
+            language=init_lang,
             state=IVRState.WAITING_FOR_CITIZEN.value,
             structured_memory=initial_memory,
             created_at=datetime.now(timezone.utc),
@@ -223,7 +224,10 @@ class NewIVRService:
         ivr_session.affected_scope = memory.get("affected_scope") or memory.get("affected_area")
         ivr_session.frequency = memory.get("frequency")
         ivr_session.severity = memory.get("severity")
-        ivr_session.priority = memory.get("priority", "MEDIUM")
+        raw_prio = memory.get("priority", "MEDIUM")
+        norm_prio = "MEDIUM" if str(raw_prio).upper() in ["STANDARD", "NORMAL"] else raw_prio
+        memory["priority"] = norm_prio
+        ivr_session.priority = norm_prio
         ivr_session.department = memory.get("department")
         ivr_session.citizen_name = memory.get("citizen_name")
         ivr_session.structured_memory = memory
@@ -256,6 +260,7 @@ class NewIVRService:
                 "success": True,
                 "session_id": ivr_session.session_id,
                 "state": IVRState.CONFIRMATION.value,
+                "language": detected_lang,
                 "detected_language": detected_lang,
                 "language_confidence": conf,
                 "ai_reply": summary_text,
@@ -285,6 +290,7 @@ class NewIVRService:
                 "success": True,
                 "session_id": ivr_session.session_id,
                 "state": IVRState.WAITING_FOR_CITIZEN.value,
+                "language": detected_lang,
                 "detected_language": detected_lang,
                 "language_confidence": conf,
                 "ai_reply": ai_reply,
@@ -505,7 +511,10 @@ class NewIVRService:
                 scope=memory.get("impact") or memory.get("affected_scope"),
                 hazard=memory.get("safety_hazard")
             )
-            memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
+            prio_val = prio.value if hasattr(prio, 'value') else str(prio)
+            if prio_val.upper() in ["STANDARD", "NORMAL"]:
+                prio_val = "MEDIUM"
+            memory["priority"] = prio_val
 
     def _check_explicit_corrections(self, raw_text: str, cleaned: str, memory: Dict[str, Any]) -> None:
         """Handles explicit user corrections like 'Change area to Gandhipuram', 'Street is 5th Street'."""
@@ -921,7 +930,7 @@ class NewIVRService:
                     spoken = "How serious or urgent is this problem?"
                     options = [
                         {"label": "🚨 Very serious", "text": "Very serious issue"},
-                        {"label": "ℹ️ Standard priority", "text": "Standard priority issue"}
+                        {"label": "ℹ️ Medium priority", "text": "Medium priority issue"}
                     ]
             return text, spoken, options
 
@@ -1076,6 +1085,9 @@ class NewIVRService:
         full_location = ", ".join(full_loc_parts) or "Tamil Nadu"
 
         priority_str = memory.get("priority", "MEDIUM")
+        if str(priority_str).upper() in ["STANDARD", "NORMAL"]:
+            priority_str = "MEDIUM"
+            memory["priority"] = "MEDIUM"
         try:
             prio_enum = ComplaintPriority[priority_str]
         except Exception:
@@ -1096,7 +1108,7 @@ class NewIVRService:
             f"- Affected Scope: {memory.get('affected_scope', 'N/A')}\n"
             f"- Frequency: {memory.get('frequency', 'N/A')}\n"
             f"- Previous Complaint: {memory.get('previous_complaint', 'N/A')}\n"
-            f"- Severity: {memory.get('severity', 'Standard')}\n"
+            f"- Severity: {memory.get('severity', 'Medium')}\n"
             f"- Safety Hazard: {memory.get('safety_hazard', 'None')}\n"
             f"- Additional Details: {memory.get('additional_details', 'None')}\n"
             f"- Caller Phone: {ivr_session.caller_phone}\n"
@@ -1111,7 +1123,7 @@ class NewIVRService:
             latitude=lat,
             longitude=lon,
             priority=prio_enum,
-            language=ivr_session.language or "English",
+            language=ivr_session.language if ivr_session.language not in ["Auto", "Auto-Detecting...", "", None] else "Tamil",
             source=ComplaintSource.TELEPHONY_IVR,
             citizen_confirmed=True,
             ai_metadata={
@@ -1154,29 +1166,31 @@ class NewIVRService:
         ivr_session.ended_at = datetime.now(timezone.utc)
         db.commit()
 
+        lang_str: str = str(ivr_session.language) if (ivr_session.language and ivr_session.language not in ["Auto", "Auto-Detecting...", ""]) else "Tamil"
+        ivr_session.language = lang_str
+
         # Send Twilio Confirmation SMS
         sms_body = twilio_adapter.build_complaint_sms(
             complaint_number=c_num,
             description=problem,
             department=dept_name,
             location=full_location,
-            lang=ivr_session.language
+            lang=lang_str
         )
         sms_res = twilio_adapter.send_sms(ivr_session.caller_phone or "+919843098765", sms_body)
 
         # Spoken confirmation in detected language
-        lang = ivr_session.language
-        if lang == "Tamil":
+        if lang_str == "Tamil":
             reply_text = f"நன்றி! உங்கள் புகார் எண் **{c_num}** வெற்றிகரமாக பதிவு செய்யப்பட்டது. இது **{dept_name}** துறைக்கு அனுப்பப்பட்டுள்ளது."
             spoken_text = f"நன்றி! உங்கள் புகார் எண் {c_num} வெற்றிகரமாக பதிவு செய்யப்பட்டது. உரிய நடவடிக்கை எடுக்கப்படும்."
-        elif lang == "Tanglish":
+        elif lang_str == "Tanglish":
             reply_text = f"Thank you! Unga complaint ID **{c_num}** register aaiduchu. Idhu **{dept_name}**-ku forward panniyaachu."
             spoken_text = f"Thank you! Unga complaint ID {c_num} register aaiduchu. Department udane action edupaanga."
         else:
             reply_text = f"Thank you! Your complaint has been registered under ID **{c_num}** and routed to **{dept_name}**."
             spoken_text = f"Thank you! Your complaint has been registered under ID {c_num}. Our team will take action shortly."
 
-        self._save_ai_message(db, ivr_session, reply_text, spoken_text, lang)
+        self._save_ai_message(db, ivr_session, reply_text, spoken_text, lang_str)
         logger.info(f"[NewIVR] Complaint registered: {c_num} for session {ivr_session.session_id}")
 
         return {
@@ -1235,7 +1249,9 @@ class NewIVRService:
         }
 
     def _handle_unclear_input(self, db: Session, ivr_session: IVRSession, error_code: str) -> Dict[str, Any]:
-        lang = ivr_session.language or "English"
+        lang = ivr_session.language or "Tamil"
+        if lang in ["Auto", "Auto-Detecting...", ""]:
+            lang = "Tamil"
         if lang == "Tamil":
             reply = "மன்னிக்கவும், உங்கள் குரல் சரியாக கேட்கவில்லை. தயவுசெய்து மீண்டும் ஒருமுறை கூற முடியுமா?"
             spoken = "மன்னிக்கவும், மீண்டும் ஒருமுறை கூற முடியுமா?"

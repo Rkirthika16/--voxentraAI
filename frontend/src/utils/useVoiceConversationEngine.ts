@@ -5,6 +5,7 @@ import { speech } from './speech';
 import { VoiceState } from '../components/voice/VoiceStatus';
 import { MessageItem } from '../components/voice/ConversationMessage';
 import { ConversationalAnalysis } from '../types';
+import { detectLanguageFromText } from './languageDetect';
 
 export interface VoiceConversationOptions {
   mode?: 'ivr' | 'assistant';
@@ -22,7 +23,7 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [liveTranscription, setLiveTranscription] = useState<string>('');
   const [normalizedTranscription, setNormalizedTranscription] = useState<string>('');
-  const [detectedLanguage, setDetectedLanguage] = useState<string>('Auto-Detecting...');
+  const [detectedLanguage, setDetectedLanguage] = useState<string>('Listening (Tamil / Tanglish / English)');
   const [latitude, setLatitude] = useState<string | number | null>('11.016844');
   const [longitude, setLongitude] = useState<string | number | null>('76.955833');
   const [osmLocationName, setOsmLocationName] = useState<string | null>('Coimbatore, Tamil Nadu');
@@ -142,14 +143,19 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
       setSessionId(res.session_id);
       sessionIdRef.current = res.session_id;
       if (res.analysis) setAnalysis(res.analysis);
-      if (res.detected_language) setDetectedLanguage(res.detected_language);
+      const initLang = (res.detected_language && res.detected_language !== 'Auto' && !res.detected_language.includes('Detecting'))
+        ? res.detected_language
+        : (res.language && res.language !== 'Auto' && !res.language.includes('Detecting'))
+          ? res.language
+          : 'Tamil';
+      setDetectedLanguage(initLang);
       const welcomeText = res.response_text || '🎙️ Call connected. Microphone is active — please speak your complaint now in Tamil, English, or Tanglish.';
 
       const initialNotice: MessageItem = {
         id: `sys_${Date.now()}`,
         sender: 'ai',
         text: welcomeText,
-        language: 'Auto-Detecting...',
+        language: 'Tamil / Tanglish / English',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         state: 'WAITING_FOR_CITIZEN'
       };
@@ -320,6 +326,12 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
                   isSpeakingRef.current = true;
                   setVoiceState('CITIZEN_SPEAKING');
                 }
+                if (transcript.trim().length >= 2) {
+                  const quickLang = detectLanguageFromText(transcript);
+                  if (quickLang) {
+                    setDetectedLanguage(quickLang);
+                  }
+                }
               }
             },
             (err) => console.log('STT status:', err),
@@ -462,7 +474,7 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
       setMessages((prev) => [...prev, citizenMsg]);
 
       try {
-        setVoiceState('DETECTING_LANGUAGE');
+        setVoiceState('UNDERSTANDING');
         let res: any;
 
         if (audioBlob && audioBlob.size > 800) {
@@ -508,10 +520,17 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
   const handleTurnResponse = (res: any) => {
     setVoiceState('GENERATING_RESPONSE');
 
-    if (res.language || res.detected_language) {
-      setDetectedLanguage(res.language || res.detected_language);
+    const backendLang = res.detected_language || res.language;
+    if (backendLang && backendLang !== 'Auto' && !backendLang.toLowerCase().includes('detecting')) {
+      setDetectedLanguage(backendLang);
+    } else {
+      const fromSpeech = detectLanguageFromText(res.transcription || liveTranscriptionRef.current);
+      setDetectedLanguage(fromSpeech || 'Tamil');
     }
     if (res.analysis) {
+      if (res.analysis.priority === 'STANDARD' || res.analysis.priority === 'NORMAL') {
+        res.analysis.priority = 'MEDIUM';
+      }
       setAnalysis(res.analysis);
       if (res.analysis.location) {
         setOsmLocationName(res.analysis.location);
@@ -593,11 +612,17 @@ export function useVoiceConversationEngine(options: VoiceConversationOptions = {
     setLiveTranscription(raw);
     setVoiceState('PROCESSING');
 
+    const quickLang = detectLanguageFromText(raw);
+    const activeLang = quickLang || (detectedLanguage.includes('Listening') ? 'Tamil' : detectedLanguage);
+    if (quickLang) {
+      setDetectedLanguage(quickLang);
+    }
+
     const citizenMsg: MessageItem = {
       id: `cit_${Date.now()}`,
       sender: 'citizen',
       text: raw,
-      language: detectedLanguage,
+      language: activeLang,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     setMessages((prev) => [...prev, citizenMsg]);

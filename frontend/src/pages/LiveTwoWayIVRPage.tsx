@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { newIvrApi, NewIVRMemory, NewIVRMessage } from '../api/newIvr';
 import { speech } from '../utils/speech';
+import { detectLanguageFromText, formatLanguageDisplay } from '../utils/languageDetect';
 
 export const LiveTwoWayIVRPage: React.FC = () => {
   // Call & Session State
@@ -28,7 +29,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [ivrState, setIvrState] = useState<string>('CALL_DISCONNECTED');
   const [callDuration, setCallDuration] = useState<number>(0);
-  const [detectedLanguage, setDetectedLanguage] = useState<string>('Auto');
+  const [detectedLanguage, setDetectedLanguage] = useState<string>('Tamil');
   const [questionCount, setQuestionCount] = useState<number>(0);
   const [maxQuestions, setMaxQuestions] = useState<number>(10);
 
@@ -153,18 +154,18 @@ export const LiveTwoWayIVRPage: React.FC = () => {
       transcriptRef.current = '';
       setQuestionCount(0);
 
-      const res = await newIvrApi.createSession('+919843098765', 'Auto');
+      const res = await newIvrApi.createSession('+919843098765', 'Tamil');
       setSessionId(res.session_id);
       setCallActive(true);
       setIvrState('WAITING_FOR_CITIZEN');
-      setDetectedLanguage('Auto-Detecting...');
+      setDetectedLanguage(res.language || 'Tamil');
       setMemory(res.structured_memory);
 
       const systemMsg: NewIVRMessage = {
         id: 1,
         role: 'system',
         content: `📞 Call Connected. Citizen speaks first — please speak your civic problem in Tamil (தமிழ்), Tanglish, or English. AI will automatically detect your language and respond.`,
-        language: 'Auto',
+        language: res.language || 'Tamil',
         created_at: new Date().toISOString(),
       };
       setMessages([systemMsg]);
@@ -224,6 +225,10 @@ export const LiveTwoWayIVRPage: React.FC = () => {
               current += e.results[i][0].transcript + ' ';
             }
             let trimmed = current.trim();
+            if (trimmed.length >= 2) {
+              const quickLang = detectLanguageFromText(trimmed);
+              if (quickLang) setDetectedLanguage(quickLang);
+            }
             // Intelligent phonetic normalization for Tamil STT mishearings
             trimmed = trimmed
               .replace(/காந்தி\s*தம்பியின்\s*வரவில்லை/gi, 'காந்திபுரத்தில் தண்ணீர் வரவில்லை')
@@ -361,6 +366,9 @@ export const LiveTwoWayIVRPage: React.FC = () => {
     setIsProcessing(true);
     setIvrState('UNDERSTANDING');
 
+    const quickLang = detectLanguageFromText(userText);
+    if (quickLang) setDetectedLanguage(quickLang);
+
     // Add citizen message to UI immediately
     const userMsg: NewIVRMessage = {
       id: Date.now(),
@@ -383,10 +391,15 @@ export const LiveTwoWayIVRPage: React.FC = () => {
 
   // Handle Turn Response from Backend
   const handleTurnResponse = (res: any) => {
-    if (res.detected_language) {
-      setDetectedLanguage(res.detected_language);
+    const backendLang = res.detected_language || res.language;
+    if (backendLang && backendLang !== 'Auto' && !backendLang.toLowerCase().includes('detecting')) {
+      setDetectedLanguage(backendLang);
+    } else {
+      const fromSpeech = detectLanguageFromText(res.cleaned_transcription || res.transcription || liveTranscript);
+      setDetectedLanguage(fromSpeech || 'Tamil');
     }
     if (res.memory) {
+      if (res.memory.priority === 'STANDARD' || res.memory.priority === 'NORMAL') res.memory.priority = 'MEDIUM';
       setMemory(res.memory);
     }
     if (res.state) {
@@ -505,7 +518,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0369a1', background: '#e0f2fe', padding: '0.25rem 0.65rem', borderRadius: '9999px', border: '1px solid #bae6fd' }}>
-            {callActive ? `AI Voice Language: ${detectedLanguage}` : 'Ready for Tamil / Tanglish / English'}
+            {callActive ? `AI Voice Language: ${formatLanguageDisplay(detectedLanguage)}` : 'Ready for Tamil / Tanglish / English'}
           </span>
         </div>
       </div>
@@ -543,7 +556,7 @@ export const LiveTwoWayIVRPage: React.FC = () => {
                 </div>
               )}
               <div style={{ background: '#1e293b', padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#38bdf8' }}>
-                <Languages size={14} /> {detectedLanguage}
+                <Languages size={14} /> {formatLanguageDisplay(detectedLanguage)}
               </div>
               <button
                 onClick={() => setTtsMuted(!ttsMuted)}
@@ -970,7 +983,13 @@ export const LiveTwoWayIVRPage: React.FC = () => {
                     color: memory.priority === 'CRITICAL' ? '#b91c1c' : memory.priority === 'HIGH' ? '#c2410c' : '#15803d',
                   }}
                 >
-                  {memory.priority || 'MEDIUM'}
+                  {memory.priority === 'CRITICAL'
+                    ? 'Critical'
+                    : memory.priority === 'HIGH'
+                      ? 'High'
+                      : memory.priority === 'LOW'
+                        ? 'Low'
+                        : 'Medium Priority'}
                 </span>
               </div>
             </div>

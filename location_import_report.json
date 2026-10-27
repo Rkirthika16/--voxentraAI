@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-05T05:45:45.707097+00:00",
+  "timestamp": "2026-10-26T15:45:32.644645+00:00",
   "district": "Coimbatore",
   "administrative_records": 3,
   "taluks": 11,
@@ -8,9 +8,9 @@
   "zones": 5,
   "wards": 100,
   "areas": 45,
-  "streets": 105,
-  "landmarks": 49,
-  "aliases": 604,
+  "streets": 109,
+  "landmarks": 50,
+  "aliases": 623,
   "duplicate_records": 0,
   "missing_relationships": 0,
   "unresolved_names": 0,
@@ -26,5 +26,5 @@
     "Street & Landmark Geographic Data: Authoritative municipal roads, commercial arterials, numbered cross grids, and key civic landmarks with GPS coordinates.",
     "Multi-lingual Coverage: Canonical Tamil names, English names, and phonetic Tanglish aliases populated."
   ],
-  "last_updated": "2026-10-05 05:45:45 UTC"
+  "last_updated": "2026-10-26 15:45:32 UTC"
 }

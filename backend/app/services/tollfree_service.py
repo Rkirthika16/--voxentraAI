@@ -109,7 +109,7 @@ class TollFreeService:
             provider_call_id=provider_call_id,
             caller_phone=caller_phone or "+919843098765",
             toll_free_number=toll_free_number,
-            language="Auto",
+            language="Tamil",
             state=TollFreeState.WAITING_FOR_CITIZEN.value,
             structured_memory=initial_memory,
             raw_transcript="",
@@ -217,7 +217,10 @@ class TollFreeService:
         session.affected_scope = memory.get("affected_scope") or memory.get("affected_area")
         session.frequency = memory.get("frequency")
         session.severity = memory.get("severity")
-        session.priority = memory.get("priority", "MEDIUM")
+        raw_prio = memory.get("priority", "MEDIUM")
+        norm_prio = "MEDIUM" if str(raw_prio).upper() in ["STANDARD", "NORMAL"] else raw_prio
+        memory["priority"] = norm_prio
+        session.priority = norm_prio
         session.department = memory.get("department")
         session.citizen_name = memory.get("citizen_name")
         session.structured_memory = memory
@@ -250,6 +253,7 @@ class TollFreeService:
                 "success": True,
                 "session_id": session.call_session_id,
                 "state": TollFreeState.CONFIRMATION.value,
+                "language": detected_lang,
                 "detected_language": detected_lang,
                 "language_confidence": conf,
                 "ai_reply": summary_text,
@@ -276,6 +280,7 @@ class TollFreeService:
                 "success": True,
                 "session_id": session.call_session_id,
                 "state": TollFreeState.WAITING_FOR_CITIZEN.value,
+                "language": detected_lang,
                 "detected_language": detected_lang,
                 "language_confidence": conf,
                 "ai_reply": ai_reply,
@@ -467,7 +472,10 @@ class TollFreeService:
                 scope=memory.get("impact") or memory.get("affected_scope"),
                 hazard=memory.get("safety_hazard")
             )
-            memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
+            prio_val = prio.value if hasattr(prio, 'value') else str(prio)
+            if prio_val.upper() in ["STANDARD", "NORMAL"]:
+                prio_val = "MEDIUM"
+            memory["priority"] = prio_val
 
     def _get_next_missing_slot(self, memory: Dict[str, Any]) -> Optional[str]:
         """Returns the next missing question slot from the prioritized checklist."""
@@ -814,7 +822,7 @@ class TollFreeService:
                     spoken = "How serious or urgent is this problem?"
                     options = [
                         {"label": "🚨 Very serious", "text": "Very serious issue"},
-                        {"label": "ℹ️ Standard priority", "text": "Standard priority issue"}
+                        {"label": "ℹ️ Medium priority", "text": "Medium priority issue"}
                     ]
             return text, spoken, options
 
@@ -939,6 +947,9 @@ class TollFreeService:
         full_location = ", ".join(full_loc_parts) or "Tamil Nadu"
 
         priority_str = memory.get("priority", "MEDIUM")
+        if str(priority_str).upper() in ["STANDARD", "NORMAL"]:
+            priority_str = "MEDIUM"
+            memory["priority"] = "MEDIUM"
         try:
             prio_enum = ComplaintPriority[priority_str]
         except Exception:
@@ -959,7 +970,7 @@ class TollFreeService:
             f"- Affected Scope: {memory.get('affected_scope', 'N/A')}\n"
             f"- Frequency: {memory.get('frequency', 'N/A')}\n"
             f"- Previous Complaint: {memory.get('previous_complaint', 'N/A')}\n"
-            f"- Severity: {memory.get('severity', 'Standard')}\n"
+            f"- Severity: {memory.get('severity', 'Medium')}\n"
             f"- Safety Hazard: {memory.get('safety_hazard', 'None')}\n"
             f"- Additional Details: {memory.get('additional_details', 'None')}\n"
             f"- Caller Phone: {session.caller_phone}\n"
@@ -974,7 +985,7 @@ class TollFreeService:
             latitude=lat,
             longitude=lon,
             priority=prio_enum,
-            language=session.language or "English",
+            language=session.language if session.language not in ["Auto", "Auto-Detecting...", "", None] else "Tamil",
             source=ComplaintSource.TELEPHONY_IVR,
             citizen_confirmed=True,
             ai_metadata={
@@ -1017,19 +1028,21 @@ class TollFreeService:
         session.ended_at = datetime.now(timezone.utc)
         db.commit()
 
+        lang_str: str = str(session.language) if (session.language and session.language not in ["Auto", "Auto-Detecting...", ""]) else "Tamil"
+        session.language = lang_str
+
         # Spoken confirmation in detected language
-        lang = session.language
-        if lang == "Tamil":
+        if lang_str == "Tamil":
             reply_text = f"நன்றி! உங்கள் புகார் எண் **{c_num}** வெற்றிகரமாக பதிவு செய்யப்பட்டது. இது **{dept_name}** துறைக்கு அனுப்பப்பட்டுள்ளது."
             spoken_text = f"நன்றி! உங்கள் புகார் எண் {c_num} வெற்றிகரமாக பதிவு செய்யப்பட்டது. உரிய நடவடிக்கை எடுக்கப்படும்."
-        elif lang == "Tanglish":
+        elif lang_str == "Tanglish":
             reply_text = f"Thank you! Unga complaint ID **{c_num}** register aaiduchu. Idhu **{dept_name}**-ku forward panniyaachu."
             spoken_text = f"Thank you! Unga complaint ID {c_num} register aaiduchu. Department udane action edupaanga."
         else:
             reply_text = f"Thank you! Your complaint has been registered under ID **{c_num}** and routed to **{dept_name}**."
             spoken_text = f"Thank you! Your complaint has been registered under ID {c_num}. Our team will take action shortly."
 
-        self._save_ai_message(db, session, reply_text, spoken_text, lang)
+        self._save_ai_message(db, session, reply_text, spoken_text, lang_str)
         logger.info(f"[TollFree] Complaint registered: {c_num} for session {session.call_session_id}")
 
         return {
@@ -1084,7 +1097,9 @@ class TollFreeService:
         }
 
     def _handle_unclear_input(self, db: Session, session: TollFreeCallSession, error_code: str) -> Dict[str, Any]:
-        lang = session.language or "English"
+        lang = session.language or "Tamil"
+        if lang in ["Auto", "Auto-Detecting...", ""]:
+            lang = "Tamil"
         if lang == "Tamil":
             reply = "மன்னிக்கவும், உங்கள் குரல் சரியாக கேட்கவில்லை. தயவுசெய்து மீண்டும் ஒருமுறை கூற முடியுமா?"
             spoken = "மன்னிக்கவும், மீண்டும் ஒருமுறை கூற முடியுமா?"

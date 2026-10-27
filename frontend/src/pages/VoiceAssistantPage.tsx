@@ -149,7 +149,7 @@ export const VoiceAssistantPage: React.FC = () => {
       {/* 2. Real-time Status Badge */}
       <VoiceStatus
         state={voiceState}
-        language={detectedLanguage !== 'Auto-Detecting...' ? detectedLanguage : undefined}
+        language={detectedLanguage && !detectedLanguage.toLowerCase().includes('auto') && !detectedLanguage.toLowerCase().includes('detecting') ? detectedLanguage : 'Tamil'}
         category={analysis.category}
         location={analysis.location}
       />

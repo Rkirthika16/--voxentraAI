@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { tollfreeApi, TollFreeMemory, TollFreeMessage } from '../api/tollfree';
 import { speech } from '../utils/speech';
+import { detectLanguageFromText, formatLanguageDisplay } from '../utils/languageDetect';
 import { CallScreen } from '../components/tollfree/CallScreen';
 import { ConversationStatus } from '../components/tollfree/ConversationStatus';
 import { LiveTranscript } from '../components/tollfree/LiveTranscript';
@@ -17,7 +18,7 @@ export const TollFreeIVRPage: React.FC = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [ivrState, setIvrState] = useState<string>('DISCONNECTED');
   const [callDuration, setCallDuration] = useState<number>(0);
-  const [detectedLanguage, setDetectedLanguage] = useState<string>('Auto');
+  const [detectedLanguage, setDetectedLanguage] = useState<string>('Tamil');
   const [languageConfidence, setLanguageConfidence] = useState<number | undefined>(undefined);
 
   // Messages & Memory State
@@ -114,17 +115,17 @@ export const TollFreeIVRPage: React.FC = () => {
         citizen_name: null,
       });
 
-      const data = await tollfreeApi.createSession(callerPhone, tollFreeNumber, 'Auto');
+      const data = await tollfreeApi.createSession(callerPhone, tollFreeNumber, 'Tamil');
       setSessionId(data.session_id);
       setIvrState(data.state || 'WAITING_FOR_CITIZEN');
-      setDetectedLanguage('Auto-Detecting...');
+      setDetectedLanguage(data.language || 'Tamil');
       setCallActive(true);
 
       const systemBannerMsg: TollFreeMessage = {
         id: Date.now(),
         role: 'system',
         content: `📞 Toll-Free Call Connected. Citizen speaks first — please speak your grievance in Tamil (தமிழ்), Tanglish, or English. AI will automatically detect your language and respond.`,
-        language: 'Auto',
+        language: data.language || 'Tamil',
         created_at: new Date().toISOString(),
       };
       setMessages([systemBannerMsg]);
@@ -180,13 +181,18 @@ export const TollFreeIVRPage: React.FC = () => {
 
     setMessages((prev) => [...prev, citizenMsg, aiMsg]);
     setIvrState(res.state);
-    if (res.detected_language) {
-      setDetectedLanguage(res.detected_language);
+    const backendLang = res.detected_language || res.language;
+    if (backendLang && backendLang !== 'Auto' && !backendLang.toLowerCase().includes('detecting')) {
+      setDetectedLanguage(backendLang);
+    } else {
+      const fromSpeech = detectLanguageFromText(rawTranscript);
+      setDetectedLanguage(fromSpeech || 'Tamil');
     }
     if (res.language_confidence !== undefined) {
       setLanguageConfidence(res.language_confidence);
     }
     if (res.memory) {
+      if (res.memory.priority === 'STANDARD' || res.memory.priority === 'NORMAL') res.memory.priority = 'MEDIUM';
       setMemory(res.memory);
     }
     if (res.options && Array.isArray(res.options)) {
@@ -229,6 +235,8 @@ export const TollFreeIVRPage: React.FC = () => {
   // Send Text fallback
   const handleSendText = async (text: string) => {
     if (!sessionId || !callActive || isProcessing) return;
+    const quickLang = detectLanguageFromText(text);
+    if (quickLang) setDetectedLanguage(quickLang);
     try {
       setIsProcessing(true);
       setErrorMessage(null);
@@ -285,7 +293,7 @@ export const TollFreeIVRPage: React.FC = () => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0369a1', background: '#e0f2fe', padding: '0.25rem 0.65rem', borderRadius: '9999px', border: '1px solid #bae6fd' }}>
-            {callActive ? `Active Voice: ${detectedLanguage}` : 'Auto-Detection Ready'}
+            {callActive ? `Active Voice: ${formatLanguageDisplay(detectedLanguage)}` : 'Auto-Detection Ready'}
           </span>
         </div>
       </div>

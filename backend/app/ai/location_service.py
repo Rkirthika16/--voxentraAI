@@ -1851,9 +1851,13 @@ def extract_location(text: str) -> Tuple[Optional[str], Optional[str], Optional[
     try:
         from app.services.location_resolver import location_resolver
         cbe_res = location_resolver.resolve(raw)
-        if cbe_res and (cbe_res.get("area") or cbe_res.get("taluk") or cbe_res.get("landmark")) and cbe_res.get("confidence", 0.0) >= 0.75:
+        if cbe_res and (cbe_res.get("area") or cbe_res.get("taluk") or cbe_res.get("street") or cbe_res.get("landmark")) and cbe_res.get("confidence", 0.0) >= 0.70:
             area_name = cbe_res.get("area") or cbe_res.get("taluk") or "Coimbatore"
-            formatted = f"{area_name}, Coimbatore District"
+            street_name = cbe_res.get("street")
+            if street_name:
+                formatted = f"{street_name}, {area_name}, Coimbatore District"
+            else:
+                formatted = f"{area_name}, Coimbatore District"
             lat_str = str(cbe_res["latitude"]) if cbe_res.get("latitude") else "11.016800"
             lon_str = str(cbe_res["longitude"]) if cbe_res.get("longitude") else "76.955800"
             return formatted, lat_str, lon_str, cbe_res["confidence"]

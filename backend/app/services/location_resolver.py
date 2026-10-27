@@ -1,12 +1,14 @@
 """Production-grade Coimbatore Location Intelligence Resolver for VoxentraAI.
 Hierarchically resolves spoken/written Tamil, English, and Tanglish locations into official
-administrative and corporation records with confidence scoring and smart clarification.
+administrative and corporation records with confidence scoring, citizen corrections, and smart clarification.
 """
 import re
 import logging
 from typing import Dict, List, Optional, Any, Tuple
 from app.services.location_normalizer import LocationNormalizer
 from app.services.location_alias_service import location_alias_service
+from app.services.speech_correction import speech_correction_service
+from app.ai.language_service import detect_language
 from app.database.session import SessionLocal
 from app.models.location import (
     Taluk, Firka, RevenueVillage, CorporationZone,
@@ -36,8 +38,24 @@ CLARIFICATION_PROMPTS = {
         "Tamil": "நீங்கள் குறிப்பிட்ட இடம் {location} தானா?",
         "English": "Is your location {location}?",
         "Tanglish": "Neenga sonna location {location} thaana?"
+    },
+    "disambiguate_candidates": {
+        "Tamil": "நீங்கள் {cand1} அல்லது {cand2} - இதில் எந்த இடத்தை குறிப்பிடுகிறீர்கள்?",
+        "English": "Did you mean {cand1} or {cand2}?",
+        "Tanglish": "Neenga {cand1} solreengala illa {cand2} solreengala?"
+    },
+    "correction_acknowledged": {
+        "Tamil": "புரிந்துகொண்டேன். உங்கள் இடம் {location} என மாற்றப்பட்டுள்ளது, சரியா?",
+        "English": "Understood. I have updated your location to {location}. Is this correct?",
+        "Tanglish": "Purinjikiten. Unga location {location}-nu update panniyachu, idhu sariya?"
+    },
+    "low_confidence_clarify": {
+        "Tamil": "உங்கள் இடத்தை தெளிவாக கண்டறிய முடியவில்லை. தயவுசெய்து உங்கள் பகுதி பெயரை சொல்லவும் அல்லது அருகில் உள்ள அடையாளத்தை (Landmark) குறிப்பிடவும்.",
+        "English": "We couldn't clearly identify your location. Could you please specify your area name or mention a nearby landmark?",
+        "Tanglish": "Unga location sariya puriyala. Unga area peyar solla mudiyuma illana pakkathula edhavadhu landmark sollunga."
     }
 }
+
 
 class CoimbatoreLocationResolver:
     """Core Location Intelligence Resolver for VoxentraAI Voice Assistant and APIs."""
@@ -45,6 +63,40 @@ class CoimbatoreLocationResolver:
     def __init__(self):
         self.normalizer = LocationNormalizer()
         self.alias_service = location_alias_service
+        self.speech_correction = speech_correction_service
+
+    def _detect_citizen_correction(self, text: str) -> Tuple[bool, str, Optional[str]]:
+        """
+        Detects if citizen is correcting a previous guess or specifying a corrected location.
+        Examples:
+        'Illa, Coimbatore town Anna Nagar' -> (True, 'Coimbatore town Anna Nagar', 'Illa')
+        'No, not Vadavalli, it is Town Hall' -> (True, 'Town Hall', ...)
+        'தவறு காந்திபுரம் இல்லை, வடவள்ளி' -> (True, 'வடவள்ளி', ...)
+        'வேற இடம், Peelamedu' -> (True, 'Peelamedu', ...)
+        """
+        if not text:
+            return False, text, None
+
+        patterns = [
+            # Case with repudiated entity before comma/separator: e.g. 'No, not 5th street, 6th street' or 'not Vadavalli, it is Town Hall'
+            r'^(?:(?:no|illa|illai|ille|thavaru|wrong|தவறு|இல்லை|இல்ல)[\s,:;\-]+)?(?:not|inga\s*illa|anga\s*illa)\s+[a-zA-Z0-9\u0B80-\u0BFF\s]+?[,;\-]\s*(?:it\s*is\s*|it\'s\s*)?',
+            # Tamil rejection: e.g. 'தவறு, காந்திபுரம் இல்லை, வடவள்ளி'
+            r'^(?:தவறு|இல்லை)?[\s,:;\-]*[a-zA-Z0-9\u0B80-\u0BFF\s]+?இல்லை[\s,:;\-]+',
+            # Simple prefix like 'Illa, Coimbatore town Anna Nagar' or 'No, Town Hall'
+            r'^(?:no|not|illa|illai|ille|thavaru|thappu|wrong|different|mariduchu|இல்லை|தவறு|இல்ல|வேற\s*இடம்|வேற)\b[\s,:;\-]+(?:it\s*is\s*|anga\s*illa,?\s*|inga\s*illa,?\s*)?',
+            r'^(?:not\s+[a-zA-Z0-9\u0B80-\u0BFF\s]+,?\s*(?:it\s*is|it\'s)?\s*)',
+            r'^(?:illa\s+[a-zA-Z0-9\u0B80-\u0BFF\s]+,\s*)'
+        ]
+
+        for pat in patterns:
+            m = re.match(pat, text, flags=re.IGNORECASE)
+            if m:
+                prefix = m.group(0)
+                corrected_target = text[len(prefix):].strip()
+                if corrected_target:
+                    return True, corrected_target, prefix.strip(" ,:-")
+
+        return False, text, None
 
     def resolve(
         self,
@@ -52,21 +104,55 @@ class CoimbatoreLocationResolver:
         current_language: str = "Tanglish",
         context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """Resolves a raw speech transcript or text string into a structured location hierarchy."""
-        if not text or not text.strip():
+        """Resolves a raw speech transcript or text string into a structured location hierarchy.
+        Returns all 7 core pipeline fields for auditing, debugging, and multi-tier confidence evaluation.
+        """
+        raw_text = text.strip() if text else ""
+        if not raw_text:
             return self._empty_result(
                 clarification_question=self._get_prompt("ask_area", current_language),
-                needs_clarification=True
+                needs_clarification=True,
+                original_transcript=raw_text,
+                detected_language=current_language
             )
 
         context = context or {}
-        cleaned_text = self.normalizer.clean(text)
-        tanglish_text = self.normalizer.normalize_tanglish(text)
-        tamil_text = self.normalizer.normalize_tamil(text)
 
-        # 1. Extract candidate entities from text
+        # 1. Pipeline transcript stages (7 core fields preservation)
+        meta = self.speech_correction.correct_with_metadata(raw_text)
+        original_transcript = meta["original_transcript"]
+        normalized_transcript = meta["normalized_transcript"]
+        corrected_transcript = meta["corrected_transcript"]
+
+        # 2. Dynamic Language Detection
+        detected_lang, _ = detect_language(raw_text, current_session_lang=current_language)
+
+        # 3. Citizen Correction Detection & Handling
+        is_citizen_correction, target_text, _ = self._detect_citizen_correction(corrected_transcript)
+        if is_citizen_correction:
+            # Clear conflicting prior context so we don't insist on the old location
+            context = {}
+            working_text = target_text
+        else:
+            working_text = corrected_transcript
+
+        # Normalize texts for entity matching
+        cleaned_text = self.normalizer.clean(working_text)
+        tanglish_text = self.normalizer.normalize_tanglish(working_text)
+        tamil_text = self.normalizer.normalize_tamil(working_text)
+
+        # 4. Extract candidate entities from text
         matched_areas = self._extract_areas(tanglish_text, tamil_text)
         area_hint = matched_areas[0] if matched_areas else context.get("area_entity")
+        if not area_hint and context.get("area"):
+            context_area_cands = self._extract_areas(
+                self.normalizer.normalize_tanglish(context["area"]),
+                self.normalizer.normalize_tamil(context["area"])
+            )
+            if context_area_cands:
+                area_hint = context_area_cands[0]
+            elif context.get("area_id"):
+                area_hint = {"id": context["area_id"], "name_en": context["area"], "confidence": 0.9}
 
         matched_landmarks = self._extract_landmarks(tanglish_text, tamil_text, area_hint=area_hint)
         matched_streets = self._extract_streets(tanglish_text, tamil_text, area_hint=area_hint)
@@ -74,7 +160,17 @@ class CoimbatoreLocationResolver:
         matched_villages = self._extract_villages(tanglish_text, tamil_text)
         matched_firkas = self._extract_firkas(tanglish_text, tamil_text)
 
-        # 2. Integrate with previous conversation context if available
+        # 5. Build candidate locations list with ranking & confidence
+        candidate_locations = self._build_candidates(
+            streets=matched_streets,
+            areas=matched_areas,
+            landmarks=matched_landmarks,
+            taluks=matched_taluks,
+            villages=matched_villages,
+            area_hint=area_hint
+        )
+
+        # 6. Integrate with context or pick highest-ranked entity
         area_entity = matched_areas[0] if matched_areas else context.get("area_entity")
         street_entity = matched_streets[0] if matched_streets else context.get("street_entity")
         landmark_entity = matched_landmarks[0] if matched_landmarks else context.get("landmark_entity")
@@ -82,7 +178,7 @@ class CoimbatoreLocationResolver:
         village_entity = matched_villages[0] if matched_villages else context.get("village_entity")
         firka_entity = matched_firkas[0] if matched_firkas else context.get("firka_entity")
 
-        # 3. Check landmark-based resolution (landmark brings area & ward proximity)
+        # Check landmark-based resolution (landmark brings area & ward proximity)
         if landmark_entity and not area_entity:
             lm_details = self._get_db_entity(Landmark, landmark_entity["id"])
             if lm_details and lm_details.area_id:
@@ -98,7 +194,7 @@ class CoimbatoreLocationResolver:
                         "confidence": 0.95
                     }
 
-        # 4. Check street-based resolution (street brings area & ward proximity)
+        # Check street-based resolution (street brings area & ward proximity)
         if street_entity and not area_entity and street_entity.get("id"):
             st_details = self._get_db_entity(Street, street_entity["id"])
             if st_details and st_details.area_id:
@@ -114,7 +210,7 @@ class CoimbatoreLocationResolver:
                         "confidence": 0.95
                     }
 
-        # 5. Build full hierarchy
+        # 7. Build full hierarchy
         hierarchy = self._build_hierarchy(
             area=area_entity,
             street=street_entity,
@@ -124,43 +220,163 @@ class CoimbatoreLocationResolver:
             firka=firka_entity
         )
 
-        # 6. Compute overall confidence score
+        # 8. Compute overall confidence score
         conf = self._compute_confidence(area_entity, street_entity, landmark_entity, taluk_entity or village_entity)
         hierarchy["confidence"] = conf
+        hierarchy["confidence_score"] = conf
 
-        # 7. Apply Decision Rules:
-        # >= 0.85: accept automatically
-        # 0.70 - 0.84: ask confirmation question
-        # < 0.70: ask for clarification
+        # 9. Form confirmed location string if resolved
+        loc_parts = []
+        if hierarchy.get("street"):
+            loc_parts.append(hierarchy["street"])
+        if hierarchy.get("area"):
+            loc_parts.append(hierarchy["area"])
+        elif hierarchy.get("taluk"):
+            loc_parts.append(hierarchy["taluk"])
+        elif hierarchy.get("revenue_village"):
+            loc_parts.append(hierarchy["revenue_village"])
+        
+        if loc_parts:
+            loc_parts.append("Coimbatore")
+            confirmed_loc_str = ", ".join(loc_parts)
+        else:
+            confirmed_loc_str = None
+
+        # 10. Apply 3 Confidence Tiers & Decision Rules
+        # Tier 1: High (>= 0.85) -> Ask confirmation before final save
+        # Tier 2: Medium (0.60 - 0.84) -> Disambiguate between 2-3 candidates
+        # Tier 3: Low (< 0.60) -> Do not auto-select; ask citizen to clarify or give landmark; preserve unresolved
         if conf >= 0.85:
-            hierarchy["needs_confirmation"] = False
-            hierarchy["needs_clarification"] = False
-            hierarchy["clarification_question"] = None
-        elif 0.70 <= conf < 0.85:
             hierarchy["needs_confirmation"] = True
             hierarchy["needs_clarification"] = False
-            loc_label = hierarchy.get("area") or hierarchy.get("taluk") or "Coimbatore"
-            hierarchy["clarification_question"] = self._get_prompt(
-                "confirm_location", current_language, location=loc_label
-            )
+            hierarchy["confirmed_location"] = confirmed_loc_str
+            hierarchy["unresolved_location"] = None
+            if is_citizen_correction:
+                hierarchy["clarification_question"] = self._get_prompt(
+                    "correction_acknowledged", detected_lang, location=confirmed_loc_str or "Coimbatore"
+                )
+            else:
+                hierarchy["clarification_question"] = self._get_prompt(
+                    "confirm_location", detected_lang, location=confirmed_loc_str or "Coimbatore"
+                )
+        elif 0.60 <= conf < 0.85:
+            hierarchy["needs_confirmation"] = False
+            hierarchy["needs_clarification"] = True
+            hierarchy["confirmed_location"] = None
+            hierarchy["unresolved_location"] = None
+            if len(candidate_locations) >= 2:
+                cand1 = candidate_locations[0]["label"]
+                cand2 = candidate_locations[1]["label"]
+                hierarchy["clarification_question"] = self._get_prompt(
+                    "disambiguate_candidates", detected_lang, cand1=cand1, cand2=cand2
+                )
+            elif not hierarchy.get("area") and not hierarchy.get("taluk"):
+                hierarchy["clarification_question"] = self._get_prompt("ask_area", detected_lang)
+            elif not hierarchy.get("street"):
+                hierarchy["clarification_question"] = self._get_prompt("ask_street", detected_lang)
+            else:
+                hierarchy["clarification_question"] = self._get_prompt("ask_landmark", detected_lang)
         else:
             hierarchy["needs_confirmation"] = False
             hierarchy["needs_clarification"] = True
-            # Smart single question follow up based on what's missing
-            if not hierarchy.get("area") and not hierarchy.get("taluk"):
-                hierarchy["clarification_question"] = self._get_prompt("ask_area", current_language)
-            elif not hierarchy.get("street"):
-                hierarchy["clarification_question"] = self._get_prompt("ask_street", current_language)
-            elif not hierarchy.get("landmark"):
-                hierarchy["clarification_question"] = self._get_prompt("ask_landmark", current_language)
+            hierarchy["confirmed_location"] = None
+            hierarchy["unresolved_location"] = raw_text
+            hierarchy["clarification_question"] = self._get_prompt("low_confidence_clarify", detected_lang)
 
-        # 8. Add nearby suggested landmarks if area is known
+        # 11. Add nearby suggested landmarks if area is known
         if hierarchy.get("area_id"):
             hierarchy["suggested_landmarks"] = self._get_suggested_landmarks(hierarchy["area_id"])
         else:
             hierarchy["suggested_landmarks"] = []
 
+        # 12. Attach 7 core audit and debugging pipeline fields
+        hierarchy["original_transcript"] = original_transcript
+        hierarchy["normalized_transcript"] = normalized_transcript
+        hierarchy["corrected_transcript"] = corrected_transcript
+        hierarchy["detected_language"] = detected_lang
+        hierarchy["candidate_locations"] = candidate_locations
+        hierarchy["is_citizen_correction"] = is_citizen_correction
+
         return hierarchy
+
+    def _build_candidates(
+        self,
+        streets: List[Dict[str, Any]],
+        areas: List[Dict[str, Any]],
+        landmarks: List[Dict[str, Any]],
+        taluks: List[Dict[str, Any]],
+        villages: List[Dict[str, Any]],
+        area_hint: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """Constructs ranked candidate locations with confidence scores."""
+        candidates = []
+        seen_labels = set()
+
+        # 1. From streets
+        for st in streets:
+            area_id = st.get("area_id")
+            area_obj = self._get_db_entity(Area, area_id) if area_id else None
+            area_name = area_obj.name_en if area_obj else (area_hint.get("name_en") if area_hint else None)
+            st_name = st.get("name_en") or "Unknown Street"
+            label = f"{st_name}, {area_name}" if area_name else st_name
+            if label not in seen_labels:
+                seen_labels.add(label)
+                conf = st.get("confidence", 0.70)
+                if area_hint and area_id and area_hint.get("id") == area_id:
+                    conf = max(conf, 0.95)
+                candidates.append({
+                    "label": label,
+                    "area": area_name,
+                    "area_id": area_id,
+                    "street": st_name,
+                    "street_id": st.get("id"),
+                    "landmark": None,
+                    "ward_no": area_obj.ward_id if area_obj else None,
+                    "taluk": None,
+                    "confidence": conf
+                })
+
+        # 2. From landmarks
+        for lm in landmarks:
+            area_id = lm.get("area_id")
+            area_obj = self._get_db_entity(Area, area_id) if area_id else None
+            area_name = area_obj.name_en if area_obj else (area_hint.get("name_en") if area_hint else None)
+            lm_name = lm.get("name_en")
+            label = f"{lm_name}, {area_name}" if area_name else lm_name
+            if label not in seen_labels:
+                seen_labels.add(label)
+                candidates.append({
+                    "label": label,
+                    "area": area_name,
+                    "area_id": area_id,
+                    "street": None,
+                    "street_id": None,
+                    "landmark": lm_name,
+                    "landmark_id": lm.get("id"),
+                    "ward_no": area_obj.ward_id if area_obj else None,
+                    "taluk": None,
+                    "confidence": lm.get("confidence", 0.85)
+                })
+
+        # 3. From areas
+        for ar in areas:
+            ar_name = ar.get("name_en")
+            if ar_name and ar_name not in seen_labels:
+                seen_labels.add(ar_name)
+                candidates.append({
+                    "label": f"{ar_name}, Coimbatore",
+                    "area": ar_name,
+                    "area_id": ar.get("id"),
+                    "street": None,
+                    "street_id": None,
+                    "landmark": None,
+                    "ward_no": ar.get("ward_id"),
+                    "taluk": None,
+                    "confidence": ar.get("confidence", 0.90)
+                })
+
+        candidates.sort(key=lambda x: x["confidence"], reverse=True)
+        return candidates[:3]
 
     def _extract_landmarks(self, tanglish_text: str, tamil_text: str, area_hint: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         candidates = self.normalizer.get_candidate_tokens(tanglish_text) + self.normalizer.get_candidate_tokens(tamil_text)
@@ -171,20 +387,33 @@ class CoimbatoreLocationResolver:
         for cand in candidates:
             cand_lower = cand.lower().strip()
             exact = self.alias_service.lookup_exact(cand)
+            if not exact and area_hint and (area_hint.get("name_en") or area_hint.get("area")):
+                area_name = area_hint.get("name_en") or area_hint.get("area")
+                exact = self.alias_service.lookup_exact(f"{area_name} {cand}")
+                if not exact:
+                    exact = self.alias_service.lookup_exact(f"{cand} {area_name}")
             for m in exact:
                 if m.get("entity_type") == "landmark":
                     det = self.alias_service.get_entity_details("landmark", m["entity_id"])
                     if det:
-                        # If candidate is a generic word, only match if it belongs to area_hint
                         if cand_lower in generic_keywords:
-                            if area_hint and area_hint.get("id") and det.get("area_id") == area_hint["id"]:
-                                results.append({
-                                    "id": int(m["entity_id"]),
-                                    "name_en": det.get("name_en"),
-                                    "name_ta": det.get("name_ta"),
-                                    "area_id": det.get("area_id"),
-                                    "confidence": 0.95
-                                })
+                            if area_hint and (area_hint.get("id") or area_hint.get("name_en")):
+                                if (area_hint.get("id") and det.get("area_id") == area_hint["id"]) or (area_hint.get("name_en") and str(det.get("area_id")) == str(area_hint.get("id"))):
+                                    results.append({
+                                        "id": int(m["entity_id"]),
+                                        "name_en": det.get("name_en"),
+                                        "name_ta": det.get("name_ta"),
+                                        "area_id": det.get("area_id"),
+                                        "confidence": 0.95
+                                    })
+                                else:
+                                    results.append({
+                                        "id": int(m["entity_id"]),
+                                        "name_en": det.get("name_en"),
+                                        "name_ta": det.get("name_ta"),
+                                        "area_id": det.get("area_id"),
+                                        "confidence": 0.90
+                                    })
                         else:
                             results.append({
                                 "id": int(m["entity_id"]),
@@ -194,7 +423,6 @@ class CoimbatoreLocationResolver:
                                 "confidence": 1.0
                             })
             if results:
-                # If area_hint is available, prioritize landmark in the same area
                 if area_hint and area_hint.get("id"):
                     same_area = [r for r in results if r.get("area_id") == area_hint["id"]]
                     if same_area:
@@ -217,7 +445,7 @@ class CoimbatoreLocationResolver:
         return results
 
     def _extract_streets(self, tanglish_text: str, tamil_text: str, area_hint: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-        # 1. Check explicit numbered street pattern first: e.g. "5th street", "3rd cross", "5th theru"
+        # 1. Check explicit numbered street pattern first: e.g. "Anna nagar second street", "5th street", "2nd cross"
         numbered_street = self.normalizer.extract_numbered_street(tanglish_text)
         if numbered_street:
             if area_hint and area_hint.get("name_en"):
@@ -243,6 +471,34 @@ class CoimbatoreLocationResolver:
                 }]
             else:
                 # Isolated / ambiguous numbered street without area
+                exact = self.alias_service.lookup_exact(numbered_street)
+                matches = []
+                for m in exact:
+                    if m.get("entity_type") == "street":
+                        det = self.alias_service.get_entity_details("street", m["entity_id"])
+                        if det:
+                            matches.append({
+                                "id": int(m["entity_id"]),
+                                "name_en": numbered_street,
+                                "name_ta": det.get("name_ta"),
+                                "area_id": det.get("area_id"),
+                                "confidence": 0.75,
+                                "is_ambiguous": True
+                            })
+                # Check Anna Nagar disambiguation candidate (Town Hall Anna Nagar Main Street)
+                if "anna nagar" in numbered_street.lower():
+                    det_town = self.alias_service.get_entity_details("street", 109)
+                    if det_town and not any(m["id"] == 109 for m in matches):
+                        matches.append({
+                            "id": 109,
+                            "name_en": det_town.get("name_en"),
+                            "name_ta": det_town.get("name_ta"),
+                            "area_id": det_town.get("area_id"),
+                            "confidence": 0.70,
+                            "is_ambiguous": True
+                        })
+                if matches:
+                    return matches
                 return [{
                     "id": None,
                     "name_en": numbered_street,
@@ -279,6 +535,53 @@ class CoimbatoreLocationResolver:
                         return same_area
                 return results
 
+        # 3. Check Anna Nagar multi-candidate matching if "anna nagar" is in text
+        if "anna nagar" in tanglish_text.lower():
+            det_vada = self.alias_service.get_entity_details("street", 107)
+            det_town = self.alias_service.get_entity_details("street", 109)
+            if area_hint:
+                hint_name = (area_hint.get("name_en") or "").lower()
+                hint_id = area_hint.get("id") or area_hint.get("area_id")
+                if hint_id == 14 or "vadavalli" in hint_name:
+                    if det_vada:
+                        return [{
+                            "id": 107,
+                            "name_en": det_vada.get("name_en"),
+                            "name_ta": det_vada.get("name_ta"),
+                            "area_id": 14,
+                            "confidence": 0.95
+                        }]
+                elif hint_id == 10 or "town hall" in hint_name:
+                    if det_town:
+                        return [{
+                            "id": 109,
+                            "name_en": det_town.get("name_en"),
+                            "name_ta": det_town.get("name_ta"),
+                            "area_id": 10,
+                            "confidence": 0.95
+                        }]
+            else:
+                if det_vada and not any(r["id"] == 107 for r in results):
+                    results.append({
+                        "id": 107,
+                        "name_en": det_vada.get("name_en"),
+                        "name_ta": det_vada.get("name_ta"),
+                        "area_id": det_vada.get("area_id"),
+                        "confidence": 0.75,
+                        "is_ambiguous": True
+                    })
+                if det_town and not any(r["id"] == 109 for r in results):
+                    results.append({
+                        "id": 109,
+                        "name_en": det_town.get("name_en"),
+                        "name_ta": det_town.get("name_ta"),
+                        "area_id": det_town.get("area_id"),
+                        "confidence": 0.70,
+                        "is_ambiguous": True
+                    })
+                if results:
+                    return results
+
         if not results:
             fuzzy = self.alias_service.lookup_fuzzy(tanglish_text, threshold=82.0)
             for ent, score in fuzzy:
@@ -289,6 +592,7 @@ class CoimbatoreLocationResolver:
                             "id": int(ent["entity_id"]),
                             "name_en": det.get("name_en"),
                             "name_ta": det.get("name_ta"),
+                            "area_id": det.get("area_id"),
                             "confidence": score
                         })
         return results
@@ -511,6 +815,8 @@ class CoimbatoreLocationResolver:
         taluk: Optional[Dict[str, Any]]
     ) -> float:
         """Computes weighted location confidence."""
+        if street and street.get("is_ambiguous"):
+            return round(street.get("confidence", 0.75), 2)
         if landmark and street and area:
             return round(min(1.0, max(0.95, (landmark.get("confidence", 1.0) + street.get("confidence", 1.0)) / 2.0)), 2)
         if area and street:
@@ -522,7 +828,7 @@ class CoimbatoreLocationResolver:
         if landmark:
             return round(landmark.get("confidence", 0.85), 2)
         if street:
-            if street.get("is_ambiguous") or street.get("confidence", 0.0) < 0.70:
+            if street.get("confidence", 0.0) < 0.70:
                 return round(street.get("confidence", 0.65), 2)
             return round(street.get("confidence", 0.85), 2)
         if taluk:
@@ -558,14 +864,30 @@ class CoimbatoreLocationResolver:
                 lang = "English"
 
         template = CLARIFICATION_PROMPTS.get(template_key, {}).get(lang, CLARIFICATION_PROMPTS[template_key]["Tanglish"])
-        return template.format(**kwargs)
+        try:
+            return template.format(**kwargs)
+        except Exception:
+            return template
 
     def _empty_result(
         self,
         clarification_question: Optional[str] = None,
-        needs_clarification: bool = False
+        needs_clarification: bool = False,
+        original_transcript: str = "",
+        normalized_transcript: str = "",
+        corrected_transcript: str = "",
+        detected_language: str = "Tanglish"
     ) -> Dict[str, Any]:
         return {
+            "original_transcript": original_transcript,
+            "normalized_transcript": normalized_transcript,
+            "corrected_transcript": corrected_transcript,
+            "detected_language": detected_language,
+            "candidate_locations": [],
+            "confidence_score": 0.0,
+            "confirmed_location": None,
+            "unresolved_location": original_transcript or None,
+            "is_citizen_correction": False,
             "district": "Coimbatore",
             "revenue_division": None,
             "taluk": None,
@@ -590,5 +912,6 @@ class CoimbatoreLocationResolver:
             "clarification_question": clarification_question,
             "suggested_landmarks": []
         }
+
 
 location_resolver = CoimbatoreLocationResolver()

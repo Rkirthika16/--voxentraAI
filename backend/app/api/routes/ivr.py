@@ -74,13 +74,21 @@ def _sync_ivr_session_to_db(
     """Helper to persist and synchronize IVRSession in SQLite DB."""
     try:
         sess = db.query(IVRSession).filter(IVRSession.session_id == session_id).first()
+        mem = memory or {}
+        resolved_lang = mem.get("language") or mem.get("current_language") or mem.get("detected_language") or "Tamil"
+        if resolved_lang in ["Auto", "Auto-Detecting...", "", None]:
+            resolved_lang = "Tamil"
+
+        raw_prio = mem.get("priority", "MEDIUM")
+        resolved_prio = "MEDIUM" if str(raw_prio).upper() in ["STANDARD", "NORMAL"] else raw_prio
+
         if not sess:
             sess = IVRSession(
                 session_id=session_id,
                 caller_phone=caller_phone,
-                language="Auto",
+                language=resolved_lang,
                 state=state,
-                structured_memory=memory or {},
+                structured_memory=mem,
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc)
             )
@@ -89,16 +97,17 @@ def _sync_ivr_session_to_db(
             sess.state = state
             sess.updated_at = datetime.now(timezone.utc)
             if memory:
-                sess.structured_memory = memory
-                sess.category = memory.get("category")
-                sess.problem = memory.get("problem")
-                sess.location = memory.get("location")
-                sess.duration = memory.get("duration")
-                sess.affected_scope = memory.get("affected_scope")
-                sess.severity = memory.get("severity")
-                sess.priority = memory.get("priority", "MEDIUM")
-                sess.department = memory.get("department")
-                sess.citizen_name = memory.get("citizen_name")
+                sess.structured_memory = mem
+                sess.language = resolved_lang
+                sess.category = mem.get("category")
+                sess.problem = mem.get("problem")
+                sess.location = mem.get("location")
+                sess.duration = mem.get("duration")
+                sess.affected_scope = mem.get("affected_scope")
+                sess.severity = mem.get("severity")
+                sess.priority = resolved_prio
+                sess.department = mem.get("department")
+                sess.citizen_name = mem.get("citizen_name")
         if complaint_id:
             sess.complaint_id = complaint_id
         if complaint_number:
@@ -208,6 +217,7 @@ async def create_ivr_conversational_session(
         )
         return Response(content=twiml, media_type="application/xml")
 
+    init_lang = session_obj.language if session_obj.language not in ["Auto", "Auto-Detecting...", "", None] else "Tamil"
     return {
         "success": True,
         "session_id": sid,
@@ -219,7 +229,8 @@ async def create_ivr_conversational_session(
         "greeting": "",
         "response_text": "",
         "spoken_greeting": "",
-        "language": session_obj.language,
+        "language": init_lang,
+        "detected_language": init_lang,
         "structured_memory": session_obj.structured_memory,
         "stream_url": "/api/v1/ivr/stream"
     }
@@ -511,10 +522,14 @@ async def process_ivr_session_audio(
         turn_res["transcription"] = transcription
         turn_res["response_text"] = turn_res.get("ai_reply", "")
         turn_res["ai_spoken"] = spoken_text
-        turn_res["language"] = tts_lang
+        resolved_tts_lang = tts_lang if tts_lang not in ["Auto", "Auto-Detecting...", "", None] else "Tamil"
+        turn_res["language"] = resolved_tts_lang
+        turn_res["detected_language"] = turn_res.get("detected_language") or resolved_tts_lang
         turn_res["should_continue"] = (turn_res.get("state") != "COMPLETED")
         turn_res["conversation_state"] = turn_res.get("state")
         turn_res["confirmation_required"] = turn_res.get("is_confirmation", False)
+        raw_prio = mem.get("priority") or "MEDIUM"
+        normalized_prio = "MEDIUM" if str(raw_prio).upper() in ["STANDARD", "NORMAL"] else raw_prio
         turn_res["analysis"] = {
             "category": mem.get("category") or "Other",
             "location": mem.get("location") or mem.get("area") or mem.get("district_area") or "",
@@ -522,7 +537,7 @@ async def process_ivr_session_audio(
             "duration": mem.get("duration") or "",
             "affected_scope": mem.get("affected_scope") or mem.get("affected_area") or "",
             "severity": mem.get("severity") or "normal",
-            "priority": mem.get("priority") or "MEDIUM",
+            "priority": normalized_prio,
             "department": mem.get("department") or "Municipal Administration"
         }
 
@@ -582,10 +597,14 @@ async def process_ivr_session_message(
     turn_res["transcription"] = raw_message
     turn_res["response_text"] = turn_res.get("ai_reply", "")
     turn_res["ai_spoken"] = spoken_text
-    turn_res["language"] = tts_lang
+    resolved_tts_lang = tts_lang if tts_lang not in ["Auto", "Auto-Detecting...", "", None] else "Tamil"
+    turn_res["language"] = resolved_tts_lang
+    turn_res["detected_language"] = turn_res.get("detected_language") or resolved_tts_lang
     turn_res["should_continue"] = (turn_res.get("state") != "COMPLETED")
     turn_res["conversation_state"] = turn_res.get("state")
     turn_res["confirmation_required"] = turn_res.get("is_confirmation", False)
+    raw_prio = mem.get("priority") or "MEDIUM"
+    normalized_prio = "MEDIUM" if str(raw_prio).upper() in ["STANDARD", "NORMAL"] else raw_prio
     turn_res["analysis"] = {
         "category": mem.get("category") or "Other",
         "location": mem.get("location") or mem.get("area") or mem.get("district_area") or "",
@@ -593,7 +612,7 @@ async def process_ivr_session_message(
         "duration": mem.get("duration") or "",
         "affected_scope": mem.get("affected_scope") or mem.get("affected_area") or "",
         "severity": mem.get("severity") or "normal",
-        "priority": mem.get("priority") or "MEDIUM",
+        "priority": normalized_prio,
         "department": mem.get("department") or "Municipal Administration"
     }
 
@@ -1521,6 +1540,15 @@ def get_telephony_logs(
             continue
         seen_ids.add(sid)
         mem = s.structured_memory or {}
+        raw_lang = s.language
+        if not raw_lang or raw_lang in ["Auto", "Auto-Detecting..."]:
+            raw_lang = mem.get("language") or mem.get("detected_language") or mem.get("current_language") or "Tamil"
+            if raw_lang in ["Auto", "Auto-Detecting..."]:
+                raw_lang = "Tamil"
+
+        raw_prio = s.priority or mem.get("priority") or "MEDIUM"
+        norm_prio = "MEDIUM" if str(raw_prio).upper() in ["STANDARD", "NORMAL"] else raw_prio
+
         merged_logs.append(
             TelephonyLogItem(
                 id=sid,
@@ -1531,10 +1559,11 @@ def get_telephony_logs(
                 status="COMPLETED" if s.state in ["COMPLETED", "CONFIRMATION"] else s.state,
                 details={
                     "session_id": s.call_session_id,
-                    "language": s.language,
+                    "language": raw_lang,
                     "category": s.category or mem.get("category") or "Civic",
                     "problem": s.problem or mem.get("problem") or "Phone Inquiry",
                     "location": s.location or mem.get("location") or "Tamil Nadu",
+                    "priority": norm_prio,
                     "complaint_number": s.complaint_number or "In-Progress",
                     "state": s.state,
                     "toll_free_number": s.toll_free_number
@@ -1549,6 +1578,15 @@ def get_telephony_logs(
             continue
         seen_ids.add(sid)
         mem = s.structured_memory or {}
+        raw_lang = s.language
+        if not raw_lang or raw_lang in ["Auto", "Auto-Detecting..."]:
+            raw_lang = mem.get("language") or mem.get("detected_language") or mem.get("current_language") or "Tamil"
+            if raw_lang in ["Auto", "Auto-Detecting..."]:
+                raw_lang = "Tamil"
+
+        raw_prio = s.priority or mem.get("priority") or "MEDIUM"
+        norm_prio = "MEDIUM" if str(raw_prio).upper() in ["STANDARD", "NORMAL"] else raw_prio
+
         merged_logs.append(
             TelephonyLogItem(
                 id=sid,
@@ -1559,10 +1597,11 @@ def get_telephony_logs(
                 status="COMPLETED" if s.state in ["COMPLETED", "CONFIRMED"] else s.state,
                 details={
                     "session_id": s.session_id,
-                    "language": s.language,
+                    "language": raw_lang,
                     "category": s.category or mem.get("category") or "Civic",
                     "problem": s.problem or mem.get("problem") or "Voice Inquiry",
                     "location": s.location or mem.get("location") or "Tamil Nadu",
+                    "priority": norm_prio,
                     "complaint_number": s.complaint_number or "In-Progress",
                     "state": s.state
                 }

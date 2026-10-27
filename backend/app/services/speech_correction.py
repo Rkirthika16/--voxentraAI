@@ -37,6 +37,9 @@ class SpeechCorrectionService:
             (r'\bhundred\s*feet\s*road\b', '100 Feet Road'),
             (r'\bd\s*b\s*road\b', 'DB Road'),
             (r'\bd\.?\s*b\.?\s*road\b', 'DB Road'),
+            (r'(?:^|\s)டி\.?\s*பி\.?\s*ரோட்(?:டு|டில்|ட்டில்|ட்[டி]*ல்|ல்)?(?:\s|$|[.,!?])', ' DB Road '),
+            (r'(?:^|\s)டி\s*பி\s*ரோடு(?:\s|$|[.,!?])', ' DB Road '),
+            (r'(?:^|\s)டி\.?\s*பி\.?\s*ரோடு(?:\s|$|[.,!?])', ' DB Road '),
             (r'\btani\s*vara\s*la\b', 'thanni varala'),
             (r'\btani\s*varala\b', 'thanni varala'),
             (r'\btani\s*varla\b', 'thanni varala'),
@@ -45,9 +48,52 @@ class SpeechCorrectionService:
             (r'\bvara\s*le\b', 'varala'),
             (r'\bvarla\b', 'varala'),
             (r'\bthani\b', 'thanni'),
+            (r'\bcoimbatore\s+vada\s*veli\b', 'Coimbatore Vadavalli'),
+            (r'\bcoimbatore\s+vadaveli\b', 'Coimbatore Vadavalli'),
+            (r'\bcoimbatore\s+vada\s*valli\b', 'Coimbatore Vadavalli'),
+            (r'\bvada\s*veli\b', 'Vadavalli'),
+            (r'\bvada\s*valli\b', 'Vadavalli'),
+            (r'\bvadavelli\b', 'Vadavalli'),
+            (r'\bvadavali\b', 'Vadavalli'),
+            (r'\bvaadavalli\b', 'Vadavalli'),
+            (r'\banna\s*nagar\s*rendu\s*street\b', 'Anna Nagar 2nd Street'),
+            (r'\banna\s*nagar\s*second\s*street\b', 'Anna Nagar 2nd Street'),
+            (r'\banna\s*nagar\s*2\s*street\b', 'Anna Nagar 2nd Street'),
+            (r'\banna\s*nagar\s*rendavathu\s*(?:theru|street)\b', 'Anna Nagar 2nd Street'),
+            (r'\bgovernment\s*school\s*pakkathula\b', 'Government School pakkathula'),
+            (r'\bgovernment\s*school\s*pakkam\b', 'Government School pakkam'),
+            (r'\bgovt\s*school\s*pakkathula\b', 'Government School pakkathula'),
+            (r'\bgovt\s*school\s*kitta\b', 'Government School kitta'),
             (r'\bcurrent\s*cut\s*aagiduchu\b', 'current cut aaiduchu'),
             (r'\bcurrent\s*cut\s*aayiduchu\b', 'current cut aaiduchu'),
             (r'\bcurrent\s*cut\s*aachu\b', 'current cut aaiduchu'),
+            (r'\bvada\s*valli\s*la\s*thanni\s*varala\b', 'Vadavalli-la thanni varala'),
+            (r'\bvada\s*valli\s*la\s*problem\b', 'Vadavalli-la problem'),
+            (r'\bvada\s*valli\s*la\b', 'Vadavalli-la'),
+            (r'\benga\s*oor\s*la\b', 'enga oorla'),
+            (r'\benga\s*area\s*la\b', 'enga areala'),
+            (r'\bthree\s*days\s*ah\s*water\s*varala\b', '3 days-ah water varala'),
+            (r'\b3\s*days\s*ah\s*water\s*varala\b', '3 days-ah water varala'),
+            (r'\bthree\s*days\s*ah\b', '3 days-ah'),
+            (r'\b3\s*days\s*ah\b', '3 days-ah'),
+            (r'\bmoonu\s*naala\b', '3 naala'),
+            (r'\brendu\s*naala\b', '2 naala'),
+            (r'\bfull\s*street\s*la\b', 'full street-la'),
+            (r'\bfull\s*street\s*layum\b', 'full street-layum'),
+            (r'\bstreet\s*light\s*eriyala\b', 'street light eriyala'),
+            (r'\bstreet\s*light\s*eriyave\s*illa\b', 'street light eriyala'),
+            (r'\bstreet\s*light\s*eriyadhu\b', 'street light eriyala'),
+            (r'\broad\s*romba\s*damage\s*ah\s*irukku\b', 'road romba damage-ah irukku'),
+            (r'\broad\s*damage\s*ah\s*irukku\b', 'road damage-ah irukku'),
+            (r'\broad\s*damage\s*aayirukku\b', 'road damage-ah irukku'),
+            (r'\broad\s*sari\s*illa\b', 'road sari illa'),
+            (r'\bgandhipuram\s*bus\s*stand\s*pakkam\s*road\s*sari\s*illa\b', 'Gandhipuram bus stand pakkam road sari illa'),
+            (r'\bbus\s*stand\s*pakkam\b', 'bus stand pakkam'),
+            (r'\bbus\s*stand\s*kitta\b', 'bus stand kitta'),
+            (r'\bkuppa\s*edukkave\s*varala\b', 'kuppai edukkave varala'),
+            (r'\bkuppa\s*edukka\s*varala\b', 'kuppai edukkave varala'),
+            (r'\bkuppa\s*allave\s*illa\b', 'kuppai allave illa'),
+            (r'\bkuppa\s*allamaatenguranga\b', 'kuppai allamaatenguranga'),
         ]
 
     def clean(self, raw_text: str) -> str:
@@ -74,6 +120,20 @@ class SpeechCorrectionService:
         cleaned = self.clean(text)
         return ai_normalize_text(cleaned)
 
+    def correct_with_metadata(self, raw_text: str) -> Dict[str, str]:
+        """
+        Preserves original transcript, normalized transcript, and corrected transcript separately
+        for debugging, auditing, and multi-stage evaluation.
+        """
+        raw = raw_text.strip() if raw_text else ""
+        cleaned = self.clean(raw)
+        norm = self.normalize(raw)
+        return {
+            "original_transcript": raw,
+            "normalized_transcript": norm,
+            "corrected_transcript": cleaned
+        }
+
     def reconstruct_spelled_letters(self, text: str) -> str:
         """
         Reconstructs words that citizens spelled out letter by letter.
@@ -95,3 +155,4 @@ class SpeechCorrectionService:
 speech_correction_service = SpeechCorrectionService()
 clean_transcription = speech_correction_service.clean
 normalize_text = speech_correction_service.normalize
+correct_with_metadata = speech_correction_service.correct_with_metadata

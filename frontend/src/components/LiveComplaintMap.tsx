@@ -229,7 +229,8 @@ export const LiveComplaintMap: React.FC<LiveComplaintMapProps> = ({
     if (selectedStatus === 'RESOLVED' && c.status !== 'RESOLVED') return false;
     if (selectedStatus === 'ACTIVE' && c.status === 'RESOLVED') return false;
     // Filter by priority
-    if (selectedPriority !== 'ALL' && c.priority !== selectedPriority) return false;
+    const compPriority = (String(c.priority) === 'STANDARD' ? 'MEDIUM' : c.priority);
+    if (selectedPriority !== 'ALL' && compPriority !== selectedPriority) return false;
 
     // Filter by district if selected
     if (selectedDistrict !== 'ALL') {
@@ -324,12 +325,13 @@ export const LiveComplaintMap: React.FC<LiveComplaintMapProps> = ({
           ? '#8b5cf6'
           : '#3b82f6';
 
+      const prioVal = (String(c.priority) === 'STANDARD' ? 'MEDIUM' : c.priority);
       const priorityBg =
-        c.priority === 'CRITICAL'
+        prioVal === 'CRITICAL'
           ? '#ef4444'
-          : c.priority === 'HIGH'
+          : prioVal === 'HIGH'
           ? '#f97316'
-          : c.priority === 'MEDIUM'
+          : prioVal === 'MEDIUM'
           ? '#3b82f6'
           : '#64748b';
 
@@ -340,7 +342,7 @@ export const LiveComplaintMap: React.FC<LiveComplaintMapProps> = ({
               ${c.complaint_number}
             </span>
             <span style="font-size: 10px; font-weight: 700; color: #ffffff; background: ${priorityBg}; padding: 2px 6px; border-radius: 10px; text-transform: uppercase;">
-              ${c.priority}
+              ${prioVal}
             </span>
           </div>
 

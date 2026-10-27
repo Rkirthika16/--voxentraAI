@@ -3,7 +3,7 @@ import re
 import json
 import logging
 from typing import Dict, Any, Optional, List, Tuple
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 import httpx
 
 from app.config import settings
@@ -60,6 +60,22 @@ class GeminiAnalysisResult(BaseModel):
     ai_reply: Optional[str] = Field(None, description="Markdown/formatted text for UI chat feed")
     is_confirmation: bool = Field(default=False, description="True if sufficient info is gathered and confirmation should be prompted")
     needs_clarification: bool = Field(default=False, description="True if transcription is ambiguous or garbled")
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def normalize_priority(cls, v: Any) -> str:
+        s = str(v or "MEDIUM").strip().upper()
+        if s in ["STANDARD", "NORMAL"]:
+            return "MEDIUM"
+        return s or "MEDIUM"
+
+    @field_validator("language", mode="before")
+    @classmethod
+    def normalize_language(cls, v: Any) -> str:
+        s = str(v or "Tamil").strip()
+        if s in ["Auto", "Auto-Detecting...", ""]:
+            return "Tamil"
+        return s
 
 
 class GeminiService:
@@ -278,7 +294,10 @@ class GeminiService:
         # 7. Priority Assessment
         if mem.get("problem"):
             prio, _ = assess_priority(mem["problem"], mem.get("category", "General"))
-            mem["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
+            p_val = prio.value if hasattr(prio, 'value') else str(prio)
+            if p_val.upper() in ["STANDARD", "NORMAL"]:
+                p_val = "MEDIUM"
+            mem["priority"] = p_val
 
         # 8. Determine Missing Information & Next Step
         missing: List[str] = []

@@ -603,3 +603,22 @@ id,entity_type,entity_id,alias,normalized_value,language,alias_type,confidence
 602,street,10,100 feet,100feet,Tanglish,whisper_error,0.9
 603,street,25,5 th street,5thstreet,Tanglish,whisper_error,0.9
 604,street,25,5 th street gandhipuram,5thstreetgandhipuram,Tanglish,whisper_error,0.9
+605,area,14,Vada valli,vadavalli,Tanglish,whisper_error,0.95
+606,area,14,vadaveli,vadavalli,Tanglish,phonetic,0.95
+607,area,14,vadavelli,vadavalli,Tanglish,phonetic,0.95
+608,area,14,vadavali,vadavalli,Tanglish,phonetic,0.95
+609,area,14,vadavallii,vadavalli,Tanglish,phonetic,0.95
+610,area,14,Coimbatore vadaveli,vadavalli,Tanglish,phonetic,0.90
+611,street,107,Anna nagar second street,annanagar2ndstreet,Tanglish,phonetic,0.95
+612,street,107,Anna nagar rendu street,annanagar2ndstreet,Tanglish,phonetic,0.95
+613,street,107,Anna nagar 2 street,annanagar2ndstreet,Tanglish,phonetic,0.95
+614,street,107,Anna nagar 2nd street,annanagar2ndstreet,Tanglish,canonical,1.0
+615,street,107,Anna nagar rendavathu theru,annanagar2ndstreet,Tanglish,phonetic,0.95
+616,street,107,அண்ணா நகர் இரண்டாவது தெரு,அண்ணாநகர்2வதுதெரு,Tamil,canonical,1.0
+617,street,107,அண்ணா நகர் 2வது தெரு,அண்ணாநகர்2வதுதெரு,Tamil,canonical,1.0
+618,street,109,Coimbatore town Anna Nagar,annanagartown,Tanglish,canonical,0.95
+619,street,109,Town Anna Nagar,annanagartown,Tanglish,canonical,0.95
+620,landmark,50,Government School,governmentschool,English,canonical,0.95
+621,landmark,50,Govt School,governmentschool,English,phonetic,0.95
+622,landmark,50,Government school pakkathula,governmentschool,Tanglish,phonetic,0.95
+623,landmark,50,அரசு பள்ளி,அரசுபள்ளி,Tamil,canonical,0.95

@@ -10,6 +10,15 @@ import signal
 import time
 from pathlib import Path
 
+# Ensure UTF-8 output on Windows
+if sys.platform == "win32":
+    reconfig = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconfig):
+        try:
+            reconfig(encoding="utf-8")
+        except Exception:
+            pass
+
 ROOT_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = ROOT_DIR / "backend"
 FRONTEND_DIR = ROOT_DIR / "frontend"
@@ -22,7 +31,7 @@ PYTHON_EXE = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
 
 def main():
     print("=" * 70)
-    print("  🏛️  VoxentraAI — Starting Combined Full-Stack Services")
+    print("  VoxentraAI - Starting Combined Full-Stack Services")
     print("=" * 70)
     print(f"  Backend Dir  : {BACKEND_DIR}")
     print(f"  Frontend Dir : {FRONTEND_DIR}")

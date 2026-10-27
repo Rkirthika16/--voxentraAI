@@ -70,11 +70,11 @@ export const VoiceStatus: React.FC<VoiceStatusProps> = ({ state, language, categ
         };
       case 'DETECTING_LANGUAGE':
         return {
-          label: '🌐 Detecting Language...',
-          color: '#06b6d4',
-          bg: 'rgba(6, 182, 212, 0.15)',
-          border: 'rgba(6, 182, 212, 0.35)',
-          icon: <Globe className="w-4 h-4 animate-spin" />
+          label: '🧠 Understanding Speech...',
+          color: '#6366f1',
+          bg: 'rgba(99, 102, 241, 0.15)',
+          border: 'rgba(99, 102, 241, 0.35)',
+          icon: <Brain className="w-4 h-4 animate-pulse" />
         };
       case 'UNDERSTANDING':
         return {
@@ -145,11 +145,11 @@ export const VoiceStatus: React.FC<VoiceStatusProps> = ({ state, language, categ
         };
       default:
         return {
-          label: 'Ready — Auto-Detecting Language',
-          color: '#a855f7',
-          bg: 'rgba(168, 85, 247, 0.15)',
-          border: 'rgba(168, 85, 247, 0.35)',
-          icon: <Clock className="w-4 h-4" />
+          label: 'Ready — Voice Active',
+          color: '#10b981',
+          bg: 'rgba(16, 185, 129, 0.15)',
+          border: 'rgba(16, 185, 129, 0.35)',
+          icon: <Sparkles className="w-4 h-4" />
         };
     }
   };

@@ -145,7 +145,7 @@ export const ConfirmationPage: React.FC<ConfirmationPageProps> = ({ initialAnaly
               onChange={(e) => setPriority(e.target.value as ComplaintPriority)}
             >
               <option value="LOW">Low Priority (Minor issue)</option>
-              <option value="MEDIUM">Medium Priority (Standard grievance)</option>
+              <option value="MEDIUM">Medium Priority</option>
               <option value="HIGH">High Priority (Urgent repair needed)</option>
               <option value="CRITICAL">Critical / Emergency (Life-safety hazard)</option>
             </select>

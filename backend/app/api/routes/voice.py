@@ -53,7 +53,8 @@ def create_voice_session(req: VoiceSessionStartRequest = VoiceSessionStartReques
     return {
         "session_id": sid,
         "transcription": "",
-        "language": "Auto-Detecting...",
+        "language": "Tamil",
+        "detected_language": "Tamil",
         "analysis": {
             "category": "Other",
             "location": "",

@@ -2571,6 +2571,58 @@
       "latitude": 11.021,
       "longitude": 76.892,
       "confidence": 0.9
+    },
+    "106": {
+      "id": 106,
+      "name_en": "Anna Nagar 1st Street",
+      "name_ta": "அண்ணா நகர் 1-வது தெரு",
+      "area_id": 14,
+      "ward_id": 85,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.026,
+      "longitude": 76.899,
+      "confidence": 0.95
+    },
+    "107": {
+      "id": 107,
+      "name_en": "Anna Nagar 2nd Street",
+      "name_ta": "அண்ணா நகர் 2-வது தெரு",
+      "area_id": 14,
+      "ward_id": 85,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.027,
+      "longitude": 76.901,
+      "confidence": 0.95
+    },
+    "108": {
+      "id": 108,
+      "name_en": "Anna Nagar 3rd Street",
+      "name_ta": "அண்ணா நகர் 3-வது தெரு",
+      "area_id": 14,
+      "ward_id": 85,
+      "zone_id": 5,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.028,
+      "longitude": 76.903,
+      "confidence": 0.95
+    },
+    "109": {
+      "id": 109,
+      "name_en": "Anna Nagar Main Street",
+      "name_ta": "அண்ணா நகர் மெயின் வீதி",
+      "area_id": 10,
+      "ward_id": 58,
+      "zone_id": 3,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 10.998,
+      "longitude": 76.965,
+      "confidence": 0.95
     }
   },
   "landmarks": {
@@ -3307,6 +3359,21 @@
       "village_id": null,
       "latitude": 11.0025,
       "longitude": 76.969,
+      "confidence": 0.95
+    },
+    "50": {
+      "id": 50,
+      "name_en": "Government Higher Secondary School Vadavalli",
+      "name_ta": "வடவள்ளி அரசு மேல்நிலைப் பள்ளி",
+      "landmark_type": "School",
+      "area_id": 14,
+      "street_id": null,
+      "ward_id": 85,
+      "zone_id": null,
+      "taluk_id": null,
+      "village_id": null,
+      "latitude": 11.026,
+      "longitude": 76.901,
       "confidence": 0.95
     }
   },
@@ -4152,6 +4219,12 @@
       }
     ],
     "vadavali": [
+      {
+        "entity_type": "area",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      },
       {
         "entity_type": "area",
         "entity_id": 14,
@@ -8043,6 +8116,150 @@
         "entity_id": 25,
         "language": "Tanglish",
         "alias_type": "whisper_error"
+      }
+    ],
+    "vada valli": [
+      {
+        "entity_type": "area",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "whisper_error"
+      }
+    ],
+    "vadaveli": [
+      {
+        "entity_type": "area",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "vadavelli": [
+      {
+        "entity_type": "area",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "vadavallii": [
+      {
+        "entity_type": "area",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "coimbatore vadaveli": [
+      {
+        "entity_type": "area",
+        "entity_id": 14,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "anna nagar second street": [
+      {
+        "entity_type": "street",
+        "entity_id": 107,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "anna nagar rendu street": [
+      {
+        "entity_type": "street",
+        "entity_id": 107,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "anna nagar 2 street": [
+      {
+        "entity_type": "street",
+        "entity_id": 107,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "anna nagar 2nd street": [
+      {
+        "entity_type": "street",
+        "entity_id": 107,
+        "language": "Tanglish",
+        "alias_type": "canonical"
+      }
+    ],
+    "anna nagar rendavathu theru": [
+      {
+        "entity_type": "street",
+        "entity_id": 107,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "அண்ணா நகர் இரண்டாவது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 107,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      }
+    ],
+    "அண்ணா நகர் 2வது தெரு": [
+      {
+        "entity_type": "street",
+        "entity_id": 107,
+        "language": "Tamil",
+        "alias_type": "canonical"
+      }
+    ],
+    "coimbatore town anna nagar": [
+      {
+        "entity_type": "street",
+        "entity_id": 109,
+        "language": "Tanglish",
+        "alias_type": "canonical"
+      }
+    ],
+    "town anna nagar": [
+      {
+        "entity_type": "street",
+        "entity_id": 109,
+        "language": "Tanglish",
+        "alias_type": "canonical"
+      }
+    ],
+    "government school": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 50,
+        "language": "English",
+        "alias_type": "canonical"
+      }
+    ],
+    "govt school": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 50,
+        "language": "English",
+        "alias_type": "phonetic"
+      }
+    ],
+    "government school pakkathula": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 50,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
+    "அரசு பள்ளி": [
+      {
+        "entity_type": "landmark",
+        "entity_id": 50,
+        "language": "Tamil",
+        "alias_type": "canonical"
       }
     ]
   }

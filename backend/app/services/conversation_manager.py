@@ -58,11 +58,12 @@ class ConversationManager:
         Places session in silent LISTENING state (WAITING_FOR_CITIZEN).
         """
         session_id = f"ivr_sess_{uuid.uuid4().hex[:12]}"
+        initial_lang = language_preference if language_preference not in ["Auto", "Auto-Detecting...", None, ""] else "Tamil"
         
         initial_memory = {
             "conversation_id": session_id,
             "call_id": session_id,
-            "language": language_preference or "Auto",
+            "language": initial_lang,
             "previous_language": None,
             "citizen_input": "",
             "raw_citizen_input": "",
@@ -110,13 +111,22 @@ class ConversationManager:
             "questions_asked_count": 0,
             "max_questions": 10,
             "call_status": "ACTIVE",
-            "location": None
+            "location": None,
+            "original_transcript": "",
+            "normalized_transcript": "",
+            "corrected_transcript": "",
+            "detected_language": language_preference or "Auto",
+            "candidate_locations": [],
+            "confidence_score": 0.0,
+            "confirmed_location": None,
+            "unresolved_location": None,
+            "is_citizen_correction": False
         }
 
         ivr_session = IVRSession(
             session_id=session_id,
             caller_phone=caller_phone or "+919843098765",
-            language=language_preference or "Auto",
+            language=initial_lang,
             state=IVRState.WAITING_FOR_CITIZEN.value,
             structured_memory=initial_memory,
             created_at=datetime.now(timezone.utc),
@@ -288,7 +298,8 @@ class ConversationManager:
         ivr_session.affected_scope = memory.get("affected_scope") or memory.get("affected_area")
         ivr_session.frequency = memory.get("frequency")
         ivr_session.severity = memory.get("severity")
-        ivr_session.priority = memory.get("priority", "MEDIUM")
+        raw_prio = memory.get("priority", "MEDIUM")
+        ivr_session.priority = "MEDIUM" if str(raw_prio).upper() in ["STANDARD", "NORMAL"] else raw_prio
         ivr_session.department = memory.get("department")
         ivr_session.citizen_name = memory.get("citizen_name")
         ivr_session.structured_memory = memory
@@ -336,7 +347,13 @@ class ConversationManager:
             ivr_session.current_field_prompted = next_missing
             db.commit()
 
-            ai_reply, spoken_reply, options = question_manager.generate_question(next_missing, memory, detected_lang)
+            ai_reply, spoken_reply, options = question_manager.generate_question(
+                next_missing,
+                memory,
+                detected_lang,
+                last_raw_text=raw_text,
+                prompted_slot=prompted_slot
+            )
             self._save_ai_message(db, ivr_session, ai_reply, spoken_reply, detected_lang)
 
             return {
@@ -380,30 +397,80 @@ class ConversationManager:
                 memory["department"] = dept_name
 
         # 3. Location Resolution via Coimbatore Location Resolver
-        cbe_res = location_resolver.resolve(cleaned)
-        if cbe_res and cbe_res.get("confidence", 0.0) >= 0.70:
-            if cbe_res.get("area") and not memory.get("district_area"):
-                memory["district_area"] = cbe_res["area"]
-                memory["area"] = cbe_res["area"]
-            if cbe_res.get("street") and not memory.get("street_road_name"):
-                memory["street_road_name"] = cbe_res["street"]
-                memory["street"] = cbe_res["street"]
-            if cbe_res.get("landmark") and not memory.get("landmark"):
-                memory["landmark"] = cbe_res["landmark"]
-            if cbe_res.get("taluk"):
-                memory["taluk"] = cbe_res["taluk"]
-            if cbe_res.get("firka"):
-                memory["firka"] = cbe_res["firka"]
-            if cbe_res.get("revenue_village"):
-                memory["revenue_village"] = cbe_res["revenue_village"]
-            if cbe_res.get("corporation_zone"):
-                memory["corporation_zone"] = cbe_res["corporation_zone"]
-            if cbe_res.get("ward_no"):
-                memory["ward"] = f"Ward {cbe_res['ward_no']}"
-            if cbe_res.get("latitude"):
-                memory["latitude"] = str(cbe_res["latitude"])
-            if cbe_res.get("longitude"):
-                memory["longitude"] = str(cbe_res["longitude"])
+        loc_context = {}
+        if memory.get("area") or memory.get("district_area"):
+            area_name = memory.get("area") or memory.get("district_area")
+            loc_context["area"] = area_name
+            loc_context["area_id"] = memory.get("area_id")
+            loc_context["area_entity"] = {
+                "name_en": area_name,
+                "id": memory.get("area_id")
+            }
+        if memory.get("street") or memory.get("street_road_name"):
+            loc_context["street"] = memory.get("street") or memory.get("street_road_name")
+        if memory.get("landmark"):
+            loc_context["landmark"] = memory.get("landmark")
+
+        cbe_res = location_resolver.resolve(cleaned, current_language=memory.get("language", "Tanglish"), context=loc_context)
+        if cbe_res:
+            # Retain 7 core pipeline fields separately for audit/debugging
+            memory["original_transcript"] = cbe_res.get("original_transcript", raw_text)
+            memory["normalized_transcript"] = cbe_res.get("normalized_transcript", cleaned)
+            memory["corrected_transcript"] = cbe_res.get("corrected_transcript", cleaned)
+            memory["detected_language"] = cbe_res.get("detected_language", memory.get("language", "Tanglish"))
+            memory["candidate_locations"] = cbe_res.get("candidate_locations", [])
+            memory["confidence_score"] = cbe_res.get("confidence_score", 0.0)
+            memory["confirmed_location"] = cbe_res.get("confirmed_location")
+            memory["unresolved_location"] = cbe_res.get("unresolved_location")
+            memory["is_citizen_correction"] = cbe_res.get("is_citizen_correction", False)
+            if cbe_res.get("area_id"):
+                memory["area_id"] = cbe_res["area_id"]
+
+            # If citizen provided a correction, overwrite prior location context
+            if cbe_res.get("is_citizen_correction"):
+                if cbe_res.get("area"):
+                    memory["district_area"] = cbe_res["area"]
+                    memory["area"] = cbe_res["area"]
+                if cbe_res.get("street"):
+                    memory["street_road_name"] = cbe_res["street"]
+                    memory["street"] = cbe_res["street"]
+                if cbe_res.get("landmark"):
+                    memory["landmark"] = cbe_res["landmark"]
+                if cbe_res.get("taluk"):
+                    memory["taluk"] = cbe_res["taluk"]
+                if cbe_res.get("corporation_zone"):
+                    memory["corporation_zone"] = cbe_res["corporation_zone"]
+                if cbe_res.get("ward_no"):
+                    memory["ward"] = f"Ward {cbe_res['ward_no']}"
+                if cbe_res.get("latitude"):
+                    memory["latitude"] = str(cbe_res["latitude"])
+                if cbe_res.get("longitude"):
+                    memory["longitude"] = str(cbe_res["longitude"])
+            elif cbe_res.get("confidence", 0.0) >= 0.70:
+                if cbe_res.get("area") and not memory.get("district_area"):
+                    memory["district_area"] = cbe_res["area"]
+                    memory["area"] = cbe_res["area"]
+                if cbe_res.get("street"):
+                    curr_st = memory.get("street_road_name")
+                    if not curr_st or any(w in curr_st.lower() for w in ["day", "hour", "naal", "varala", "varla", "problem", "thanni", "water"]):
+                        memory["street_road_name"] = cbe_res["street"]
+                        memory["street"] = cbe_res["street"]
+                if cbe_res.get("landmark") and not memory.get("landmark"):
+                    memory["landmark"] = cbe_res["landmark"]
+                if cbe_res.get("taluk"):
+                    memory["taluk"] = cbe_res["taluk"]
+                if cbe_res.get("firka"):
+                    memory["firka"] = cbe_res["firka"]
+                if cbe_res.get("revenue_village"):
+                    memory["revenue_village"] = cbe_res["revenue_village"]
+                if cbe_res.get("corporation_zone"):
+                    memory["corporation_zone"] = cbe_res["corporation_zone"]
+                if cbe_res.get("ward_no"):
+                    memory["ward"] = f"Ward {cbe_res['ward_no']}"
+                if cbe_res.get("latitude"):
+                    memory["latitude"] = str(cbe_res["latitude"])
+                if cbe_res.get("longitude"):
+                    memory["longitude"] = str(cbe_res["longitude"])
 
         # Fallback slot prompts if explicitly asked
         if prompted_slot == "district_area" and not memory.get("district_area"):
@@ -414,7 +481,8 @@ class ConversationManager:
 
         if prompted_slot == "street_road_name" and not memory.get("street_road_name"):
             cand_st = re.sub(r'^(?:in\s+the|on\s+the|at\s+the|the|this|that|inda|indha|இந்த|அந்த|எங்கள்|என்)\s+', '', raw_text, flags=re.IGNORECASE).strip()
-            if len(cand_st) >= 2:
+            is_bogus_st = any(w in cand_st.lower() for w in ["day", "hour", "naal", "varala", "varla", "problem", "thanni", "water", "current", "cut", "illai", "illa", "damage"])
+            if len(cand_st) >= 2 and not is_bogus_st:
                 memory["street_road_name"] = cand_st
                 memory["street"] = cand_st
 
@@ -428,6 +496,7 @@ class ConversationManager:
         # 4. Duration & Start Time
         dur_patterns = [
             r'\b(\d+\s*(?:days?|hours?|weeks?|months?)(?:-ah)?)\b',
+            r'\b(\d+\s*naal[a-z]*)\b',
             r'\b((?:two|three|four|five|six|seven|one|ten)\s*(?:days?|hours?|weeks?)(?:-ah)?)\b',
             r'\b(since\s*(?:yesterday|morning|last\s*week|\d+\s*days?))\b',
             r'\b(yesterday|today\s*morning|last\s*night|netru|inniku|kaalai|just\s*now)\b',
@@ -435,11 +504,14 @@ class ConversationManager:
             r'\b((?:ரெண்டு|மூணு|நாலு|அஞ்சு|பத்து|இரண்டு|மூன்று|ஒரு வாரம்)\s*(?:நாட்களாக|நாளாக|நாளா|நாள்|வாரம்))\b',
             r'\b(rendu\s*naal[a-z]*|moonu\s*naal[a-z]*|nethu\s*lendhu|nethula\s*irundhu|kaalaila\s*irundhu|morning\s*lendhu|romba\s*naal[a-z]*|palanaal[a-z]*|oru\s*varam[a-z]*|oru\s*masam[a-z]*)\b'
         ]
-        for pat in dur_patterns:
-            m = re.search(pat, lowered)
-            if m and not memory.get("duration"):
-                memory["duration"] = m.group(0).strip()
-                memory["start_time"] = memory["duration"]
+        for text_cand in [raw_text.lower(), lowered]:
+            for pat in dur_patterns:
+                m = re.search(pat, text_cand)
+                if m and not memory.get("duration"):
+                    memory["duration"] = m.group(0).strip()
+                    memory["start_time"] = memory["duration"]
+                    break
+            if memory.get("duration"):
                 break
 
         if prompted_slot == "duration" and not memory.get("duration"):
@@ -496,11 +568,14 @@ class ConversationManager:
             memory["previous_complaint_number"] = raw_text.strip()
 
         # 10. Additional details
-        if prompted_slot == "additional_details" and not memory.get("additional_details"):
-            if any(w in lowered for w in ["no", "nothing", "illa", "illai", "none", "இல்லை"]):
+        if prompted_slot == "additional_details" or any(w in lowered for w in ["no other details", "nothing else", "no details", "nothing more", "avvalavuthaan", "avlodhaan", "கூடுதல் தகவல் இல்லை", "அவ்வளவுதான்", "வேறில்லை"]):
+            if any(w in lowered for w in ["no", "nothing", "illa", "illai", "none", "இல்லை", "கூடுதல் தகவல் இல்லை", "அவ்வளவுதான்"]):
                 memory["additional_details"] = "None"
-            else:
+            elif not memory.get("additional_details"):
                 memory["additional_details"] = raw_text.strip()
+            memory["is_citizen_confirmed_ready"] = True
+        elif any(p in lowered for p in ["register pannunga", "register it", "register my complaint", "பதிவு பண்ணுங்க", "பதிவு செய்யுங்க", "போதும்", "enough"]) and memory.get("problem_description") and (memory.get("area") or memory.get("location")):
+            memory["is_citizen_confirmed_ready"] = True
 
         # Priority calculation
         full_problem = memory.get("problem_description") or raw_text
@@ -512,39 +587,45 @@ class ConversationManager:
                 scope=memory.get("impact") or memory.get("affected_scope"),
                 hazard=memory.get("safety_hazard")
             )
-            memory["priority"] = prio.value if hasattr(prio, 'value') else str(prio)
+            prio_val = prio.value if hasattr(prio, 'value') else str(prio)
+            if prio_val.upper() in ["STANDARD", "NORMAL"]:
+                prio_val = "MEDIUM"
+            memory["priority"] = prio_val
 
     def _handle_user_corrections(self, raw_text: str, cleaned: str, memory: Dict[str, Any]) -> None:
         """Handles user turn corrections (e.g. 'No, not 5th street, 6th street')."""
         lowered = raw_text.lower()
-        if any(neg in lowered for neg in ["no,", "not", "illa,", "illai,", "இல்லை"]):
+        if any(neg in lowered for neg in ["no,", "not", "illa,", "illai,", "இல்லை", "no ", "not "]):
             # Street correction
             st_match = re.search(r'(?:not\s+[A-Za-z0-9\s]+,?\s*(?:it\s*is\s*)?|illa\s+)([0-9]+(?:st|nd|rd|th)?\s+(?:street|road|cross|salai|theru))', raw_text, re.IGNORECASE)
             if st_match:
                 memory["street_road_name"] = st_match.group(1).strip()
                 memory["street"] = st_match.group(1).strip()
+                memory["is_user_correction"] = True
 
             # Area correction
-            area_match = re.search(r'(?:not\s+[A-Za-z0-9\s]+,?\s*(?:it\s*is\s*)?|illa\s+)([A-Za-z\u0B80-\u0BFF\s]+(?:area|nagar|colony|puram|palayam))', raw_text, re.IGNORECASE)
+            area_match = re.search(r'(?:not\s+[A-Za-z0-9\s]+,?\s*(?:it\s*is\s*)?|illa\s+)([A-Za-z\u0B80-\u0BFF\s]+(?:area|nagar|colony|puram|palayam|hall|medu|valli))', raw_text, re.IGNORECASE)
             if area_match:
                 memory["district_area"] = area_match.group(1).strip()
                 memory["area"] = area_match.group(1).strip()
+                memory["is_user_correction"] = True
 
     def _is_confirmation_response(self, text: str) -> Tuple[bool, bool]:
         """Detects if response confirms or rejects registration."""
         lowered = text.lower().strip()
         positive_markers = [
             "yes", "yeah", "yep", "correct", "confirm", "register", "aama", "aamam", "aamaa",
-            "ama", "amam", "seri", "sari", "pannunga", "register pannunga", "correct dhaan",
-            "ஆம்", "சரி", "பதிவு செய்", "பதிவு பண்ணுங்க", "உண்மை", "சரிதான்", "கட்டாயம்"
+            "ama", "amam", "seri", "sari", "saringa", "seringa", "pannunga", "register pannunga", "correct dhaan",
+            "sure", "proceed", "fine", "ok", "okay",
+            "ஆம்", "சரி", "பதிவு செய்", "பதிவு பண்ணுங்க", "உண்மை", "சரிதான்", "கட்டாயம்", "ஆமா", "ஆமாம்", "சரிங்க", "கண்டிப்பா"
         ]
         negative_markers = [
             "no", "nope", "wrong", "change", "edit", "modify", "maathanum", "maathu", "illa", "illai",
             "இல்லை", "தவறு", "மாற்று", "மாற்ற வேண்டும்", "வேண்டாம்"
         ]
-        if any(w in lowered for w in positive_markers):
+        if any(w == lowered or re.search(r'\b' + re.escape(w) + r'\b', lowered) for w in positive_markers) or any(w in lowered for w in ["ஆம்", "சரி", "ஆமா", "ஆமாம்", "சரிதான்", "பதிவு பண்ணு"]):
             return True, True
-        if any(w in lowered for w in negative_markers):
+        if any(w == lowered or re.search(r'\b' + re.escape(w) + r'\b', lowered) for w in negative_markers) or any(w in lowered for w in ["இல்லை", "தவறு", "மாற்ற"]):
             return True, False
         return False, False
 
@@ -555,7 +636,7 @@ class ConversationManager:
         If DB fails, safe fallback is executed without generating a fake complaint ID.
         """
         memory: Dict[str, Any] = dict(session.structured_memory or {})
-        lang = session.language or "Tanglish"
+        lang = session.language if session.language not in ["Auto", "Auto-Detecting...", "", None] else "Tamil"
 
         category = memory.get("category") or "General"
         department_name = CATEGORY_TO_DEPARTMENT.get(category, "General Administration Department")
@@ -563,7 +644,8 @@ class ConversationManager:
         if not dept:
             dept = db.query(Department).first()
 
-        priority_str = memory.get("priority", "MEDIUM").upper()
+        raw_priority_str = memory.get("priority", "MEDIUM").upper()
+        priority_str = "MEDIUM" if raw_priority_str in ["STANDARD", "NORMAL"] else raw_priority_str
         prio_enum = ComplaintPriority[priority_str] if priority_str in ComplaintPriority.__members__ else ComplaintPriority.MEDIUM
 
         problem_title = memory.get("problem_description") or memory.get("problem") or "Civic Grievance"
@@ -574,6 +656,31 @@ class ConversationManager:
         street = memory.get("street") or memory.get("street_road_name") or ""
         landmark = memory.get("landmark") or ""
         loc_str = f"{street}, {area}".strip(", ") if street else area
+
+        # Idempotency check: if already registered for this session, return existing record
+        if session.complaint_number and session.complaint_id:
+            c_exist = db.query(Complaint).filter(Complaint.id == session.complaint_id).first()
+            if c_exist:
+                complaint_number = session.complaint_number
+                if lang in ["Tamil", "Tanglish"]:
+                    ai_reply = f"உங்க புகார் ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது. உங்க புகார் எண் {complaint_number}. தற்போதைய நிலை: பரிசீலனையில் உள்ளது (Pending)."
+                else:
+                    ai_reply = f"Your complaint is already registered. Your complaint tracking ID is {complaint_number}. Current status is Pending."
+                return {
+                    "success": True,
+                    "session_id": session.session_id,
+                    "state": IVRState.COMPLETED.value,
+                    "complaint_created": True,
+                    "complaint_id": session.complaint_id,
+                    "complaint_number": complaint_number,
+                    "department": department_name,
+                    "category": category,
+                    "location": loc_str,
+                    "status": "Pending",
+                    "ai_reply": ai_reply,
+                    "spoken_reply": ai_reply,
+                    "memory": memory
+                }
 
         try:
             # Generate unique ID upon insertion
@@ -618,12 +725,10 @@ class ConversationManager:
             db.commit()
 
             # Multilingual success voice response
-            if lang == "Tamil":
-                ai_reply = f"உங்கள் புகார் வெற்றிகரமாக பதிவு செய்யப்பட்டது. உங்கள் புகார் எண் {complaint_number}. தற்போதைய நிலை: பரிசீலனையில் உள்ளது (Pending). நன்றி!"
-            elif lang == "Tanglish":
-                ai_reply = f"Unga complaint successfully register aayiduchu. Unga Complaint ID {complaint_number}. Current status: Pending. VoxentraAI-ku call pannadhuku nandri!"
+            if lang in ["Tamil", "Tanglish"]:
+                ai_reply = f"உங்க புகார் பதிவு ஆயிடுச்சு. உங்க புகார் எண் {complaint_number}. தற்போதைய நிலை: பரிசீலனையில் உள்ளது (Pending). இதைக் குறித்து வச்சுக்கோங்க."
             else:
-                ai_reply = f"Your complaint has been registered successfully. Your complaint ID is {complaint_number}. The current status is Pending. Thank you for calling VoxentraAI!"
+                ai_reply = f"Your complaint has been registered successfully. Your complaint ID is {complaint_number}. The current status is Pending. Please note it down."
 
             self._save_ai_message(db, session, ai_reply, ai_reply, lang)
 
@@ -688,7 +793,7 @@ class ConversationManager:
 
     def _handle_silence_or_empty(self, db: Session, session: IVRSession) -> Dict[str, Any]:
         """Handles silence or empty mic audio gracefully."""
-        lang = session.language if session.language not in ["Auto", None] else "Tanglish"
+        lang = session.language if session.language not in ["Auto", "Auto-Detecting...", None, ""] else "Tamil"
         if lang == "Tamil":
             reply = "மன்னிக்கவும், உங்கள் குரல் தெளிவாக கேட்கவில்லை. மறுபடியும் சொல்லுங்கள்."
         elif lang == "Tanglish":
@@ -700,6 +805,8 @@ class ConversationManager:
             "success": True,
             "session_id": session.session_id,
             "state": session.state,
+            "detected_language": lang,
+            "language": lang,
             "ai_reply": reply,
             "spoken_reply": reply,
             "memory": session.structured_memory

@@ -682,7 +682,7 @@ export const LandingPage: React.FC = () => {
                 <div>
                   <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem' }}>Priority / Severity:</span>
                   <span style={{ color: transferData.priority === 'CRITICAL' ? '#f87171' : transferData.priority === 'HIGH' ? '#fbbf24' : '#60a5fa', fontWeight: 700 }}>
-                    {transferData.priority}
+                    {transferData.priority === 'STANDARD' ? 'MEDIUM' : transferData.priority}
                   </span>
                 </div>
                 <div>

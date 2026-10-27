@@ -7,7 +7,7 @@ interface PriorityBadgeProps {
 }
 
 export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
-  const normPri = (priority || 'MEDIUM').toUpperCase();
+  const normPri = (priority || 'no').toUpperCase();
 
   switch (normPri) {
     case 'CRITICAL':
@@ -23,6 +23,7 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
         </span>
       );
     case 'MEDIUM':
+    case 'STANDARD':
       return (
         <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid #3b82f6' }}>
           <Info size={12} /> Medium Priority

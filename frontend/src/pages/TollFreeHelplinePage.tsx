@@ -3,6 +3,7 @@ import { useVoiceConversationEngine } from '../utils/useVoiceConversationEngine'
 import { telephonyAudio } from '../utils/telephonyAudio';
 import { IVRStreetMap } from '../components/IVRStreetMap';
 import { VoiceStatus } from '../components/voice/VoiceStatus';
+import { formatLanguageDisplay } from '../utils/languageDetect';
 import { Link } from 'react-router-dom';
 import {
   PhoneCall,
@@ -1072,7 +1073,7 @@ export const TollFreeHelplinePage: React.FC = () => {
               <div style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Detected Language</div>
                 <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#38bdf8', marginTop: '0.2rem' }}>
-                  {detectedLanguage}
+                  {formatLanguageDisplay(detectedLanguage)}
                 </div>
                 <div style={{ fontSize: '0.65rem', color: '#10b981' }}>Auto-Preserved Per Turn</div>
               </div>
@@ -1087,8 +1088,14 @@ export const TollFreeHelplinePage: React.FC = () => {
 
               <div style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Current Priority</div>
-                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: analysis.priority === 'HIGH' || analysis.priority === 'CRITICAL' ? '#ef4444' : '#f59e0b', marginTop: '0.2rem' }}>
-                  {analysis.priority || 'MEDIUM'}
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: analysis.priority === 'HIGH' || analysis.priority === 'CRITICAL' ? '#ef4444' : '#38bdf8', marginTop: '0.2rem' }}>
+                  {analysis.priority === 'CRITICAL'
+                    ? 'Critical / Emergency'
+                    : analysis.priority === 'HIGH'
+                      ? 'High Priority'
+                      : analysis.priority === 'LOW'
+                        ? 'Low Priority'
+                        : 'Medium Priority'}
                 </div>
                 <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Dynamic Slot Fusion</div>
               </div>

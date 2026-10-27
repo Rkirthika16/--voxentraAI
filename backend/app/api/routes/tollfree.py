@@ -1,4 +1,5 @@
 import os
+import uuid
 import tempfile
 import aiofiles
 import logging
@@ -48,9 +49,9 @@ def create_tollfree_session(
     Starts a new two-way conversational toll-free session.
     AI delivers the initial greeting and enters WAITING_FOR_CITIZEN state (Citizen speaks first).
     """
-    phone = payload.caller_phone if payload else "+919843098765"
+    phone = (payload.caller_phone if payload and payload.caller_phone else None) or "+919843098765"
     call_id = payload.provider_call_id if payload else None
-    tf_num = payload.toll_free_number if payload else "1800-425-8693"
+    tf_num = (payload.toll_free_number if payload and payload.toll_free_number else None) or "1800-425-8693"
 
     session, greeting_text, greeting_spoken = tollfree_service.create_call_session(
         db=db,
@@ -67,7 +68,7 @@ def create_tollfree_session(
         "state": session.state,
         "greeting": greeting_text,
         "spoken_greeting": greeting_spoken,
-        "language": session.language,
+        "language": session.language if session.language not in ["Auto", "Auto-Detecting...", "", None] else "Tamil",
         "structured_memory": session.structured_memory
     }
 
@@ -103,7 +104,7 @@ def get_tollfree_session(
         "caller_phone": session.caller_phone,
         "toll_free_number": session.toll_free_number,
         "state": session.state,
-        "language": session.language,
+        "language": session.language if session.language not in ["Auto", "Auto-Detecting...", "", None] else "Tamil",
         "language_confidence": session.language_confidence,
         "current_field_prompted": session.current_field_prompted,
         "structured_memory": session.structured_memory,
@@ -287,7 +288,7 @@ def get_tollfree_status(
     return {
         "session_id": session.call_session_id,
         "state": session.state,
-        "language": session.language,
+        "language": session.language if session.language not in ["Auto", "Auto-Detecting...", "", None] else "Tamil",
         "complaint_id": session.complaint_id,
         "complaint_number": session.complaint_number
     }
@@ -308,7 +309,7 @@ async def tollfree_incoming_call_webhook(
     """
     form_data = await request.form()
     caller_phone = form_data.get("From") or form_data.get("CallFrom") or "+919843098765"
-    call_sid = form_data.get("CallSid") or form_data.get("CallSid") or f"CA_{tempfile.mktemp()}"
+    call_sid = form_data.get("CallSid") or f"CA_{uuid.uuid4().hex}"
 
     session, greeting_text, _ = tollfree_service.create_call_session(
         db=db,
