@@ -4544,6 +4544,14 @@
         "alias_type": "phonetic"
       }
     ],
+    "koundampalayam": [
+      {
+        "entity_type": "area",
+        "entity_id": 27,
+        "language": "Tanglish",
+        "alias_type": "phonetic"
+      }
+    ],
     "periyanaickenpalayam": [
       {
         "entity_type": "area",

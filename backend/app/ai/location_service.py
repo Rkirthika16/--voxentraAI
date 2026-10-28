@@ -484,7 +484,7 @@ TAMIL_NADU_DISTRICT_LOCATIONS: List[Dict] = [
         "district": "Coimbatore",
         "latitude": "11.045000",
         "longitude": "76.935000",
-        "keywords": ["goundenpalayam", "kavundampalayam", "koundampalayam", "கவுண்டம்பாளையம்", "saibaba colony", "சாயிபாபா காலனி", "edaiyarpalayam"]
+        "keywords": ["goundenpalayam", "kavundampalayam", "koundampalayam", "கவுண்டம்பாளையம்", "கவுண்டம்பாளையத்துல", "கவுண்டம்பாளையத்தில்", "கவுண்டம்பாளையத்தில", "saibaba colony", "சாயிபாபா காலனி", "edaiyarpalayam"]
     },
 
     # --- METTUPALAYAM TALUK (மேட்டுப்பாளையம் வட்டம்) ---
@@ -1066,7 +1066,7 @@ TAMIL_NADU_DISTRICT_LOCATIONS: List[Dict] = [
         "district": "Tirunelveli",
         "latitude": "8.718300",
         "longitude": "77.746100",
-        "keywords": ["palayamkottai", "பாளை", "பாளையங்கோட்டை", "oxford of south india", "st xaviers palayamkottai", "sarah tucker", "palayamkottai market", "palayamkottai bus stand", "south bazaar palayamkottai", "murugankurichi", "முருகன்குறிச்சி"]
+        "keywords": ["palayamkottai", "பாளை மார்க்கெட்", "பாளையங்கோட்டை", "oxford of south india", "st xaviers palayamkottai", "sarah tucker", "palayamkottai market", "palayamkottai bus stand", "south bazaar palayamkottai", "murugankurichi", "முருகன்குறிச்சி"]
     },
     {
         "name": "Melapalayam, Tirunelveli District",

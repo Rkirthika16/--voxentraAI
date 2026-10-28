@@ -486,11 +486,23 @@ class NewIVRService:
         if phone_match and not memory.get("citizen_phone"):
             memory["citizen_phone"] = phone_match.group(0)
 
-        name_match = re.search(r'(?:name\s*is|i\s*am|my\s*name\s*is|பெயர்|naan|peyar|en\s*peru)\s*([A-Za-z\u0B80-\u0BFF\s]{2,25})', raw_text, re.IGNORECASE)
+        name_pattern = r'''(?x)
+            (?:
+                (?:(?:நான்|நாங்க|நானு|inga)?\s*(?:வந்துட்டு|வந்து)?\s*([A-Za-z\u0B80-\u0BFF]{2,25})\s*(?:பேசுறேன்|பேசுகிறேன்|pesuren|pesuranga|speaking))
+                |
+                (?:(?:name\s*is|i\s*am|my\s*name\s*is|பெயர்|en\s*peyar|en\s*peru|peru|this\s*is)\s*[:=]?\s*([A-Za-z\u0B80-\u0BFF]{2,25}))
+            )
+        '''
+        name_stopwords = {"seri", "ok", "problem", "thanni", "water", "anna", "tamil", "english", "no", "yes", "illa", "illai", "irundhu", "vanakkam", "hello", "நாங்க", "நான்", "வந்துட்டு"}
+        name_match = re.search(name_pattern, raw_text, re.IGNORECASE)
         if name_match and not memory.get("citizen_name"):
-            cand = name_match.group(1).strip()
-            if cand.lower() not in ["seri", "ok", "problem", "thanni", "water", "anna", "tamil", "english", "no", "yes", "illa"]:
-                memory["citizen_name"] = cand.title() if cand.isascii() else cand
+            cand = (name_match.group(1) or name_match.group(2) or "").strip()
+            cand = re.sub(r'^(?:நான்|நாங்க|நானு|வந்துட்டு|வந்து)\s+', '', cand).strip()
+            if cand.lower() not in name_stopwords and len(cand) >= 2:
+                cand_clean = cand.title() if cand.isascii() else cand
+                memory["citizen_name"] = cand_clean
+                if not memory.get("contact_person"):
+                    memory["contact_person"] = cand_clean
 
         # Impact handling
         if prompted_slot == "impact" and not memory.get("impact"):

@@ -355,17 +355,26 @@ class QuestionManager:
             has_dur = bool(memory.get("duration") or memory.get("start_time"))
             has_scope = bool(memory.get("affected_scope") or memory.get("affected_area"))
             has_freq = bool(memory.get("frequency") or memory.get("severity") or memory.get("impact"))
-            return bool(has_problem and has_area and has_street_or_lm and has_dur and has_scope and has_freq)
+            return has_problem and has_area and has_street_or_lm and has_dur and has_scope and has_freq
 
         if "road" in category:
             has_sev = bool(memory.get("severity") or memory.get("safety_hazard"))
-            return bool(has_problem and has_area and has_street_or_lm and has_sev)
+            return has_problem and has_area and has_street_or_lm and has_sev
 
         if "light" in category:
             has_sev = bool(memory.get("severity") or memory.get("affected_scope"))
-            return bool(has_problem and has_area and has_street_or_lm and has_sev)
+            return has_problem and has_area and has_street_or_lm and has_sev
 
-        return bool(has_problem and has_area and has_street_or_lm)
+        return has_problem and has_area and has_street_or_lm
+
+    def is_slot_filled(self, memory: Dict[str, Any], slot: str) -> bool:
+        """Checks if a slot is already filled in memory."""
+        val = self._get_slot_value(memory, slot)
+        return bool(val and str(val).strip() not in ["None", "null", ""])
+
+    def _is_slot_filled(self, memory: Dict[str, Any], slot: str) -> bool:
+        """Internal alias for checking if a slot is filled."""
+        return self.is_slot_filled(memory, slot)
 
     def get_next_missing_slot(self, memory: Dict[str, Any], min_questions: int = 10) -> Optional[str]:
         """
@@ -503,12 +512,23 @@ class QuestionManager:
             ]
 
         # 2. Citizen just gave an area or village name (e.g. 'Vadavalli', 'Gandhipuram', 'Coimbatore Vadavalli')
-        if any(a.lower() in raw_lowered for a in ["vadavalli", "gandhipuram", "rs puram", "peelamedu", "singanallur", "saravanampatti", "town hall", "thudiyalur"]):
+        tamil_area_indicators = ["காந்திபுரம்", "காந்திபுரத்து", "வடவள்ளி", "ஆர்.எஸ்.புரம்", "பீளமேடு", "சிங்காநல்லூர்", "சரவணம்பட்டி", "கவுண்டம்பாளையம்", "துடியலூர்"]
+        has_area_indicator = any(a.lower() in raw_lowered for a in ["vadavalli", "gandhipuram", "rs puram", "peelamedu", "singanallur", "saravanampatti", "town hall", "thudiyalur", "koundampalayam", "kavundampalayam"] + tamil_area_indicators)
+        if has_area_indicator or (area and (slot == "problem_description" or not memory.get("problem_description"))):
+            c_name = memory.get("citizen_name")
+            name_greet_ta = f"வணக்கம் {c_name} அவர்களே, " if c_name else ""
+            name_greet_en = f"Hello {c_name}, " if c_name else ""
             if slot == "problem_description" or not memory.get("problem_description"):
                 if lang in ["Tamil", "Tanglish"]:
-                    reply = f"{area_ta}யா? சரி. அங்க என்ன பிரச்சினை?"
+                    if area_ta:
+                        reply = f"{name_greet_ta}{area_ta}யா? சரி. அங்க என்ன பிரச்சினை? விவரிக்கவும்."
+                    else:
+                        reply = f"{name_greet_ta}சரி, உங்களுக்கு என்ன பிரச்சினை? விவரிக்கவும்."
                 else:
-                    reply = f"{area}? Understood. What is the problem there?"
+                    if area:
+                        reply = f"{name_greet_en}{area}? Understood. What is the problem there?"
+                    else:
+                        reply = f"{name_greet_en}Understood. What is the problem? Please describe."
                 return reply, reply, []
             elif slot in ["street_road_name", "exact_location"]:
                 if any(w in category.lower() for w in ["road", "சாலை", "damage"]):

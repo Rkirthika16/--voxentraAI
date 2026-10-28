@@ -221,11 +221,19 @@ class LocationNormalizer:
         if not text:
             return ""
         t = cls.clean(text)
+        # Strip standalone spoken locative postpositions
+        t = re.sub(r"\b(?:இருந்து|லிருந்து|லேந்து|லெந்து)\b", " ", t)
         words = t.split()
         norm_words = []
         for w in words:
-            # Strip Tamil locative case markers: e.g. காந்திபுரத்தில் -> காந்திபுரம், வடவள்ளில -> வடவள்ளி
-            w_norm = re.sub(r"த்தில்$", "ம்", w)
+            # Composite locatives first: e.g. காந்திபுரத்துலிருந்து -> காந்திபுரம்
+            w_norm = re.sub(r"(?:த்துலிருந்து|த்திலிருந்து|த்துலேந்து|த்திலேந்து)$", "ம்", w)
+            # Spoken locative: e.g. காந்திபுரத்துல / கவுண்டம்பாளையத்துல -> காந்திபுரம் / கவுண்டம்பாளையம்
+            w_norm = re.sub(r"(?:த்துல|த்தில|த்தில்)$", "ம்", w_norm)
+            # Retroflex locative: e.g. பீளமேட்டுல -> பீளமேடு
+            w_norm = re.sub(r"ட்டுல$", "டு", w_norm)
+            # Postposition suffixes attached to words
+            w_norm = re.sub(r"(?:லிருந்து|லேந்து|லெந்து)$", "", w_norm)
             w_norm = re.sub(r"தில்$", "", w_norm)
             w_norm = re.sub(r"இல்$", "", w_norm)
             w_norm = re.sub(r"ல்$", "", w_norm)

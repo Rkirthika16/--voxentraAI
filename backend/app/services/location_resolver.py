@@ -269,7 +269,13 @@ class CoimbatoreLocationResolver:
             hierarchy["needs_clarification"] = True
             hierarchy["confirmed_location"] = None
             hierarchy["unresolved_location"] = None
-            if any("anna nagar" in (c.get("label") or "").lower() for c in candidate_locations) and not any(w in working_text.lower() for w in ["second", "2nd", "rendu", "இரண்டாவது", "main", "1st"]):
+            if len(candidate_locations) >= 2 and candidate_locations[0].get("area") != candidate_locations[1].get("area"):
+                cand1 = candidate_locations[0]["label"]
+                cand2 = candidate_locations[1]["label"]
+                hierarchy["clarification_question"] = self._get_prompt(
+                    "disambiguate_candidates", detected_lang, cand1=cand1, cand2=cand2
+                )
+            elif any("anna nagar" in (c.get("label") or "").lower() for c in candidate_locations) and not any(w in working_text.lower() for w in ["second", "2nd", "rendu", "இரண்டாவது", "main", "1st"]):
                 hierarchy["clarification_question"] = self._get_prompt("ask_colony_street", detected_lang)
             elif len(candidate_locations) >= 2:
                 cand1 = candidate_locations[0]["label"]
